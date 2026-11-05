@@ -35,6 +35,88 @@ frontend/  Aplicación web React
 docs/      Requisitos, arquitectura, decisiones y pruebas
 ```
 
+## Estructura de carpetas backend
+
+
+backend/
+├── prisma/
+│   └── schema.prisma
+│
+├── src/
+│   ├── config/
+│   │   └── database.js
+│   │
+│   ├── controllers/
+│   │   ├── AuthController.js
+│   │   ├── UserController.js
+│   │   ├── ApplicantController.js
+│   │   ├── LoanApplicationController.js
+│   │   ├── RiskEvaluationController.js
+│   │   ├── LoanDecisionController.js
+│   │   ├── LoanController.js
+│   │   ├── PaymentController.js
+│   │   ├── PolicyController.js
+│   │   ├── ReportController.js
+│   │   └── AuditController.js
+│   │
+│   ├── services/
+│   │   ├── LoanService.js
+│   │   ├── RiskEvaluationService.js
+│   │   ├── PolicyService.js
+│   │   ├── PaymentScheduleService.js
+│   │   ├── DelinquencyService.js
+│   │   └── AuditService.js
+│   │
+│   ├── routes/
+│   ├── middlewares/
+│   ├── utils/
+│   └── index.js
+│
+├── .env
+├── package.json
+└── server.js
+
+
+
+## Estructura de carpetas frontend
+
+frontend/
+└── src/
+    ├── api/
+    │   ├── applicant.js
+    │   ├── application.js
+    │   ├── loan.js
+    │   ├── payment.js
+    │   ├── policy.js
+    │   └── user.js
+    │
+    ├── components/
+    │   ├── general/
+    │   ├── applicants/
+    │   ├── applications/
+    │   ├── loans/
+    │   └── reports/
+    │
+    ├── layouts/
+    │   └── AdminLayout/
+    │
+    ├── pages/
+    │   ├── Dashboard/
+    │   ├── Applicants/
+    │   ├── Applications/
+    │   ├── Evaluations/
+    │   ├── Decisions/
+    │   ├── Loans/
+    │   ├── Payments/
+    │   ├── Policies/
+    │   ├── Reports/
+    │   └── Audit/
+    │
+    ├── routes/
+    ├── slices/
+    ├── utils/
+    └── App.js
+
 ## Desarrollo por incrementos
 
 | Incremento | Objetivo |
