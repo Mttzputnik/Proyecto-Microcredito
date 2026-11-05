@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String            @id @default(auto()) @map("_id") @db.ObjectId
+  firstName            String
+  lastName             String
+  email                String            @unique
+  passwordHash         String
+  role                 String            @default("CREDIT_OFFICER")
+  active               Boolean           @default(true)
+  assignedApplications LoanApplication[] @relation("AssignedOfficer")
+  decisions            LoanDecision[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model Applicant {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  documentType    String
+  documentNumber  String            @unique
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  address         String?
+  municipality    String?
+  occupation      String?
+  monthlyIncome   Float?
+  monthlyExpenses Float?
+  applications    LoanApplication[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model LoanApplication {
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  applicationNumber String           @unique
+  applicantId       String           @db.ObjectId
+  applicant         Applicant        @relation(fields: [applicantId], references: [id])
+  assignedOfficerId String?          @db.ObjectId
+  assignedOfficer   User?            @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
+  requestedAmount   Float
+  requestedTerm     Int
+  purpose           String
+  status            String           @default("DRAFT")
+  evaluations       RiskEvaluation[]
+  decisions         LoanDecision[]
+  loan              Loan?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model CreditPolicy {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  version            Int
+  description        String?
+  minimumAge         Int?
+  maximumAmount      Float?
+  maximumTermMonths  Int?
+  maxDebtRatio       Float?
+  annualInterestRate Float?
+  effectiveFrom      DateTime
+  effectiveUntil     DateTime?
+  active             Boolean          @default(true)
+  evaluations        RiskEvaluation[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  @@unique([name, version])
+}
+
+model RiskEvaluation {
+  id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId        String          @db.ObjectId
+  application          LoanApplication @relation(fields: [applicationId], references: [id])
+  policyId             String          @db.ObjectId
+  policy               CreditPolicy    @relation(fields: [policyId], references: [id])
+  monthlyIncome        Float
+  monthlyExpenses      Float
+  existingObligations  Float           @default(0)
+  estimatedInstallment Float?
+  debtToIncomeRatio    Float?
+  indicators           Json
+  result               String
+  observations         String?
+  evaluatedAt          DateTime        @default(now())
+}
+
+model LoanDecision {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId String          @db.ObjectId
+  application   LoanApplication @relation(fields: [applicationId], references: [id])
+  officerId     String          @db.ObjectId
+  officer       User            @relation(fields: [officerId], references: [id])
+  outcome       String
+  justification String
+  conditions    String?
+  decidedAt     DateTime        @default(now())
+}
+
+model Loan {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  loanNumber       String            @unique
+  applicationId    String            @unique @db.ObjectId
+  application      LoanApplication   @relation(fields: [applicationId], references: [id])
+  principal        Float
+  annualRate       Float
+  termMonths       Int
+  status           String            @default("ACTIVE")
+  disbursementDate DateTime?
+  paymentSchedules PaymentSchedule[]
+  payments         Payment[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model PaymentSchedule {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  loanId      String   @db.ObjectId
+  loan        Loan     @relation(fields: [loanId], references: [id])
+  installment Int
+  dueDate     DateTime
+  principal   Float
+  interest    Float
+  totalDue    Float
+  balance     Float
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  @@unique([loanId, installment])
+}
+
+model Payment {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  loanId       String   @db.ObjectId
+  loan         Loan     @relation(fields: [loanId], references: [id])
+  amount       Float
+  paymentDate  DateTime
+  reference    String?
+  status       String   @default("CONFIRMED")
+  recordedById String   @db.ObjectId
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  actorId     String?
+  action      String
+  entityType  String
+  entityId    String
+  description String
+  metadata    Json?
+  occurredAt  DateTime @default(now())
+}
