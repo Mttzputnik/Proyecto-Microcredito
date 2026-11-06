@@ -37,7 +37,7 @@ docs/      Requisitos, arquitectura, decisiones y pruebas
 
 ## Estructura de carpetas backend
 
-
+```text
 backend/
 ├── prisma/
 │   └── schema.prisma
@@ -75,11 +75,12 @@ backend/
 ├── .env
 ├── package.json
 └── server.js
-
+```
 
 
 ## Estructura de carpetas frontend
 
+```text
 frontend/
 └── src/
     ├── api/
@@ -116,6 +117,7 @@ frontend/
     ├── slices/
     ├── utils/
     └── App.js
+```
 
 ## Desarrollo por incrementos
 
