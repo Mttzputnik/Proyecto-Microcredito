@@ -8,10 +8,10 @@ Estructurar la recepción de solicitudes, verificación de elegibilidad, evaluac
 
 ## Stack tecnológico
 
-- **Frontend:** React, React Router, Redux Toolkit, Ant Design y Axios.
+- **Frontend:** React, Vite, React Router, Redux Toolkit, Ant Design y Axios.
 - **Backend:** Node.js y Express.
 - **Persistencia:** MongoDB mediante Prisma ORM.
-- **Autenticación:** JWT y contraseñas con hash seguro.
+- **Autenticación prevista:** JWT y contraseñas con hash seguro.
 
 ## Alcance funcional
 
@@ -27,12 +27,31 @@ Estructurar la recepción de solicitudes, verificación de elegibilidad, evaluac
 
 El sistema apoya el juicio del funcionario: no toma decisiones crediticias autónomas. Los desembolsos, consultas automáticas a fuentes externas, contabilidad general y cobro jurídico están fuera del alcance académico inicial.
 
-## Estructura prevista
+## Estructura del repositorio
 
 ```text
-backend/   API REST, reglas de negocio y Prisma
-frontend/  Aplicación web React
-docs/      Requisitos, arquitectura, decisiones y pruebas
+Proyecto-Microcredito/
+├── backend/
+│   ├── prisma/
+│   │   └── schema.prisma
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── prisma.js
+│   │   ├── app.js
+│   │   └── server.js
+│   ├── .env.example
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   ├── store.js
+│   │   └── styles.css
+│   ├── index.html
+│   └── package.json
+└── docs/
+    ├── DECISIONES-ARQUITECTURA.md
+    └── FLUJO-DE-TRABAJO.md
 ```
 
 ## Estructura de carpetas backend
@@ -131,8 +150,27 @@ frontend/
 | 6 | Pagos, mora y reestructuración |
 | 7 | Reportes, auditoría y pruebas integrales |
 
-## Configuración
+## Trabajo colaborativo
 
-Los pasos de instalación se documentarán por separado para frontend y backend cuando se incorpore cada aplicación.
+- `main`: versión estable.
+- `feature/nombre`: funcionalidades nuevas.
+- `fix/nombre`: correcciones.
+- `docs/nombre`: documentación.
+
+Crea ramas por funcionalidad y abre Pull Requests para revisar e integrar los cambios. Consulta [docs/FLUJO-DE-TRABAJO.md](docs/FLUJO-DE-TRABAJO.md) para conocer las pautas del equipo.
+
+## Consideraciones de arquitectura
+
+- Las reglas crediticias deben ser configurables y versionadas.
+- Cada evaluación debe conservar la política utilizada y sus indicadores.
+- La evaluación de riesgo es apoyo a la decisión; la decisión final corresponde a un funcionario autorizado y debe quedar justificada.
+- Las decisiones y pagos confirmados deben conservar trazabilidad.
+- Antes de implementar cálculos financieros se deben definir con el Product Owner las fórmulas, la precisión monetaria y las reglas de redondeo. El esquema inicial es una base de trabajo y requiere revisión antes de producción.
+
+Consulta [docs/DECISIONES-ARQUITECTURA.md](docs/DECISIONES-ARQUITECTURA.md) para ver las decisiones y pendientes técnicos.
+
+## Estado del proyecto
+
+El repositorio contiene la estructura inicial del frontend y backend, el esquema inicial de Prisma y la documentación de arquitectura y colaboración. Los módulos funcionales se desarrollarán y validarán progresivamente; por tanto, no todas las funcionalidades descritas en el alcance están implementadas todavía.
 
 > Proyecto académico de Ingeniería de Software II. Las reglas financieras concretas deben validarse con el Product Owner antes de implementarse.
