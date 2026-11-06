@@ -54,170 +54,89 @@ Proyecto-Microcredito/
     └── FLUJO-DE-TRABAJO.md
 ```
 
-## Requisitos previos
+## Estructura de carpetas backend
 
-Instala las siguientes herramientas antes de iniciar:
-
-- **Node.js 20.19 o superior** (recomendado para Vite 7).
-- **npm**, incluido con Node.js.
-- Una instancia de **MongoDB**, local o en MongoDB Atlas.
-- **Git** para clonar el repositorio.
-
-Puedes comprobar las versiones con:
-
-```bash
-node --version
-npm --version
-git --version
+```text
+backend/
+├── prisma/
+│   └── schema.prisma
+│
+├── src/
+│   ├── config/
+│   │   └── database.js
+│   │
+│   ├── controllers/
+│   │   ├── AuthController.js
+│   │   ├── UserController.js
+│   │   ├── ApplicantController.js
+│   │   ├── LoanApplicationController.js
+│   │   ├── RiskEvaluationController.js
+│   │   ├── LoanDecisionController.js
+│   │   ├── LoanController.js
+│   │   ├── PaymentController.js
+│   │   ├── PolicyController.js
+│   │   ├── ReportController.js
+│   │   └── AuditController.js
+│   │
+│   ├── services/
+│   │   ├── LoanService.js
+│   │   ├── RiskEvaluationService.js
+│   │   ├── PolicyService.js
+│   │   ├── PaymentScheduleService.js
+│   │   ├── DelinquencyService.js
+│   │   └── AuditService.js
+│   │
+│   ├── routes/
+│   ├── middlewares/
+│   ├── utils/
+│   └── index.js
+│
+├── .env
+├── package.json
+└── server.js
 ```
 
-## Instalación y configuración
 
-### 1. Clonar el repositorio
+## Estructura de carpetas frontend
 
-```bash
-git clone https://github.com/Mttzputnik/Proyecto-Microcredito.git
-cd Proyecto-Microcredito
+```text
+frontend/
+└── src/
+    ├── api/
+    │   ├── applicant.js
+    │   ├── application.js
+    │   ├── loan.js
+    │   ├── payment.js
+    │   ├── policy.js
+    │   └── user.js
+    │
+    ├── components/
+    │   ├── general/
+    │   ├── applicants/
+    │   ├── applications/
+    │   ├── loans/
+    │   └── reports/
+    │
+    ├── layouts/
+    │   └── AdminLayout/
+    │
+    ├── pages/
+    │   ├── Dashboard/
+    │   ├── Applicants/
+    │   ├── Applications/
+    │   ├── Evaluations/
+    │   ├── Decisions/
+    │   ├── Loans/
+    │   ├── Payments/
+    │   ├── Policies/
+    │   ├── Reports/
+    │   └── Audit/
+    │
+    ├── routes/
+    ├── slices/
+    ├── utils/
+    └── App.js
 ```
-
-Si vas a trabajar con la rama de implementación inicial:
-
-```bash
-git fetch origin
-git checkout feature/bootstrap-arquitectura
-```
-
-### 2. Configurar MongoDB
-
-Puedes utilizar MongoDB Atlas o una instancia local. Crea una base de datos para el proyecto y ten disponible su cadena de conexión.
-
-En MongoDB Atlas:
-
-1. Crea un cluster y una base de datos.
-2. Crea un usuario de base de datos.
-3. Configura el acceso de red para tu entorno de desarrollo.
-4. Copia la cadena de conexión proporcionada por Atlas.
-5. Sustituye el usuario, contraseña y nombre de base de datos en la cadena.
-
-No publiques credenciales ni compartas tu archivo `.env`.
-
-### 3. Configurar el backend
-
-Desde la raíz del repositorio:
-
-```bash
-cd backend
-npm install
-```
-
-Crea el archivo local de variables de entorno a partir de la plantilla:
-
-**Linux / macOS / Git Bash:**
-
-```bash
-cp .env.example .env
-```
-
-**Windows PowerShell:**
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Edita `backend/.env` y configura los valores:
-
-| Variable | Descripción |
-|---|---|
-| `PORT` | Puerto de la API. Por defecto, `3001`. |
-| `NODE_ENV` | Entorno de ejecución, por ejemplo `development`. |
-| `DATABASE_URL` | Cadena de conexión de MongoDB. |
-| `JWT_SECRET` | Secreto aleatorio y privado para firmar tokens. |
-| `JWT_EXPIRES_IN` | Tiempo de expiración del token, por ejemplo `8h`. |
-| `FRONTEND_URL` | Origen permitido para CORS. Por defecto, `http://localhost:5173`. |
-
-Ejemplo de configuración (reemplaza los valores de ejemplo por los tuyos):
-
-```env
-PORT=3001
-NODE_ENV=development
-DATABASE_URL="mongodb+srv://USUARIO:CONTRASENA@CLUSTER/NOMBRE_BD?retryWrites=true&w=majority"
-JWT_SECRET="reemplazar-por-un-secreto-aleatorio-largo"
-JWT_EXPIRES_IN="8h"
-FRONTEND_URL="http://localhost:5173"
-```
-
-Genera el cliente de Prisma y valida el esquema:
-
-```bash
-npx prisma format
-npx prisma validate
-npx prisma generate
-```
-
-Para sincronizar el esquema inicial con MongoDB:
-
-```bash
-npx prisma db push
-```
-
-> **Importante:** Prisma utiliza `db push` para sincronizar esquemas con MongoDB; no se debe utilizar `prisma migrate dev` en este proyecto. Ejecuta este comando únicamente contra la base de datos de desarrollo que hayas configurado.
-
-Inicia el servidor:
-
-```bash
-npm run dev
-```
-
-La API estará disponible en:
-
-- `http://localhost:3001`
-- Comprobación de estado: `http://localhost:3001/api/health`
-
-La ruta de salud debe responder con un JSON que indique que la API está activa.
-
-### 4. Configurar el frontend
-
-Abre otra terminal desde la raíz del repositorio:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Vite mostrará la dirección local de la aplicación. Con la configuración actual estará disponible en:
-
-- `http://localhost:5173`
-
-### 5. Ejecutar ambos proyectos durante el desarrollo
-
-Mantén dos terminales abiertas:
-
-| Terminal | Directorio | Comando |
-|---|---|---|
-| Backend | `backend/` | `npm run dev` |
-| Frontend | `frontend/` | `npm run dev` |
-
-## Comandos útiles
-
-### Backend
-
-| Comando | Función |
-|---|---|
-| `npm run dev` | Inicia Express en modo desarrollo con Nodemon. |
-| `npm start` | Inicia Express. |
-| `npx prisma format` | Formatea el esquema Prisma. |
-| `npx prisma validate` | Valida el esquema Prisma. |
-| `npx prisma generate` | Genera el cliente Prisma. |
-| `npx prisma db push` | Sincroniza el esquema con MongoDB. |
-
-### Frontend
-
-| Comando | Función |
-|---|---|
-| `npm run dev` | Inicia el servidor de desarrollo Vite. |
-| `npm run build` | Genera la compilación de producción. |
-| `npm run preview` | Previsualiza la compilación. |
 
 ## Desarrollo por incrementos
 
