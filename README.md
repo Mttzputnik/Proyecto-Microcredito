@@ -174,3 +174,47 @@ Consulta [docs/DECISIONES-ARQUITECTURA.md](docs/DECISIONES-ARQUITECTURA.md) para
 El repositorio contiene la estructura inicial del frontend y backend, el esquema inicial de Prisma y la documentación de arquitectura y colaboración. Los módulos funcionales se desarrollarán y validarán progresivamente; por tanto, no todas las funcionalidades descritas en el alcance están implementadas todavía.
 
 > Proyecto académico de Ingeniería de Software II. Las reglas financieras concretas deben validarse con el Product Owner antes de implementarse.
+
+
+## Primer flujo funcional: recepción de solicitudes
+
+El formulario público del frontend consume `POST /api/applications`. El endpoint valida el payload con Zod, crea o actualiza el solicitante por número de documento y registra una solicitud con estado `SUBMITTED`. La respuesta incluye el número generado por el backend; la interfaz solo muestra la confirmación cuando la API responde correctamente.
+
+### Ejecutar localmente
+
+Backend:
+```bash
+cd backend
+cp .env.example .env
+npm install
+npx prisma format
+npx prisma validate
+npx prisma generate
+npx prisma db push
+npm run dev
+```
+
+Frontend (en otra terminal):
+```bash
+cd frontend
+cp .env.example .env
+npm ci
+npm run dev
+```
+
+Configura `DATABASE_URL` en `backend/.env` con una base de desarrollo de MongoDB. Prisma ORM 6 con MongoDB requiere un replica set para operaciones transaccionales; MongoDB Atlas lo proporciona por defecto. En `frontend/.env`, configura `VITE_API_URL=http://localhost:3001/api` si el backend usa el puerto predeterminado.
+
+### API disponible
+
+- `GET /api/health`: comprobación básica del servidor.
+- `POST /api/applications`: recibe la solicitud del formulario. Valida identidad, datos socioeconómicos, monto, plazo y propósito. Devuelve `201` y `data.applicationNumber` cuando se guarda correctamente.
+
+El endpoint de recepción es público para permitir el formulario inicial. No expongas endpoints administrativos ni datos personales de consulta hasta implementar autenticación, autorización, controles antiabuso y políticas de protección de datos.
+
+### Límites conocidos del incremento
+
+- La elegibilidad del frontend es informativa y no constituye evaluación ni aprobación.
+- Las políticas, umbrales y fórmulas crediticias deben confirmarse con el Product Owner.
+- Los importes se reciben como pesos enteros COP; el uso de `Float` en el esquema es provisional y no debe considerarse contabilidad definitiva.
+- La creación del solicitante y de la solicitud se realiza en operaciones separadas; para consistencia transaccional, la base MongoDB debe operar como replica set y se debe añadir una estrategia de transacción/compensación probada.
+- La autenticación y los módulos administrativos siguen pendientes.
