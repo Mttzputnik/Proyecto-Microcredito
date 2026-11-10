@@ -92,7 +92,7 @@ export default function App() {
       setSubmitted(true);
       return;
     }
-    const nameParts = values.fullName.trim().split(" ");
+    const nameParts = values.fullName.trim().split(/\s+/);
     if (nameParts.length < 2) {
       setApiError("Ingresa al menos un nombre y un apellido.");
       return;
