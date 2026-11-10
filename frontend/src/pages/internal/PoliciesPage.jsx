@@ -1,0 +1,3 @@
+import { Card, Descriptions, Tag } from "antd";
+import { PageHeader } from "../../components/GeneralComponents";
+export default function PoliciesPage() { return <div className="internal-page"><PageHeader eyebrow="Configuración" title="Políticas de crédito" description="Las reglas se gestionarán como datos versionados, no como lógica fija en la interfaz." /><Card className="detail-card"><Tag color="green">Activa</Tag><h2>Política de microcrédito general</h2><Descriptions column={1} items={[{ key: "1", label: "Versión", children: "2026.11" }, { key: "2", label: "Edad mínima", children: "18 años" }, { key: "3", label: "Estado", children: "Vigente desde 01/11/2026" }]} /></Card></div>; }
