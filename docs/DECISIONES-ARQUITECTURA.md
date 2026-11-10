@@ -1,23 +1,26 @@
 # Decisiones iniciales de arquitectura
 
 ## ADR-001: Stack tecnológico
-React, Node.js, Express, Prisma y MongoDB se adoptan por continuidad con la experiencia del equipo en ProyectoFlota.
+React, Node.js, Express, Prisma ORM 6 y MongoDB. Prisma es la única capa de persistencia; no se usa Mongoose en paralelo.
 
 ## ADR-002: Separación por capas
-Los controladores atenderán HTTP; los servicios concentrarán reglas de negocio; Prisma será accedido desde los servicios mediante un cliente compartido.
+Las rutas/controladores atienden HTTP, los servicios concentran reglas de negocio y Prisma se consume mediante un cliente compartido.
 
 ## ADR-003: Políticas configurables y versionadas
-Las reglas crediticias se almacenarán como datos. Cada evaluación conservará la política y versión utilizadas, junto con los indicadores y resultados calculados.
+Las reglas crediticias se almacenarán como datos. Cada evaluación conservará la política y versión utilizadas, junto con indicadores y resultados calculados.
 
 ## ADR-004: Decisión humana y trazabilidad
-La evaluación de riesgo apoya al funcionario, no decide autónomamente. Toda decisión exige justificación. Las decisiones y pagos confirmados no se sobrescriben silenciosamente: las correcciones deben dejar evidencia auditable.
+La evaluación de riesgo apoya al funcionario, no decide autónomamente. Toda decisión exige justificación. Las decisiones y pagos confirmados no se sobrescriben silenciosamente.
 
 ## ADR-005: Precisión monetaria
-Antes de implementar cálculos financieros se definirán con el Product Owner las reglas de redondeo, representación monetaria y fórmulas. No se asumirán tasas ni límites no validados.
+Prisma ORM 6 no admite Decimal para MongoDB. Los campos Float son provisionales; la API recibe importes enteros en COP. Se debe definir una representación exacta y reglas de redondeo antes de producción.
 
-## Pendientes de validación
-- Requisitos y políticas concretas con el Product Owner.
-- Roles y permisos exactos.
-- Reglas de capacidad de pago y cálculo de cuotas.
-- Tratamiento de pagos parciales, anticipados y reversos.
-- Estados y transiciones permitidas del préstamo.
+## ADR-006: Separación de solicitud y préstamo
+Una solicitud recibida no es un préstamo. Solo después de una aprobación humana y formalización se crea un préstamo; el formulario público no aprueba ni desembolsa.
+
+## Pendientes
+- Confirmar políticas, umbrales y fórmulas con el Product Owner.
+- Definir roles y permisos.
+- Definir estados y transiciones permitidas.
+- Definir pagos parciales, anticipados y reversos.
+- Implementar autenticación y autorización antes de exponer operaciones administrativas.
