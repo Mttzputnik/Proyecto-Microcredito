@@ -10,7 +10,7 @@ import "./styles.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
-      <ConfigProvider theme={{ token: { colorPrimary: "#145b8c", borderRadius: 8 } }}>
+      <ConfigProvider theme={{ token: { colorPrimary: "#1f7a5a", colorInfo: "#1e3a5f", borderRadius: 8, fontFamily: "Inter, system-ui, sans-serif" } }}>
         <App />
       </ConfigProvider>
     </Provider>
