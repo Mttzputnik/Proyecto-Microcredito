@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Alert, Button, Card, Checkbox, DatePicker, Input, InputNumber, Radio, Select, Steps, Tag } from "antd";
 import { ArrowLeftOutlined, ArrowRightOutlined, CheckCircleFilled, FileTextOutlined, InfoCircleOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { createLoanApplication } from "./services/applicationService.js";
 
 const steps = ["Tus datos", "Tu situación", "Tu solicitud", "Revisión"];
 const initialValues = {
@@ -45,6 +46,9 @@ export default function App() {
   const [step, setStep] = useState(0);
   const [values, setValues] = useState(initialValues);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [applicationNumber, setApplicationNumber] = useState("");
 
   const available = useMemo(
     () => Number(values.monthlyIncome || 0) - Number(values.monthlyExpenses || 0) - Number(values.debtPayment || 0),
@@ -83,13 +87,49 @@ export default function App() {
     setStep((current) => Math.max(current - 1, 0));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!values.accepted) {
       setSubmitted(true);
       return;
     }
+    const nameParts = values.fullName.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      setApiError("Ingresa al menos un nombre y un apellido.");
+      return;
+    }
     setSubmitted(false);
-    setStep(4);
+    setApiError("");
+    setSubmitting(true);
+    try {
+      const result = await createLoanApplication({
+        applicant: {
+          documentType: values.documentType,
+          documentNumber: values.documentNumber,
+          firstName: nameParts[0],
+          lastName: nameParts.slice(1).join(" "),
+          birthDate: values.birthDate.startOf("day").toISOString(),
+          phone: values.phone,
+          municipality: values.municipality,
+          residenceZone: values.residence,
+          occupation: values.activity,
+          activityDuration: values.activityTime,
+          monthlyIncome: Number(values.monthlyIncome),
+          monthlyExpenses: Number(values.monthlyExpenses),
+          dependents: Number(values.dependents),
+          hasExistingDebts: values.currentDebts === "si",
+          monthlyDebtPayments: values.currentDebts === "si" ? Number(values.debtPayment) : 0
+        },
+        requestedAmount: Number(values.amount),
+        requestedTerm: Number(values.term),
+        purpose: values.purpose
+      });
+      setApplicationNumber(result.applicationNumber);
+      setStep(4);
+    } catch (error) {
+      setApiError(error.response?.data?.message || "No fue posible enviar la solicitud. Verifica tu conexión e inténtalo nuevamente.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (step === 4) {
@@ -100,8 +140,8 @@ export default function App() {
           <span className="eyebrow">Solicitud recibida</span>
           <h1>Gracias, {values.fullName.split(" ")[0] || "por confiar"}</h1>
           <p>Guardamos tu información para que un funcionario de la cooperativa la revise. Esta pantalla es una confirmación de recepción, no una aprobación del crédito.</p>
-          <div className="reference-box"><span>Número de solicitud</span><strong>MC-2026-00124</strong></div>
-          <Button type="primary" size="large" onClick={() => { setValues(initialValues); setStep(0); }}>Registrar otra solicitud</Button>
+          <div className="reference-box"><span>Número de solicitud</span><strong>{applicationNumber}</strong></div>
+          <Button type="primary" size="large" onClick={() => { setValues(initialValues); setApplicationNumber(""); setApiError(""); setStep(0); }}>Registrar otra solicitud</Button>
         </main>
       </div>
     );
@@ -131,6 +171,7 @@ export default function App() {
         <div className="workspace">
           <section className="form-card">
             {submitted && <Alert className="form-alert" type="warning" showIcon message="Revisa los campos marcados antes de continuar." />}
+            {apiError && <Alert className="form-alert" type="error" showIcon message={apiError} />}
             {step === 0 && (
               <>
                 <SectionHeading eyebrow="Paso 1 de 4" title="Primero conozcamos un poco de ti" description="Necesitamos estos datos para identificar correctamente tu solicitud." />
@@ -187,7 +228,7 @@ export default function App() {
               </>
             )}
 
-            <div className="form-actions"><Button type="text" size="large" onClick={goBack} disabled={step === 0} icon={<ArrowLeftOutlined />}>Volver</Button>{step < 3 ? <Button type="primary" size="large" onClick={goNext}>Continuar <ArrowRightOutlined /></Button> : <Button type="primary" size="large" onClick={handleSubmit}>Enviar solicitud <ArrowRightOutlined /></Button>}</div>
+            <div className="form-actions"><Button type="text" size="large" onClick={goBack} disabled={step === 0} icon={<ArrowLeftOutlined />}>Volver</Button>{step < 3 ? <Button type="primary" size="large" onClick={goNext}>Continuar <ArrowRightOutlined /></Button> : <Button type="primary" size="large" onClick={handleSubmit} loading={submitting} disabled={submitting}>Enviar solicitud <ArrowRightOutlined /></Button>}</div>
           </section>
 
           <aside className="side-card"><div className="side-icon"><SafetyCertificateOutlined /></div><h3>Estás en buenas manos</h3><p>La cooperativa revisa cada solicitud con criterios claros y una mirada humana.</p><div className="side-divider" /><div className="side-item"><span className="side-number">1</span><span>Completa tus datos con calma</span></div><div className="side-item"><span className="side-number">2</span><span>Revisaremos la información</span></div><div className="side-item"><span className="side-number">3</span><span>Un funcionario te contactará</span></div><Tag color="green">Sin costo por solicitar</Tag></aside>

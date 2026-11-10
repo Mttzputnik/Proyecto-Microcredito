@@ -27,13 +27,19 @@ model Applicant {
   documentNumber  String            @unique
   firstName       String
   lastName        String
+  birthDate       DateTime?
   email           String?
   phone           String?
   address         String?
-  municipality    String?
-  occupation      String?
-  monthlyIncome   Float?
-  monthlyExpenses Float?
+  municipality         String?
+  residenceZone        String?
+  occupation           String?
+  activityDuration     String?
+  dependents           Int               @default(0)
+  hasExistingDebts     Boolean           @default(false)
+  monthlyIncome        Float?
+  monthlyExpenses      Float?
+  monthlyDebtPayments  Float             @default(0)
   applications    LoanApplication[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -49,7 +55,7 @@ model LoanApplication {
   requestedAmount   Float
   requestedTerm     Int
   purpose           String
-  status            String           @default("DRAFT")
+  status            String           @default("SUBMITTED")
   evaluations       RiskEvaluation[]
   decisions         LoanDecision[]
   loan              Loan?
@@ -113,7 +119,7 @@ model Loan {
   principal        Float
   annualRate       Float
   termMonths       Int
-  status           String            @default("ACTIVE")
+  status           String            @default("PENDING_DISBURSEMENT")
   disbursementDate DateTime?
   paymentSchedules PaymentSchedule[]
   payments         Payment[]
