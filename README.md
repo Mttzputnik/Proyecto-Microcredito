@@ -216,5 +216,5 @@ El endpoint de recepción es público para permitir el formulario inicial. No ex
 - La elegibilidad del frontend es informativa y no constituye evaluación ni aprobación.
 - Las políticas, umbrales y fórmulas crediticias deben confirmarse con el Product Owner.
 - Los importes se reciben como pesos enteros COP; el uso de `Float` en el esquema es provisional y no debe considerarse contabilidad definitiva.
-- La creación del solicitante y de la solicitud se realiza en operaciones separadas; para consistencia transaccional, la base MongoDB debe operar como replica set y se debe añadir una estrategia de transacción/compensación probada.
+- La creación/actualización del solicitante y el registro de la solicitud se ejecutan dentro de una transacción Prisma. MongoDB debe operar como replica set para soportar esta operación.
 - La autenticación y los módulos administrativos siguen pendientes.
