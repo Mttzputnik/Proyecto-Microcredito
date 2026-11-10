@@ -1,33 +1,44 @@
-# Documentación del Modelo de Dominio y Base de Datos (MongoDB)
+# Modelo de dominio y persistencia
 
-## 1. Entidades Principales y Colecciones
-- **users:** Credenciales, roles y autenticación de los usuarios del sistema (Clientes, Analistas, Administradores).
-- **clients:** Perfil socioeconómico del cliente solicitante (vinculado a un registro de `users`).
-- **loans:** Objeto principal del crédito. Incluye montos, tasa, estado global y contiene dos subdocumentos (arrays embebidos):
-  - `installments`: Plan de amortización (cuotas mensuales con capital, interés y fechas límite).
-  - `payments`: Registro e historial inmutable de pagos recibidos.
+## Fuente única de persistencia
+El backend utiliza Prisma ORM 6.19 y MongoDB. Los modelos persistentes se definen exclusivamente en `prisma/schema.prisma`; no se deben crear esquemas paralelos con Mongoose.
 
----
+MongoDB se modela con referencias entre colecciones:
+- `Applicant`: identidad y perfil socioeconómico.
+- `LoanApplication`: petición de financiación, monto, plazo, destino y estado del trámite.
+- `Loan`: crédito formalizado después de una decisión y un desembolso.
+- `PaymentSchedule` y `Payment`: cuotas programadas y pagos registrados.
+- `CreditPolicy`, `RiskEvaluation` y `LoanDecision`: reglas versionadas, análisis y decisión humana.
+- `AuditLog`: trazabilidad de eventos.
 
-## 2. Máquina de Estados (Ciclo de Vida)
+## Flujo y estados
+La solicitud y el préstamo son conceptos diferentes.
 
-### Estados del Crédito (`loan.status`)
-1. **`BORRADOR`**: Solicitud iniciada por el cliente pero aún no enviada a evaluación.
-2. **`EN_ESTUDIO`**: Enviada y en proceso de revisión por parte del analista financiero.
-3. **`APROBADO`**: Evaluada positivamente por el analista, lista para el desembolso.
-4. **`RECHAZADO`**: La solicitud no superó las políticas de riesgo crediticio.
-5. **`ACTIVO`**: Crédito desembolsado con su plan de pagos corriendo.
-6. **`PAGADO`**: Totalidad del capital e intereses saldados por el cliente.
-7. **`CASTIGADO`**: En mora prolongada e incobrable.
+Estados de solicitud: `SUBMITTED`, `UNDER_REVIEW`, `NEEDS_INFORMATION`, `APPROVED`, `REJECTED`, `CANCELLED`.
 
-### Estados de la Cuota (`installment.status`)
-1. **`PENDIENTE`**: Cuota vigencia con fecha límite futura.
-2. **`PAGADA`**: Cuota saldada en su totalidad.
-3. **`VENCIDA`**: Pasó la fecha de vencimiento sin registro de pago completo.
+Estados de préstamo: `PENDING_DISBURSEMENT`, `ACTIVE`, `PAID`, `WRITTEN_OFF`.
 
----
+Estados de cuota: `PENDING`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`.
 
-## 3. Reglas de Negocio Backend
-1. **Límite de Capacidad de Pago:** La cuota estimada del crédito solicitado no puede superar el 40% del ingreso mensual neto del cliente (`monthlyIncome`).
-2. **Generación Automática del Cronograma:** Al cambiar el estado del crédito a `ACTIVO`, el backend debe generar automáticamente el array de cuotas (`installments`) aplicando el cálculo de amortización según el plazo (`termMonths`) e interés (`interestRate`).
-3. **Bloqueo por Mora:** Un cliente con al menos una cuota en estado `VENCIDA` en un crédito activo no puede solicitar un nuevo microcrédito.
+Los estados se almacenan como cadenas. Las transiciones y permisos deben implementarse en servicios del backend; el cliente no debe cambiar libremente el estado.
+
+## Reglas de negocio
+1. El formulario público registra una solicitud como `SUBMITTED`; no la aprueba ni calcula una decisión de riesgo.
+2. La elegibilidad mostrada en frontend es orientativa. La validación definitiva pertenece al backend y a políticas confirmadas por el Product Owner.
+3. No se codifica un umbral del 40 % como política oficial hasta que el Product Owner lo confirme.
+4. La evaluación de riesgo apoya al funcionario. Toda decisión debe tener responsable y justificación.
+5. El cronograma se genera cuando se formalice el desembolso, usando una tasa y fórmula aprobadas.
+6. Los pagos confirmados y decisiones deben conservar trazabilidad.
+
+## Datos monetarios
+Prisma ORM 6 con MongoDB no soporta `Decimal`; los importes se mantienen temporalmente como `Float` en COP y la API restringe las entradas a pesos enteros. Antes de producción se debe evaluar una representación monetaria exacta compatible con el motor y definir redondeos con el Product Owner. No usar punto flotante como contabilidad definitiva.
+
+## Operación local
+Prisma utiliza transacciones internamente en ciertas operaciones. MongoDB requiere un replica set para esas operaciones; MongoDB Atlas ya lo configura. Para aplicar cambios:
+
+```bash
+npx prisma format
+npx prisma validate
+npx prisma generate
+npx prisma db push
+```
