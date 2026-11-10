@@ -119,7 +119,7 @@ model Loan {
   principal        Float
   annualRate       Float
   termMonths       Int
-  status           String            @default("ACTIVE")
+  status           String            @default("PENDING_DISBURSEMENT")
   disbursementDate DateTime?
   paymentSchedules PaymentSchedule[]
   payments         Payment[]
