@@ -137,6 +137,8 @@ model PaymentSchedule {
   interest    Float
   totalDue    Float
   balance     Float
+  paidAmount  Float    @default(0)
+  paidAt      DateTime?
   status      String   @default("PENDING")
   createdAt   DateTime @default(now())
   @@unique([loanId, installment])
@@ -152,6 +154,7 @@ model Payment {
   status       String   @default("CONFIRMED")
   recordedById String   @db.ObjectId
   notes        String?
+  allocations  Json?
   createdAt    DateTime @default(now())
 }
 

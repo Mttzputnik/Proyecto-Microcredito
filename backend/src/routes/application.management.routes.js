@@ -52,6 +52,8 @@ router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) 
     include: {
       applicant: true,
       assignedOfficer: { select: { id: true, firstName: true, lastName: true } },
+      loan: { select: { id: true, loanNumber: true, status: true } },
+      evaluations: { orderBy: { evaluatedAt: "desc" }, take: 5 },
       decisions: {
         orderBy: { decidedAt: "desc" },
         include: { officer: { select: { id: true, firstName: true, lastName: true } } }

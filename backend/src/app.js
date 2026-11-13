@@ -7,6 +7,9 @@ import applicationManagementRoutes from "./routes/application.management.routes.
 import applicantRoutes from "./routes/applicant.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import policyRoutes from "./routes/policy.routes.js";
+import applicationEvaluationRoutes from "./routes/application.evaluation.routes.js";
+import loanRoutes from "./routes/loan.routes.js";
 
 const app = express();
 app.use(helmet());
@@ -26,6 +29,9 @@ app.use("/api/applicants", applicantRoutes);
 // El router público (POST / del formulario) va primero; el de gestión exige sesión.
 app.use("/api/applications", applicationRoutes);
 app.use("/api/applications", applicationManagementRoutes);
+app.use("/api/applications", applicationEvaluationRoutes);
+app.use("/api/policies", policyRoutes);
+app.use("/api/loans", loanRoutes);
 
 app.use((req, res) => res.status(404).json({
   success: false,

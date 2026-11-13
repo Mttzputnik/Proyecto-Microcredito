@@ -17,11 +17,16 @@ export async function changeApplicationStatus(prisma, { applicationId, toStatus,
   return prisma.$transaction(async (tx) => {
     const application = await tx.loanApplication.findUnique({
       where: { id: applicationId },
-      select: { id: true, status: true }
+      select: { id: true, status: true, loan: { select: { id: true } } }
     });
     if (!application) throw httpError(404, "Solicitud no encontrada.");
 
     assertTransition(applicationTransitions, application.status, toStatus, "Solicitud");
+
+    // Una solicitud con préstamo ya formalizado no se cancela: el préstamo sigue su propio ciclo de vida.
+    if (toStatus === "CANCELLED" && application.loan) {
+      throw httpError(409, "La solicitud ya tiene un préstamo formalizado y no se puede cancelar.");
+    }
 
     // Cambio condicionado al estado leído: si otro usuario la cambió en paralelo, no se pisa en silencio.
     const updated = await tx.loanApplication.updateMany({

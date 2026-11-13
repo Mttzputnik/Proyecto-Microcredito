@@ -10,11 +10,20 @@ export const ROLES = Object.freeze({
 
 export const ALL_ROLES = Object.freeze(Object.values(ROLES));
 
+const OPERATORS = [ROLES.ADMIN, ROLES.CREDIT_OFFICER];
+
 // Quién puede hacer qué (usado por las rutas).
 export const PERMISSIONS = Object.freeze({
   manageUsers: [ROLES.ADMIN],
-  readApplicants: [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.AUDITOR],
-  editApplicants: [ROLES.ADMIN, ROLES.CREDIT_OFFICER],
-  readApplications: [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.AUDITOR],
-  changeApplicationStatus: [ROLES.ADMIN, ROLES.CREDIT_OFFICER]
+  readApplicants: ALL_ROLES,
+  editApplicants: OPERATORS,
+  readApplications: ALL_ROLES,
+  changeApplicationStatus: OPERATORS,
+  managePolicies: [ROLES.ADMIN],
+  readPolicies: ALL_ROLES,
+  evaluateApplications: OPERATORS,
+  readLoans: ALL_ROLES,
+  manageLoans: OPERATORS,
+  registerPayments: OPERATORS,
+  writeOffLoans: [ROLES.ADMIN]
 });
