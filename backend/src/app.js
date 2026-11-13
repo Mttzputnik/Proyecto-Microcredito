@@ -3,6 +3,10 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import applicationRoutes from "./routes/application.routes.js";
+import applicationManagementRoutes from "./routes/application.management.routes.js";
+import applicantRoutes from "./routes/applicant.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 app.use(helmet());
@@ -16,7 +20,12 @@ app.get("/api/health", (_req, res) => res.status(200).json({
   timestamp: new Date().toISOString()
 }));
 
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/applicants", applicantRoutes);
+// El router público (POST / del formulario) va primero; el de gestión exige sesión.
 app.use("/api/applications", applicationRoutes);
+app.use("/api/applications", applicationManagementRoutes);
 
 app.use((req, res) => res.status(404).json({
   success: false,
