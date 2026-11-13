@@ -60,6 +60,21 @@ test("una transición no permitida responde 409 y no escribe nada", async () => 
   assert.equal(db.calls.audits.length, 0);
 });
 
+test("no se puede cancelar una solicitud que ya tiene préstamo", async () => {
+  const db = fakePrisma("APPROVED");
+  const original = db.$transaction;
+  db.$transaction = (fn) => original((tx) => {
+    const find = tx.loanApplication.findUnique;
+    tx.loanApplication.findUnique = async (args) => ({ ...(await find(args)), loan: { id: "c".repeat(24) } });
+    return fn(tx);
+  });
+  await assert.rejects(
+    () => changeApplicationStatus(db, { applicationId, toStatus: "CANCELLED", actor }),
+    (e) => e.status === 409 && /préstamo/.test(e.message)
+  );
+  assert.equal(db.calls.updates.length, 0);
+});
+
 test("solicitud inexistente responde 404", async () => {
   const db = fakePrisma(null);
   await assert.rejects(

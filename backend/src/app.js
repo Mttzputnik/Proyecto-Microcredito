@@ -7,6 +7,9 @@ import applicationManagementRoutes from "./routes/application.management.routes.
 import applicantRoutes from "./routes/applicant.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import policyRoutes from "./routes/policy.routes.js";
+import applicationEvaluationRoutes from "./routes/application.evaluation.routes.js";
+import loanRoutes from "./routes/loan.routes.js";
 
 const app = express();
 app.use(helmet());
@@ -26,6 +29,9 @@ app.use("/api/applicants", applicantRoutes);
 // El router público (POST / del formulario) va primero; el de gestión exige sesión.
 app.use("/api/applications", applicationRoutes);
 app.use("/api/applications", applicationManagementRoutes);
+app.use("/api/applications", applicationEvaluationRoutes);
+app.use("/api/policies", policyRoutes);
+app.use("/api/loans", loanRoutes);
 
 app.use((req, res) => res.status(404).json({
   success: false,
@@ -33,7 +39,8 @@ app.use((req, res) => res.status(404).json({
 }));
 
 app.use((error, _req, res, _next) => {
-  console.error(error);
+  // Los errores esperados (401, 403, 404, 409...) no necesitan imprimir la traza completa.
+  if (!error.status || error.status >= 500) console.error(error);
   res.status(error.status ?? 500).json({
     success: false,
     message: error.status && error.status < 500 ? error.message : "Internal server error",
