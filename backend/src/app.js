@@ -39,7 +39,8 @@ app.use((req, res) => res.status(404).json({
 }));
 
 app.use((error, _req, res, _next) => {
-  console.error(error);
+  // Los errores esperados (401, 403, 404, 409...) no necesitan imprimir la traza completa.
+  if (!error.status || error.status >= 500) console.error(error);
   res.status(error.status ?? 500).json({
     success: false,
     message: error.status && error.status < 500 ? error.message : "Internal server error",

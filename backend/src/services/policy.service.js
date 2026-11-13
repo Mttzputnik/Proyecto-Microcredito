@@ -2,15 +2,15 @@ import { httpError } from "../utils/httpError.js";
 import { writeAudit } from "./audit.service.js";
 
 // Política vigente: activa, ya en vigor y no vencida. Si hay varias, la de vigencia más reciente.
-export function findActivePolicy(db, now = new Date()) {
-  return db.creditPolicy.findFirst({
-    where: {
-      active: true,
-      effectiveFrom: { lte: now },
-      OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: now } }]
-    },
+// La condición "no vencida" se filtra aquí y NO en la consulta: en MongoDB, `effectiveUntil: null` no
+// encuentra los documentos donde el campo no existe (Prisma no escribe los opcionales que no se envían),
+// así que una política recién creada nunca aparecería como vigente.
+export async function findActivePolicy(db, now = new Date()) {
+  const candidates = await db.creditPolicy.findMany({
+    where: { active: true, effectiveFrom: { lte: now } },
     orderBy: [{ effectiveFrom: "desc" }, { version: "desc" }]
   });
+  return candidates.find((policy) => !policy.effectiveUntil || new Date(policy.effectiveUntil) >= now) ?? null;
 }
 
 // Las políticas NO se editan (ADR-003): crear una con el mismo nombre genera una versión nueva

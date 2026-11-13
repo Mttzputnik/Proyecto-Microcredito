@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { disburseLoan, formalizeLoan, refreshArrears, registerPayment, writeOffLoan } from "../src/services/loan.service.js";
 import { evaluateApplication } from "../src/services/evaluation.service.js";
-import { createPolicyVersion } from "../src/services/policy.service.js";
+import { createPolicyVersion, findActivePolicy } from "../src/services/policy.service.js";
 
 // Base de datos falsa en memoria: solo implementa lo que usan los servicios.
 function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", version: 1, annualInterestRate: 24 }, withEvaluation = true } = {}) {
@@ -207,6 +207,21 @@ test("evaluar exige solicitud en revisión y una política activa", async () => 
   const noPolicy = memoryDb({ status: "UNDER_REVIEW" });
   noPolicy.t.creditPolicy.length = 0;
   await assert.rejects(() => evaluateApplication(noPolicy, { applicationId: "app1", actor }), (e) => e.status === 409 && /política de crédito activa/.test(e.message));
+});
+
+test("una política sin effectiveUntil (campo ausente en MongoDB) cuenta como vigente", async () => {
+  const db = memoryDb();
+  assert.equal("effectiveUntil" in db.t.creditPolicy[0], false);
+  assert.equal((await findActivePolicy(db, new Date("2026-06-01T00:00:00Z"))).id, "p1");
+
+  db.t.creditPolicy[0].effectiveUntil = null;
+  assert.equal((await findActivePolicy(db, new Date("2026-06-01T00:00:00Z"))).id, "p1");
+
+  db.t.creditPolicy[0].effectiveUntil = new Date("2026-12-31T00:00:00Z");
+  assert.equal((await findActivePolicy(db, new Date("2026-06-01T00:00:00Z"))).id, "p1");
+
+  db.t.creditPolicy[0].effectiveUntil = new Date("2026-03-01T00:00:00Z");
+  assert.equal(await findActivePolicy(db, new Date("2026-06-01T00:00:00Z")), null);
 });
 
 test("crear una política con el mismo nombre genera la versión siguiente y desactiva la anterior", async () => {
