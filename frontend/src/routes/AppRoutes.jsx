@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LoginPage from "../pages/auth/LoginPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ApplicantLayout from "../layouts/ApplicantLayout";
 import InternalLayout from "../layouts/InternalLayout";
 import ApplicantHomePage from "../pages/applicant/ApplicantHomePage";
@@ -17,6 +18,7 @@ import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
 import ReportsPage from "../pages/internal/ReportsPage";
 import UnauthorizedPage from "../pages/shared/UnauthorizedPage";
+import { roleHome } from "./navigation.jsx";
 
 function ProtectedRoute() { const token = useSelector((state) => state.auth.token); const location = useLocation(); return token ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />; }
 function RoleRoute({ roles }) { const role = useSelector((state) => state.auth.user?.role); return roles.includes(role) ? <Outlet /> : <Navigate to="/sin-permisos" replace />; }
@@ -24,6 +26,7 @@ function RoleRoute({ roles }) { const role = useSelector((state) => state.auth.u
 export default function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
     <Route element={<ProtectedRoute />}>
       <Route element={<RoleRoute roles={["solicitante"]} />}>
         <Route path="/applicant" element={<ApplicantLayout />}>
@@ -53,4 +56,4 @@ export default function AppRoutes() {
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;
 }
-function HomeRedirect() { const role = useSelector((state) => state.auth.user?.role); return <Navigate to={role === "solicitante" ? "/applicant" : role ? "/internal" : "/login"} replace />; }
+function HomeRedirect() { const role = useSelector((state) => state.auth.user?.role); return <Navigate to={roleHome(role)} replace />; }
