@@ -22,6 +22,30 @@ Estados de cuota: `PENDING`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`.
 
 Los estados se almacenan como cadenas. Las transiciones y permisos deben implementarse en servicios del backend; el cliente no debe cambiar libremente el estado.
 
+### Transiciones permitidas (propuesta, pendiente de validar con el Product Owner)
+Están codificadas en `src/domain/states.js` y cubiertas por `test/states.test.js`. Los servicios deben llamar a `assertTransition(...)` antes de cambiar un estado.
+
+| Entidad | Desde | Hacia |
+|---|---|---|
+| Solicitud | `SUBMITTED` | `UNDER_REVIEW`, `CANCELLED` |
+| Solicitud | `UNDER_REVIEW` | `NEEDS_INFORMATION`, `APPROVED`, `REJECTED`, `CANCELLED` |
+| Solicitud | `NEEDS_INFORMATION` | `UNDER_REVIEW`, `CANCELLED` |
+| Solicitud | `APPROVED` | `CANCELLED` (mientras no exista préstamo) |
+| Solicitud | `REJECTED`, `CANCELLED` | final |
+| Préstamo | `PENDING_DISBURSEMENT` | `ACTIVE` |
+| Préstamo | `ACTIVE` | `PAID`, `WRITTEN_OFF` |
+| Préstamo | `PAID`, `WRITTEN_OFF` | final |
+| Cuota | `PENDING` | `PARTIALLY_PAID`, `PAID`, `OVERDUE` |
+| Cuota | `PARTIALLY_PAID` | `PAID`, `OVERDUE` |
+| Cuota | `OVERDUE` | `PARTIALLY_PAID`, `PAID` |
+| Cuota | `PAID` | final |
+
+Preguntas abiertas para el Product Owner (no se asumieron):
+- Reconsideración de una solicitud `REJECTED`: hoy es estado final.
+- Mora: se deriva de cuotas `OVERDUE`; no existe un estado de préstamo "en mora".
+- Reversión de pagos: `Payment` solo tiene `CONFIRMED`; falta definir cómo se corrige un pago.
+- Valores de `LoanDecision.outcome` y `RiskEvaluation.result`.
+
 ## Reglas de negocio
 1. El formulario público registra una solicitud como `SUBMITTED`; no la aprueba ni calcula una decisión de riesgo.
 2. La elegibilidad mostrada en frontend es orientativa. La validación definitiva pertenece al backend y a políticas confirmadas por el Product Owner.
