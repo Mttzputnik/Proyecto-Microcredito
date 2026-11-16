@@ -16,12 +16,12 @@ Esta fase convierte el prototipo de solicitud en una base navegable para la plat
 
 ## Decisiones de UX
 
-El solicitante ve una tarea principal por pantalla, navegación inferior en móvil y controles grandes. El personal interno obtiene una navegación operativa con búsqueda, alertas, perfil y menú filtrado por rol. Los estados siempre incluyen icono y texto, nunca dependen solo del color. El login recibe únicamente el correo en modo mock: con backend, la relación entre cuenta y rol vendrá en la respuesta de autenticación junto con el JWT.
+El solicitante ve una tarea principal por pantalla, navegación inferior en móvil y controles grandes. El personal interno obtiene una navegación operativa con búsqueda, alertas, perfil y menú filtrado por rol. Los estados siempre incluyen icono y texto, nunca dependen solo del color. El login recibe correo y contraseña; el modo API consume el JWT y el usuario devueltos por `/api/auth/login`, mientras el modo mock se conserva para desarrollo sin base de datos.
 
 ## Módulos nuevos
 
 El cronograma separa capital, interés, total, saldo y estado de cada cuota. La reconsideración exige una explicación mínima de 30 caracteres y admite soportes opcionales. Administración y comité supervisor tienen reportes agregados de portafolio y equidad, sin datos personales. La evaluación de riesgo conserva indicadores, política aplicada y justificación humana.
 
-## Login real pendiente
+## Autenticación integrada y seguridad
 
-El frontend ya centraliza el login en `authService`, pero hoy usa cuentas mock. Para consultar correo y contraseña contra la base de datos se necesitan en backend un endpoint de autenticación, comparación de `passwordHash` con bcrypt, JWT firmado, endpoint de sesión/perfil y middleware de autorización por rol. El navegador nunca debe consultar MongoDB directamente ni recibir hashes de contraseña.
+El backend ya expone `POST /api/auth/login` y `GET /api/auth/me`, compara `passwordHash` con bcrypt, firma JWT y aplica autorización por rol. El frontend normaliza `firstName/lastName`, conserva el token en la sesión y redirige según el rol recibido. El navegador nunca consulta MongoDB directamente ni recibe hashes de contraseña. Los archivos `.env` permanecen locales y no deben versionarse.

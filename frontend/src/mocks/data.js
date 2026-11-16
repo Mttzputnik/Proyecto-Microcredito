@@ -26,4 +26,7 @@ export const roleLabels = {
   analista_riesgo: "Analista de riesgo",
   administrativo: "Administrativo",
   comite_supervisor: "Comité supervisor",
+  ADMIN: "Administrador",
+  CREDIT_OFFICER: "Oficial de crédito",
+  AUDITOR: "Auditor",
 };

@@ -6,7 +6,7 @@
 - [x] Servicios mock separados para autenticación, solicitudes, préstamos, pagos, políticas y usuarios.
 - [x] Datos mock en COP, fechas día/mes/año y roles de la cooperativa.
 - [x] Redux Toolkit con sesión de usuario, rol, token y estado de interfaz.
-- [x] Login simulado que recibe solo el correo, resuelve automáticamente el rol asociado y redirige al portal correspondiente.
+- [x] Login con correo y contraseña; en modo API consume JWT y usuario desde `/api/auth/login`, y en modo mock permite desarrollo local.
 - [x] Rutas protegidas por sesión y rol, pantalla de acceso restringido y redirección a login.
 - [x] ApplicantLayout mobile-first con barra inferior de Inicio, Mi solicitud, Mi préstamo y Ayuda.
 - [x] InternalLayout con Sider colapsable, búsqueda, alertas, perfil y menú filtrado por rol.
@@ -26,5 +26,5 @@
 - [ ] Conectar evaluación de riesgo y registro de decisiones con endpoints reales.
 - [ ] Construir decisiones justificadas, reconsideraciones y confirmaciones irreversibles en backend.
 - [ ] Añadir pruebas unitarias y de navegación por rol.
-- [ ] Implementar autenticación real con correo, contraseña, bcrypt, JWT, sesión/perfil y autorización por rol.
+- [x] Implementar autenticación real con correo, contraseña, bcrypt, JWT, sesión/perfil y autorización por rol en backend.
 - [ ] Conectar cronograma, reconsideraciones y reportes a endpoints reales cuando backend los publique.
