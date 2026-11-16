@@ -12,6 +12,7 @@ Esta fase convierte el prototipo de solicitud en una base navegable para la plat
 - `src/layouts/`: portal mobile-first del solicitante y portal interno con Sider colapsable.
 - `src/components/`: estados, justificaciones, auditoría, confirmaciones, encabezados y estados vacíos.
 - `src/pages/`: login, solicitud guiada, cronograma, reconsideración, riesgo, reportes y acceso restringido.
+- `src/pages/internal/`: solicitudes de crédito y gestión de solicitantes consumiendo los contratos protegidos del backend.
 - `src/theme/`: tokens de Ant Design alineados con `DESIGN.md`.
 
 ## Decisiones de UX

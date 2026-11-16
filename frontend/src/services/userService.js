@@ -1,3 +1,2 @@
-import { mockUsers } from "../mocks/data";
-const wait = (data, delay = 300) => new Promise((resolve) => setTimeout(() => resolve(data), delay));
-export const userService = { list: () => wait(mockUsers) };
+import { applicantService } from "./applicantService";
+export const userService = { list: applicantService.list, getById: applicantService.getById, update: applicantService.update };

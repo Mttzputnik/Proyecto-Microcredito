@@ -13,6 +13,9 @@ import LoanPage from "../pages/applicant/LoanPage";
 import HelpPage from "../pages/applicant/HelpPage";
 import InternalDashboardPage from "../pages/internal/InternalDashboardPage";
 import ApplicationsPage from "../pages/internal/ApplicationsPage";
+import ApplicationDetailPage from "../pages/internal/ApplicationDetailPage";
+import ApplicantsPage from "../pages/internal/ApplicantsPage";
+import ApplicantDetailPage from "../pages/internal/ApplicantDetailPage";
 import RiskEvaluationPage from "../pages/internal/RiskEvaluationPage";
 import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
@@ -43,8 +46,10 @@ export default function AppRoutes() {
         <Route path="/internal" element={<InternalLayout />}>
           <Route index element={<InternalDashboardPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
-          <Route path="applications/:id" element={<ApplicationsPage />} />
+          <Route path="applications/:id" element={<ApplicationDetailPage />} />
           <Route path="applications/:id/review" element={<RiskEvaluationPage />} />
+          <Route path="applicants" element={<ApplicantsPage />} />
+          <Route path="applicants/:id" element={<ApplicantDetailPage />} />
           <Route path="policies" element={<PoliciesPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route element={<RoleRoute roles={["administrativo", "comite_supervisor", "ADMIN", "AUDITOR"]} />}><Route path="reports" element={<ReportsPage />} /></Route>

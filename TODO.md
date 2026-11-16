@@ -17,6 +17,8 @@
 - [x] Pantalla de cronograma de pagos con desglose de capital, interés, saldo, vencimiento y estado de cada cuota.
 - [x] Flujo de reconsideración para rechazos con explicación mínima de 30 caracteres y soportes opcionales.
 - [x] Panel de reportes de portafolio y equidad restringido a administración y comité supervisor.
+- [x] Módulo de solicitudes de crédito con listado API/mock, filtro por estado, búsqueda, detalle, revisión y trazabilidad.
+- [x] Módulo de gestión de solicitantes con búsqueda, detalle, solicitudes relacionadas y edición de datos permitidos.
 
 ## Próximos incrementos
 
