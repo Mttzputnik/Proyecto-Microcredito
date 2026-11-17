@@ -35,6 +35,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <div className="login-aside">
+        <Link className="login-back-link" to="/">← Volver a la página principal</Link>
         <div className="brand-mark">
           <span className="brand-symbol">+</span>
           <span>
@@ -122,6 +123,7 @@ export default function LoginPage() {
           Modo local: si `VITE_AUTH_MODE=mock`, puedes usar cualquier contraseña
           de 6 caracteres con un correo demo.
         </p>
+        <p className="login-register-link">¿Todavía no tienes una cuenta? <Link to="/registro">Crear mi registro solidario</Link></p>
       </Card>
     </main>
   );

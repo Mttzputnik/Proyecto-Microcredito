@@ -11,7 +11,7 @@ const { Sider, Header, Content } = Layout;
 export default function InternalLayout() {
   const dispatch = useDispatch(); const navigate = useNavigate(); const { user } = useSelector((state) => state.auth); const collapsed = useSelector((state) => state.ui.siderCollapsed); const location = useLocation();
   const role = roleLabels[user?.role] || user?.role || "Equipo interno"; const displayName = user?.name || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Usuario"; const initials = displayName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  const logout = () => { dispatch(clearSession()); navigate("/login"); };
+  const logout = () => { dispatch(clearSession()); navigate("/"); };
   const visibleItems = internalNavigation.filter((item) => item.roles.includes(user?.role)).map((item) => ({ key: item.key, icon: item.icon, label: <NavLink to={item.key}>{item.label}</NavLink> }));
   const selectedKey = visibleItems.map((item) => item.key).filter((key) => location.pathname === key || location.pathname.startsWith(`${key}/`)).sort((a, b) => b.length - a.length)[0] || "/internal";
   return <Layout className="internal-layout"><Sider trigger={null} collapsible collapsed={collapsed} width={256}>
