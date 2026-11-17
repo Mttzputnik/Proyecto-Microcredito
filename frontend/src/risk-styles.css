@@ -1,1 +1,136 @@
-.risk-page .ant-alert{margin-bottom:18px}.risk-section{height:100%}.risk-indicator{position:relative;display:flex;flex-direction:column;gap:5px;min-height:142px;padding:17px 17px 15px 52px;border:1px solid #dfe7ed;border-radius:13px;background:#fbfcfd}.risk-indicator-icon{position:absolute;top:18px;left:17px;font-size:21px}.risk-indicator span{color:#687783;font-size:12px}.risk-indicator strong{color:#1e3a5f;font-size:20px;letter-spacing:-.03em}.risk-indicator small{color:#687783;font-size:11px;line-height:1.35}.risk-indicator.positive{background:#f1faf5;border-color:#cde4d9}.risk-indicator.positive .risk-indicator-icon{color:#1f7a5a}.risk-indicator.review{background:#fff8ec;border-color:#f1d9a9}.risk-indicator.review .risk-indicator-icon{color:#a66a09}.calculation-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px 0 2px}.calculation-strip .ant-statistic{padding:14px;border-radius:10px;background:#f6f8fa}.calculation-strip .ant-statistic-title{font-size:11px;color:#687783}.calculation-strip .ant-statistic-content{font-size:17px;color:#1e3a5f}.policy-note{display:flex;gap:8px;align-items:center;margin:18px 0 0!important;color:#5f6f7d;font-size:12px}.policy-note svg{color:#1f7a5a}.decision-card{border:2px solid #cde4d9!important}.decision-icon{font-size:23px;color:#1f7a5a}.decision-intro{margin:0 0 22px;color:#5f6f7d;font-size:13px;line-height:1.5}.outcome-options{display:flex;flex-direction:column;gap:10px}.outcome-options .ant-radio-wrapper{min-height:48px;display:flex;align-items:center;padding:10px 13px;border:1px solid #d8e0e7;border-radius:9px}.outcome-options .ant-radio-wrapper:has(.ant-radio-checked){border-color:#1f7a5a;background:#f1faf5}.decision-card .ant-form-item-label>label{font-weight:600;color:#263744}.decision-card .ant-input{min-height:auto}.decision-card .ant-btn-primary{height:50px;background:#1f7a5a}.status-chip{white-space:normal}@media(max-width:760px){.calculation-strip{grid-template-columns:1fr}.risk-page .page-header .ant-btn{width:auto}.risk-indicator{min-height:128px}}
+.risk-page .ant-alert {
+  margin-bottom: 18px;
+}
+.risk-section {
+  height: 100%;
+}
+.risk-indicator {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 142px;
+  padding: 17px 17px 15px 52px;
+  border: 1px solid #dfe7ed;
+  border-radius: 13px;
+  background: #fbfcfd;
+}
+.risk-indicator-icon {
+  position: absolute;
+  top: 18px;
+  left: 17px;
+  font-size: 21px;
+}
+.risk-indicator span {
+  color: #687783;
+  font-size: 12px;
+}
+.risk-indicator strong {
+  color: #1e3a5f;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.risk-indicator small {
+  color: #687783;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.risk-indicator.positive {
+  background: #f1faf5;
+  border-color: #cde4d9;
+}
+.risk-indicator.positive .risk-indicator-icon {
+  color: #1f7a5a;
+}
+.risk-indicator.review {
+  background: #fff8ec;
+  border-color: #f1d9a9;
+}
+.risk-indicator.review .risk-indicator-icon {
+  color: #a66a09;
+}
+.calculation-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 18px 0 2px;
+}
+.calculation-strip .ant-statistic {
+  padding: 14px;
+  border-radius: 10px;
+  background: #f6f8fa;
+}
+.calculation-strip .ant-statistic-title {
+  font-size: 11px;
+  color: #687783;
+}
+.calculation-strip .ant-statistic-content {
+  font-size: 17px;
+  color: #1e3a5f;
+}
+.policy-note {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 18px 0 0 !important;
+  color: #5f6f7d;
+  font-size: 12px;
+}
+.policy-note svg {
+  color: #1f7a5a;
+}
+.decision-card {
+  border: 2px solid #cde4d9 !important;
+}
+.decision-icon {
+  font-size: 23px;
+  color: #1f7a5a;
+}
+.decision-intro {
+  margin: 0 0 22px;
+  color: #5f6f7d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.outcome-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.outcome-options .ant-radio-wrapper {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 10px 13px;
+  border: 1px solid #d8e0e7;
+  border-radius: 9px;
+}
+.outcome-options .ant-radio-wrapper:has(.ant-radio-checked) {
+  border-color: #1f7a5a;
+  background: #f1faf5;
+}
+.decision-card .ant-form-item-label > label {
+  font-weight: 600;
+  color: #263744;
+}
+.decision-card .ant-input {
+  min-height: auto;
+}
+.decision-card .ant-btn-primary {
+  height: 50px;
+  background: #1f7a5a;
+}
+.status-chip {
+  white-space: normal;
+}
+@media (max-width: 760px) {
+  .calculation-strip {
+    grid-template-columns: 1fr;
+  }
+  .risk-page .page-header .ant-btn {
+    width: auto;
+  }
+  .risk-indicator {
+    min-height: 128px;
+  }
+}

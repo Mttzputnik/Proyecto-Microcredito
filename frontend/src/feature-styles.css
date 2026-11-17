@@ -1,1 +1,127 @@
-.schedule-summary{border-top:4px solid var(--green)!important}.schedule-note{display:flex;gap:14px;align-items:flex-start;background:#f1faf5;color:var(--green-dark)}.schedule-note>svg{font-size:24px}.schedule-note p{margin:6px 0;color:var(--muted);font-size:13px;line-height:1.5}.schedule-note a{color:var(--navy);font-weight:600}.reconsideration-card{max-width:780px}.rejected-summary{padding:18px 20px;margin-bottom:24px;border-left:4px solid #d88915;border-radius:4px 12px 12px 4px;background:#fff8ec}.rejected-summary h2{margin:0;color:var(--navy);font-size:20px}.rejected-summary p{margin:10px 0 0;color:#6f5b39;line-height:1.55}.inline-success{max-width:650px;margin:40px auto;text-align:center}.inline-success .success-icon{margin:0 auto 18px}.reconsideration-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fff8ec}.reconsideration-cta span{flex:1;min-width:220px;color:var(--muted);font-size:13px}.report-filters{display:flex;align-items:center;gap:8px;margin:-10px 0 18px}.report-filters>span{margin-left:auto;color:var(--muted);font-size:12px}.report-card{height:100%}.report-bar{margin:18px 0}.report-bar>div,.equity-metric>div{display:flex;justify-content:space-between;gap:12px;margin-bottom:5px;color:var(--muted);font-size:13px}.report-bar strong,.equity-metric strong{color:var(--navy)}.equity-metric{margin:16px 0}.report-note{display:flex;gap:8px;align-items:flex-start;margin:18px 0 0;color:var(--muted);font-size:12px;line-height:1.45}.report-note svg{color:var(--navy);margin-top:2px}@media(max-width:760px){.report-filters{align-items:flex-start;flex-wrap:wrap}.report-filters>span{width:100%;margin-left:0}.reconsideration-cta{align-items:flex-start;flex-direction:column}.reconsideration-cta .ant-btn{width:100%}}
+.schedule-summary {
+  border-top: 4px solid var(--green) !important;
+}
+.schedule-note {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: #f1faf5;
+  color: var(--green-dark);
+}
+.schedule-note > svg {
+  font-size: 24px;
+}
+.schedule-note p {
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.schedule-note a {
+  color: var(--navy);
+  font-weight: 600;
+}
+.reconsideration-card {
+  max-width: 780px;
+}
+.rejected-summary {
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  border-left: 4px solid #d88915;
+  border-radius: 4px 12px 12px 4px;
+  background: #fff8ec;
+}
+.rejected-summary h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 20px;
+}
+.rejected-summary p {
+  margin: 10px 0 0;
+  color: #6f5b39;
+  line-height: 1.55;
+}
+.inline-success {
+  max-width: 650px;
+  margin: 40px auto;
+  text-align: center;
+}
+.inline-success .success-icon {
+  margin: 0 auto 18px;
+}
+.reconsideration-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #fff8ec;
+}
+.reconsideration-cta span {
+  flex: 1;
+  min-width: 220px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.report-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -10px 0 18px;
+}
+.report-filters > span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.report-card {
+  height: 100%;
+}
+.report-bar {
+  margin: 18px 0;
+}
+.report-bar > div,
+.equity-metric > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.report-bar strong,
+.equity-metric strong {
+  color: var(--navy);
+}
+.equity-metric {
+  margin: 16px 0;
+}
+.report-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.report-note svg {
+  color: var(--navy);
+  margin-top: 2px;
+}
+@media (max-width: 760px) {
+  .report-filters {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .report-filters > span {
+    width: 100%;
+    margin-left: 0;
+  }
+  .reconsideration-cta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .reconsideration-cta .ant-btn {
+    width: 100%;
+  }
+}

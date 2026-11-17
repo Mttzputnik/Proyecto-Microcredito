@@ -10,4 +10,12 @@ import "./styles.css";
 import "./risk-styles.css";
 import "./feature-styles.css";
 import "./auth-styles.css";
-ReactDOM.createRoot(document.getElementById("root")).render(<React.StrictMode><Provider store={store}><ConfigProvider theme={theme}><App /></ConfigProvider></Provider></React.StrictMode>);
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <ConfigProvider theme={theme}>
+        <App />
+      </ConfigProvider>
+    </Provider>
+  </React.StrictMode>,
+);
