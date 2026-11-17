@@ -1,5 +1,9 @@
 import { mockLoan } from "../mocks/data";
 import { mockSchedule } from "../mocks/loanScheduleData";
 
-const wait = (data, delay = 300) => new Promise((resolve) => setTimeout(() => resolve(data), delay));
-export const loanService = { getMine: () => wait(mockLoan), getSchedule: () => wait(mockSchedule) };
+const wait = (data, delay = 300) =>
+  new Promise((resolve) => setTimeout(() => resolve(data), delay));
+export const loanService = {
+  getMine: () => wait(mockLoan),
+  getSchedule: () => wait(mockSchedule),
+};

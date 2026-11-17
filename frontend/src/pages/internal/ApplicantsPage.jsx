@@ -3,4 +3,96 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/GeneralComponents";
 import { applicantService } from "../../services/applicantService";
-export default function ApplicantsPage() { const [items, setItems] = useState([]); const [search, setSearch] = useState(""); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); useEffect(() => { let active = true; setLoading(true); const timer = setTimeout(() => applicantService.list({ search }).then((result) => active && setItems(result.data || [])).catch((err) => active && setError(err.response?.data?.message || "No fue posible cargar los solicitantes.")).finally(() => active && setLoading(false)), 250); return () => { active = false; clearTimeout(timer); }; }, [search]); const columns = [{ title: "Nombre", key: "name", render: (_, record) => <Link to={`/internal/applicants/${record.id}`}><strong>{record.firstName} {record.lastName}</strong></Link> }, { title: "Documento", dataIndex: "documentNumber", key: "documentNumber" }, { title: "Teléfono", dataIndex: "phone", key: "phone" }, { title: "Municipio", dataIndex: "municipality", key: "municipality" }, { title: "Ocupación", dataIndex: "occupation", key: "occupation" }, { title: "Solicitudes", key: "applications", render: (_, record) => record.applications?.length || 0 }]; return <div className="internal-page"><PageHeader eyebrow="Personas" title="Gestión de solicitantes" description="Consulta perfiles, datos de contacto y solicitudes relacionadas." /><Card className="table-card"><Input.Search aria-label="Buscar solicitantes" placeholder="Busca por nombre o documento" allowClear onChange={(event) => setSearch(event.target.value)} style={{ maxWidth: 360, marginBottom: 18 }} />{error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}<Table rowKey="id" loading={loading} columns={columns} dataSource={items} locale={{ emptyText: <Typography.Text>No hay solicitantes registrados.</Typography.Text> }} pagination={false} scroll={{ x: 800 }} /></Card></div>; }
+export default function ApplicantsPage() {
+  const [items, setItems] = useState([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    const timer = setTimeout(
+      () =>
+        applicantService
+          .list({ search })
+          .then((result) => active && setItems(result.data || []))
+          .catch(
+            (err) =>
+              active &&
+              setError(
+                err.response?.data?.message ||
+                  "No fue posible cargar los solicitantes.",
+              ),
+          )
+          .finally(() => active && setLoading(false)),
+      250,
+    );
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [search]);
+  const columns = [
+    {
+      title: "Nombre",
+      key: "name",
+      render: (_, record) => (
+        <Link to={`/internal/applicants/${record.id}`}>
+          <strong>
+            {record.firstName} {record.lastName}
+          </strong>
+        </Link>
+      ),
+    },
+    { title: "Documento", dataIndex: "documentNumber", key: "documentNumber" },
+    { title: "Teléfono", dataIndex: "phone", key: "phone" },
+    { title: "Municipio", dataIndex: "municipality", key: "municipality" },
+    { title: "Ocupación", dataIndex: "occupation", key: "occupation" },
+    {
+      title: "Solicitudes",
+      key: "applications",
+      render: (_, record) => record.applications?.length || 0,
+    },
+  ];
+  return (
+    <div className="internal-page">
+      <PageHeader
+        eyebrow="Personas"
+        title="Gestión de solicitantes"
+        description="Consulta perfiles, datos de contacto y solicitudes relacionadas."
+      />
+      <Card className="table-card">
+        <Input.Search
+          aria-label="Buscar solicitantes"
+          placeholder="Busca por nombre o documento"
+          allowClear
+          onChange={(event) => setSearch(event.target.value)}
+          style={{ maxWidth: 360, marginBottom: 18 }}
+        />
+        {error && (
+          <Alert
+            type="error"
+            showIcon
+            message={error}
+            style={{ marginBottom: 16 }}
+          />
+        )}
+        <Table
+          rowKey="id"
+          loading={loading}
+          columns={columns}
+          dataSource={items}
+          locale={{
+            emptyText: (
+              <Typography.Text>
+                No hay solicitantes registrados.
+              </Typography.Text>
+            ),
+          }}
+          pagination={false}
+          scroll={{ x: 800 }}
+        />
+      </Card>
+    </div>
+  );
+}

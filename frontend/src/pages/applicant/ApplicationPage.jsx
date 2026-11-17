@@ -2,7 +2,84 @@ import { Button, Card, Descriptions, Tag } from "antd";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/GeneralComponents";
 import StatusChip from "../../components/StatusChip";
-import { JustificationBlock, AuditTimeline } from "../../components/DecisionComponents";
+import {
+  JustificationBlock,
+  AuditTimeline,
+} from "../../components/DecisionComponents";
 import { mockApplications } from "../../mocks/data";
 
-export default function ApplicationPage() { const application = mockApplications[0]; return <div className="portal-page"><PageHeader eyebrow="Mi solicitud" title="Solicitud de microcrédito" description="Consulta la información que entregaste y el estado actual del proceso." /><Card className="detail-card"><div className="card-heading"><div><span className="eyebrow">{application.id}</span><h2>{application.purpose}</h2></div><StatusChip status={application.status} /></div><Descriptions column={{ xs: 1, sm: 2 }} bordered items={[{ key: "1", label: "Monto solicitado", children: "$ 3.500.000 COP" }, { key: "2", label: "Fecha de solicitud", children: application.createdAt }, { key: "3", label: "Plazo elegido", children: "12 meses" }, { key: "4", label: "Destino", children: application.purpose }]} /><JustificationBlock title="¿Qué significa este estado?">La cooperativa está revisando que la información esté completa. Esta revisión no es una aprobación ni un rechazo.</JustificationBlock></Card><Card className="detail-card"><div className="card-heading"><h2>Historial de la solicitud</h2><Tag color="blue">Trazable</Tag></div><AuditTimeline items={[{ action: "Solicitud recibida", actor: "Sistema", date: "08/11/2026 · 10:42" }, { action: "Información enviada a revisión", actor: "Sistema", date: "08/11/2026 · 10:43" }]} /></Card><Card className="detail-card reconsideration-cta"><strong>¿Tu solicitud fue rechazada?</strong><span>Si cuentas con información nueva, puedes solicitar una reconsideración.</span><Button><Link to="/applicant/application/reconsideration">Solicitar reconsideración</Link></Button></Card></div>; }
+export default function ApplicationPage() {
+  const application = mockApplications[0];
+  return (
+    <div className="portal-page">
+      <PageHeader
+        eyebrow="Mi solicitud"
+        title="Solicitud de microcrédito"
+        description="Consulta la información que entregaste y el estado actual del proceso."
+      />
+      <Card className="detail-card">
+        <div className="card-heading">
+          <div>
+            <span className="eyebrow">{application.id}</span>
+            <h2>{application.purpose}</h2>
+          </div>
+          <StatusChip status={application.status} />
+        </div>
+        <Descriptions
+          column={{ xs: 1, sm: 2 }}
+          bordered
+          items={[
+            {
+              key: "1",
+              label: "Monto solicitado",
+              children: "$ 3.500.000 COP",
+            },
+            {
+              key: "2",
+              label: "Fecha de solicitud",
+              children: application.createdAt,
+            },
+            { key: "3", label: "Plazo elegido", children: "12 meses" },
+            { key: "4", label: "Destino", children: application.purpose },
+          ]}
+        />
+        <JustificationBlock title="¿Qué significa este estado?">
+          La cooperativa está revisando que la información esté completa. Esta
+          revisión no es una aprobación ni un rechazo.
+        </JustificationBlock>
+      </Card>
+      <Card className="detail-card">
+        <div className="card-heading">
+          <h2>Historial de la solicitud</h2>
+          <Tag color="blue">Trazable</Tag>
+        </div>
+        <AuditTimeline
+          items={[
+            {
+              action: "Solicitud recibida",
+              actor: "Sistema",
+              date: "08/11/2026 · 10:42",
+            },
+            {
+              action: "Información enviada a revisión",
+              actor: "Sistema",
+              date: "08/11/2026 · 10:43",
+            },
+          ]}
+        />
+      </Card>
+      <Card className="detail-card reconsideration-cta">
+        <strong>¿Tu solicitud fue rechazada?</strong>
+        <span>
+          Si cuentas con información nueva, puedes solicitar una
+          reconsideración.
+        </span>
+        <Button>
+          <Link to="/applicant/application/reconsideration">
+            Solicitar reconsideración
+          </Link>
+        </Button>
+      </Card>
+    </div>
+  );
+}

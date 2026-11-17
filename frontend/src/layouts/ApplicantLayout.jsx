@@ -16,7 +16,6 @@ export default function ApplicantLayout() {
   const location = useLocation();
   const selected = items.find((item) => location.pathname === item.key || location.pathname.startsWith(`${item.key}/`))?.key || "/applicant";
   const initials = (user?.name || "S").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-
   return <Layout className="applicant-layout">
     <header className="applicant-topbar"><div className="applicant-topbar-main">
       <div className="brand-mark"><span className="brand-symbol">+</span><span>Solidaridad <strong>Microfinanzas</strong></span></div>
