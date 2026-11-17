@@ -11,6 +11,7 @@ import "./risk-styles.css";
 import "./feature-styles.css";
 import "./auth-styles.css";
 import "./visual-polish.css";
+import "./landing-styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

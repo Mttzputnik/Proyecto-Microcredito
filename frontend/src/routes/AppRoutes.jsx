@@ -2,6 +2,8 @@ import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LoginPage from "../pages/auth/LoginPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import LandingPage from "../pages/LandingPage";
 import ApplicantLayout from "../layouts/ApplicantLayout";
 import InternalLayout from "../layouts/InternalLayout";
 import ApplicantHomePage from "../pages/applicant/ApplicantHomePage";
@@ -21,7 +23,6 @@ import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
 import ReportsPage from "../pages/internal/ReportsPage";
 import UnauthorizedPage from "../pages/shared/UnauthorizedPage";
-import { roleHome } from "./navigation.jsx";
 
 function ProtectedRoute() { const token = useSelector((state) => state.auth.token); const location = useLocation(); return token ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />; }
 function RoleRoute({ roles }) { const role = useSelector((state) => state.auth.user?.role); return roles.includes(role) ? <Outlet /> : <Navigate to="/sin-permisos" replace />; }
@@ -30,6 +31,7 @@ export default function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
+    <Route path="/registro" element={<RegisterPage />} />
     <Route element={<ProtectedRoute />}>
       <Route element={<RoleRoute roles={["solicitante"]} />}>
         <Route path="/applicant" element={<ApplicantLayout />}>
@@ -57,8 +59,7 @@ export default function AppRoutes() {
       </Route>
     </Route>
     <Route path="/sin-permisos" element={<UnauthorizedPage />} />
-    <Route path="/" element={<HomeRedirect />} />
+    <Route path="/" element={<LandingPage />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;
 }
-function HomeRedirect() { const role = useSelector((state) => state.auth.user?.role); return <Navigate to={roleHome(role)} replace />; }
