@@ -1,20 +1,32 @@
-# TODO — Primer incremento frontend
+# TODO — Arquitectura frontend por roles
 
-## Formulario guiado de solicitud y elegibilidad preliminar
-- [ ] La persona puede avanzar por cuatro pasos: datos personales, situación económica, solicitud y revisión.
-- [ ] Cada campo obligatorio tiene etiqueta visible, ayuda breve y validación comprensible.
-- [ ] El formulario solicita nombre, documento, fecha de nacimiento, teléfono, municipio y residencia.
-- [ ] El formulario solicita actividad económica, ingresos, gastos, personas a cargo y obligaciones vigentes.
-- [ ] El formulario solicita monto, plazo y destino del microcrédito.
-- [ ] La revisión muestra un resumen editable antes de enviar.
-- [ ] La verificación preliminar informa explícitamente si se cumple mayoría de edad, si se informó residencia y si existe capacidad mensual positiva.
-- [ ] La interfaz aclara que la revisión no reemplaza la evaluación ni la decisión de un funcionario.
-- [ ] La pantalla funciona en móvil sin requerir desplazamiento horizontal.
-- [ ] La compilación de Vite termina correctamente.
+## Entregado en esta fase
 
-## Pendientes posteriores
-- [ ] Conectar el formulario con los endpoints reales de solicitantes y solicitudes.
-- [ ] Reemplazar reglas preliminares por políticas configurables entregadas por el backend.
-- [ ] Incorporar carga de documentos y guardado de borrador.
-- [ ] Añadir autenticación, roles y navegación del incremento 1.
-- [ ] Definir con Product Owner fórmulas, montos máximos, tasas y redondeos antes de calcular cuotas.
+- [x] Cliente Axios con base URL configurable, JWT y manejo global de 401/403.
+- [x] Servicios mock separados para autenticación, solicitudes, préstamos, pagos, políticas y usuarios.
+- [x] Datos mock en COP, fechas día/mes/año y roles de la cooperativa.
+- [x] Redux Toolkit con sesión de usuario, rol, token y estado de interfaz.
+- [x] Login con correo y contraseña; en modo API consume JWT y usuario desde `/api/auth/login`, y en modo mock permite desarrollo local.
+- [x] Rutas protegidas por sesión y rol, pantalla de acceso restringido y redirección a login.
+- [x] ApplicantLayout mobile-first con barra inferior de Inicio, Mi solicitud, Mi préstamo y Ayuda.
+- [x] InternalLayout con Sider colapsable, búsqueda, alertas, perfil y menú filtrado por rol.
+- [x] Componentes StatusChip, JustificationBlock, AuditTimeline, ConfirmModal, PageHeader y EmptyState.
+- [x] Páginas de solicitud, préstamo, pagos, políticas, auditoría y resumen operativo.
+- [x] Vista del Oficial de Crédito con indicadores de apoyo, política aplicada, trazabilidad y decisión humana.
+- [x] Justificación obligatoria de mínimo 30 caracteres y condiciones obligatorias para aprobación condicionada.
+- [x] Pantalla de cronograma de pagos con desglose de capital, interés, saldo, vencimiento y estado de cada cuota.
+- [x] Flujo de reconsideración para rechazos con explicación mínima de 30 caracteres y soportes opcionales.
+- [x] Panel de reportes de portafolio y equidad restringido a administración y comité supervisor.
+- [x] Módulo de solicitudes de crédito con listado API/mock, filtro por estado, búsqueda, detalle, revisión y trazabilidad.
+- [x] Módulo de gestión de solicitantes con búsqueda, detalle, solicitudes relacionadas y edición de datos permitidos.
+
+## Próximos incrementos
+
+- [ ] Conectar los servicios con endpoints reales cuando exista el backend.
+- [ ] Implementar el formulario guiado de nueva solicitud con guardado de borrador.
+- [ ] Incorporar carga y validación de documentos.
+- [ ] Conectar evaluación de riesgo y registro de decisiones con endpoints reales.
+- [ ] Construir decisiones justificadas, reconsideraciones y confirmaciones irreversibles en backend.
+- [ ] Añadir pruebas unitarias y de navegación por rol.
+- [x] Implementar autenticación real con correo, contraseña, bcrypt, JWT, sesión/perfil y autorización por rol en backend.
+- [ ] Conectar cronograma, reconsideraciones y reportes a endpoints reales cuando backend los publique.
