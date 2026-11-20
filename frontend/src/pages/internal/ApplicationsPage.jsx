@@ -1,0 +1,139 @@
+import { Alert, Card, Input, Select, Space, Table, Typography } from "antd";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { PageHeader } from "../../components/GeneralComponents";
+import ApplicationStatusChip from "../../components/ApplicationStatusChip";
+import { applicationService } from "../../services/applicationService";
+const cop = (value) =>
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+const statuses = [
+  { value: "", label: "Todos los estados" },
+  { value: "SUBMITTED", label: "Recibidas" },
+  { value: "UNDER_REVIEW", label: "En revisión" },
+  { value: "APPROVED", label: "Aprobadas" },
+  { value: "REJECTED", label: "Rechazadas" },
+];
+export default function ApplicationsPage() {
+  const [items, setItems] = useState([]);
+  const [status, setStatus] = useState("");
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    applicationService
+      .list({ status: status || undefined })
+      .then((result) => active && setItems(result.data || []))
+      .catch(
+        (err) =>
+          active &&
+          setError(
+            err.response?.data?.message ||
+              "No fue posible cargar las solicitudes.",
+          ),
+      )
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [status]);
+  const columns = [
+    {
+      title: "Solicitud",
+      dataIndex: "applicationNumber",
+      key: "applicationNumber",
+      render: (value, record) => (
+        <Link to={`/internal/applications/${record.id}`}>
+          <strong>{value || record.id}</strong>
+        </Link>
+      ),
+    },
+    {
+      title: "Solicitante",
+      key: "applicant",
+      render: (_, record) =>
+        `${record.applicant?.firstName || ""} ${record.applicant?.lastName || ""}`.trim() ||
+        "Sin nombre",
+    },
+    {
+      title: "Documento",
+      key: "document",
+      render: (_, record) => record.applicant?.documentNumber || "—",
+    },
+    { title: "Destino", dataIndex: "purpose", key: "purpose" },
+    {
+      title: "Monto",
+      dataIndex: "requestedAmount",
+      key: "requestedAmount",
+      render: cop,
+    },
+    {
+      title: "Estado",
+      dataIndex: "status",
+      key: "status",
+      render: (value) => <ApplicationStatusChip status={value} />,
+    },
+    {
+      title: "Acción",
+      key: "action",
+      render: (_, record) => (
+        <Link to={`/internal/applications/${record.id}/review`}>Revisar</Link>
+      ),
+    },
+  ];
+  return (
+    <div className="internal-page">
+      <PageHeader
+        eyebrow="Gestión operativa"
+        title="Solicitudes de crédito"
+        description="Consulta, filtra y revisa las solicitudes recibidas por la cooperativa."
+      />
+      <Card className="table-card">
+        <Space wrap style={{ marginBottom: 18 }}>
+          <Typography.Text strong>Filtrar por estado</Typography.Text>
+          <Select
+            aria-label="Filtrar solicitudes por estado"
+            value={status}
+            onChange={setStatus}
+            options={statuses}
+            style={{ minWidth: 190 }}
+          />
+          <Input.Search
+            placeholder="Buscar por número"
+            allowClear
+            onChange={(event) => setQuery(event.target.value)}
+            style={{ width: 230 }}
+          />
+        </Space>
+        {error && (
+          <Alert
+            type="error"
+            showIcon
+            message={error}
+            style={{ marginBottom: 16 }}
+          />
+        )}
+        <Table
+          rowKey="id"
+          loading={loading}
+          columns={columns}
+          dataSource={items.filter(
+            (item) =>
+              !query ||
+              (item.applicationNumber || item.id || "")
+                .toLowerCase()
+                .includes(query.toLowerCase()),
+          )}
+          locale={{ emptyText: "No hay solicitudes para este filtro." }}
+          pagination={false}
+          scroll={{ x: 980 }}
+        />
+      </Card>
+    </div>
+  );
+}

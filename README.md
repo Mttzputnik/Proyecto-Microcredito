@@ -11,7 +11,7 @@ Estructurar la recepción de solicitudes, verificación de elegibilidad, evaluac
 - **Frontend:** React, Vite, React Router, Redux Toolkit, Ant Design y Axios.
 - **Backend:** Node.js y Express.
 - **Persistencia:** MongoDB mediante Prisma ORM.
-- **Autenticación prevista:** JWT y contraseñas con hash seguro.
+- **Autenticación:** correo y contraseña con bcrypt, JWT, sesión `/me` y autorización por rol.
 
 ## Alcance funcional
 
@@ -209,7 +209,7 @@ Configura `DATABASE_URL` en `backend/.env` con una base de desarrollo de MongoDB
 - `GET /api/health`: comprobación básica del servidor.
 - `POST /api/applications`: recibe la solicitud del formulario. Valida identidad, datos socioeconómicos, monto, plazo y propósito. Devuelve `201` y `data.applicationNumber` cuando se guarda correctamente.
 
-El endpoint de recepción es público para permitir el formulario inicial. No expongas endpoints administrativos ni datos personales de consulta hasta implementar autenticación, autorización, controles antiabuso y políticas de protección de datos.
+El endpoint de recepción es público para permitir el formulario inicial. Los endpoints administrativos y las consultas de datos personales requieren JWT y autorización por rol; todavía deben ampliarse los controles antiabuso y las políticas de protección de datos.
 
 ### Límites conocidos del incremento
 
@@ -217,4 +217,4 @@ El endpoint de recepción es público para permitir el formulario inicial. No ex
 - Las políticas, umbrales y fórmulas crediticias deben confirmarse con el Product Owner.
 - Los importes se reciben como pesos enteros COP; el uso de `Float` en el esquema es provisional y no debe considerarse contabilidad definitiva.
 - La creación/actualización del solicitante y el registro de la solicitud se ejecutan dentro de una transacción Prisma. MongoDB debe operar como replica set para soportar esta operación.
-- La autenticación y los módulos administrativos siguen pendientes.
+- La autenticación base y los módulos administrativos ya tienen una primera implementación; la recuperación de contraseña y el endurecimiento de seguridad siguen pendientes.
