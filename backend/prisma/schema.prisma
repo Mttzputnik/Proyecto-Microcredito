@@ -22,27 +22,27 @@ model User {
 }
 
 model Applicant {
-  id              String            @id @default(auto()) @map("_id") @db.ObjectId
-  documentType    String
-  documentNumber  String            @unique
-  firstName       String
-  lastName        String
-  birthDate       DateTime?
-  email           String?
-  phone           String?
-  address         String?
-  municipality         String?
-  residenceZone        String?
-  occupation           String?
-  activityDuration     String?
-  dependents           Int               @default(0)
-  hasExistingDebts     Boolean           @default(false)
-  monthlyIncome        Float?
-  monthlyExpenses      Float?
-  monthlyDebtPayments  Float             @default(0)
-  applications    LoanApplication[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                  String            @id @default(auto()) @map("_id") @db.ObjectId
+  documentType        String
+  documentNumber      String            @unique
+  firstName           String
+  lastName            String
+  birthDate           DateTime?
+  email               String?
+  phone               String?
+  address             String?
+  municipality        String?
+  residenceZone       String?
+  occupation          String?
+  activityDuration    String?
+  dependents          Int               @default(0)
+  hasExistingDebts    Boolean           @default(false)
+  monthlyIncome       Float?
+  monthlyExpenses     Float?
+  monthlyDebtPayments Float             @default(0)
+  applications        LoanApplication[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 }
 
 model LoanApplication {
@@ -79,6 +79,7 @@ model CreditPolicy {
   evaluations        RiskEvaluation[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
+
   @@unique([name, version])
 }
 
@@ -128,19 +129,20 @@ model Loan {
 }
 
 model PaymentSchedule {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  loanId      String   @db.ObjectId
-  loan        Loan     @relation(fields: [loanId], references: [id])
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  loanId      String    @db.ObjectId
+  loan        Loan      @relation(fields: [loanId], references: [id])
   installment Int
   dueDate     DateTime
   principal   Float
   interest    Float
   totalDue    Float
   balance     Float
-  paidAmount  Float    @default(0)
+  paidAmount  Float     @default(0)
   paidAt      DateTime?
-  status      String   @default("PENDING")
-  createdAt   DateTime @default(now())
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
+
   @@unique([loanId, installment])
 }
 
