@@ -12,10 +12,14 @@ const cop = (value) =>
   }).format(value || 0);
 const statuses = [
   { value: "", label: "Todos los estados" },
+  { value: "PENDING_ASSIGNMENT", label: "Pendientes de asignación" },
   { value: "SUBMITTED", label: "Recibidas" },
   { value: "UNDER_REVIEW", label: "En revisión" },
+  { value: "NEEDS_INFORMATION", label: "Requieren información" },
   { value: "APPROVED", label: "Aprobadas" },
+  { value: "APPROVED_WITH_CONDITIONS", label: "Aprobadas con condiciones" },
   { value: "REJECTED", label: "Rechazadas" },
+  { value: "CANCELLED", label: "Canceladas" },
 ];
 export default function ApplicationsPage() {
   const [items, setItems] = useState([]);
