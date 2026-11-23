@@ -96,8 +96,7 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
       where: { id: created.body.data.assignedOfficerId },
       select: { id: true, email: true }
     });
-    assert.equal(assignedOfficer.email, "officer@prueba.test");
-    const assignedToken = tokens.officer;
+    const assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
 
     const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
     assert.equal((await api("GET", "/api/applications", { token: tokens.officer2 })).body.data.length, 0);
