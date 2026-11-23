@@ -78,6 +78,11 @@ describe("flujo completo de la API", { skip }, () => {
     const created = await api("POST", "/api/applications", { body: applicationPayload() });
     assert.equal(created.status, 201);
     state.applicationId = created.body.data.id;
+    const assignedOfficer = await prisma.user.findUnique({ where: { email: "officer@prueba.test" }, select: { id: true } });
+    await prisma.loanApplication.update({ where: { id: state.applicationId }, data: { assignedOfficerId: assignedOfficer.id } });
+    assert.equal((await api("GET", "/api/applications", { token: tokens.officer2 })).body.data.length, 0);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: tokens.officer2 })).status, 404);
+    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer2, body: { status: "UNDER_REVIEW" } })).status, 404);
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "UNDER_REVIEW" } })).status, 200);
     const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: tokens.officer, body: {} });
     assert.equal(evaluation.status, 409);
