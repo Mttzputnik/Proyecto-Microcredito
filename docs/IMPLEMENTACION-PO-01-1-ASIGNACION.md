@@ -22,7 +22,7 @@ La carga activa cuenta solicitudes en `SUBMITTED`, `UNDER_REVIEW` y `NEEDS_INFOR
 2. El backend procesa la cola pendiente en orden de llegada.
 3. Si hay oficiales activos, asigna el caso y lo pasa a `SUBMITTED`.
 4. Si no hay oficiales disponibles, conserva `PENDING_ASSIGNMENT`.
-5. Cuando se crea un usuario activo `CREDIT_OFFICER), se vuelve a procesar la cola pendiente.
+5. Cuando se crea un usuario activo `CREDIT_OFFICER`, se vuelve a procesar la cola pendiente.
 6. La bandeja de cada oficial continúa filtrando por `assignedOfficerId`; no se amplía el acceso a casos ajenos.
 
 Se procesa también la cola heredada de solicitudes `SUBMITTED` sin oficial asignado, para no dejar registros antiguos inaccesibles.
@@ -41,7 +41,8 @@ Se procesa también la cola heredada de solicitudes `SUBMITTED` sin oficial asig
 - Si no existen oficiales activos, los casos permanecen pendientes. La cola se reintenta al registrar una nueva solicitud o al crear un oficial activo.
 - La asignación es automática; no se incorpora una interfaz de asignación manual.
 - La lógica usa las solicitudes activas como aproximación de carga. No mide complejidad ni tiempo de trabajo por expediente.
+- Para registros históricos sin `assignedAt`, el desempate usa `createdAt` como aproximación de la fecha de asignación.
 
 ## 5. Verificación
 
-Se añadieron pruebas unitarias para el selector y el procesamiento de la cola. No se afirma que hayan sido ejecutadas. La validación Prisma y las pruebas completas deben correrse en un entorno configurado con MongoDB. No se modificaron archivos `.env`.
+Se añadieron pruebas unitarias del selector y del procesamiento de la cola. No se afirma que hayan sido ejecutadas. La validación Prisma y las pruebas completas deben correrse en un entorno configurado con MongoDB. No se modificaron archivos `.env`.
