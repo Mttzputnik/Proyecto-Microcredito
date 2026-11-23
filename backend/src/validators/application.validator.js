@@ -8,6 +8,7 @@ export const applicationSchema = z.object({
     lastName: z.string().trim().min(2).max(100),
     birthDate: z.string().datetime(),
     phone: z.string().trim().min(7).max(20),
+    address: z.string().trim().min(5).max(200).optional(),
     municipality: z.string().trim().min(2).max(100),
     residenceZone: z.enum(["urbana", "rural"]),
     occupation: z.string().trim().min(2).max(120),
