@@ -36,3 +36,15 @@ test("PO-03: política sin propósito o máximo de préstamos requiere revisión
   assert.equal(result.recommendation, RECOMMENDATIONS.MANUAL_REVIEW);
   assert.ok(result.indicators.checks.some((item) => item.status === "NOT_EVALUABLE"));
 });
+
+test("PO-03: umbrales financieros ausentes nunca permiten recomendar aprobación", () => {
+  const result = evaluate({
+    applicant, application,
+    policy: { allowedPurposes: ["negocio"], maximumSimultaneousLoans: 2, annualInterestRate: 0 },
+    internalHistory, residenceVerification, today
+  });
+  for (const code of ["MINIMUM_AGE", "MAXIMUM_AMOUNT", "MAXIMUM_TERM", "DEBT_RATIO"]) {
+    assert.equal(result.indicators.checks.find((item) => item.code === code).status, "NOT_EVALUABLE");
+  }
+  assert.equal(result.recommendation, RECOMMENDATIONS.MANUAL_REVIEW);
+});
