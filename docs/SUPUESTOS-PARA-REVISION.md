@@ -74,4 +74,4 @@ La pantalla de evaluación consume los endpoints reales de expediente, evaluacio
 - Reversión de pagos y reestructuración de préstamos (ADR-005 las deja abiertas).
 - Reconsideración de solicitudes rechazadas.
 - Alertas (no existe un modelo `Alert` en el esquema).
-- Valores reales de la política de crédito: los debe cargar el administrador con los datos del PO.
+- Valores reales de la política de crédito: debe configurarlos el analista de riesgo con los datos confirmados por el PO.
