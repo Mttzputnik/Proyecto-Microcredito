@@ -9,6 +9,11 @@ export async function createLoanApplication(payload) {
     throw new Error("El servidor no devolvió una confirmación válida.");
   return response.data.data;
 }
+export async function trackLoanApplication(credentials) {
+  const response = await client.post("/applications/track", credentials);
+  return response.data.data;
+}
+
 export const applicationService = {
   async list({ status, page = 1, limit = 20 } = {}) {
     if (useApi) {
