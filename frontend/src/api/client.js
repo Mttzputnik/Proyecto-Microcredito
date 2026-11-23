@@ -15,7 +15,7 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if ([401, 403].includes(error.response?.status)) {
+    if (error.response?.status === 401) {
       window.dispatchEvent(new CustomEvent("microcredito:unauthorized"));
     }
     return Promise.reject(error);
