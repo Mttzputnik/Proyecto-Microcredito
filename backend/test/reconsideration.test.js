@@ -92,3 +92,24 @@ test("el oficial diferente registra resultado y auditoría sin sobrescribir la s
   assert.equal(db.calls.appUpdates.length, 0);
   assert.equal(db.calls.audits[0].action, "APPLICATION_RECONSIDERATION_DECIDED");
 });
+
+test("rechaza una credencial privada incorrecta", async () => {
+  const db = fakeDb();
+  await assert.rejects(() => submitReconsideration(db, {
+    applicationNumber: "MC-2026-ABC12345", accessToken: "z".repeat(48), applicantMessage: "Aporto nueva información que debe revisarse."
+  }), (error) => error.status === 404);
+  assert.equal(db.calls.created.length, 0);
+});
+
+test("no permite resolver dos veces una reconsideración", async () => {
+  const db = fakeDb();
+  db.tx.reconsideration.findUnique = async () => ({
+    id: reconsiderationId, applicationId, originalOfficerId: originalOfficer,
+    assignedOfficerId: alternateOfficer, status: "ACCEPTED"
+  });
+  await assert.rejects(() => decideReconsideration(db, {
+    reconsiderationId, actor: { id: alternateOfficer }, outcome: "UPHELD",
+    justification: "Se confirma el rechazo original."
+  }), (error) => error.status === 409);
+  assert.equal(db.calls.updates.length, 0);
+});
