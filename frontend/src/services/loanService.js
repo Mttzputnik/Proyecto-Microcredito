@@ -1,9 +1,32 @@
-import { mockLoan } from "../mocks/data";
-import { mockSchedule } from "../mocks/loanScheduleData";
+import client from "../api/client";
 
-const wait = (data, delay = 300) =>
-  new Promise((resolve) => setTimeout(() => resolve(data), delay));
 export const loanService = {
-  getMine: () => wait(mockLoan),
-  getSchedule: () => wait(mockSchedule),
+  async list({ status, page = 1, limit = 20 } = {}) {
+    const response = await client.get("/loans", { params: { status, page, limit } });
+    return response.data;
+  },
+  async getById(id) {
+    const response = await client.get(`/loans/${id}`);
+    return response.data.data;
+  },
+  async formalize(applicationId) {
+    const response = await client.post("/loans", { applicationId });
+    return response.data.data;
+  },
+  async disburse(id, disbursementDate) {
+    const response = await client.post(`/loans/${id}/disburse`, disbursementDate ? { disbursementDate } : {});
+    return response.data.data;
+  },
+  async registerPayment(id, payload) {
+    const response = await client.post(`/loans/${id}/payments`, payload);
+    return response.data.data;
+  },
+  async listArrears() {
+    const response = await client.get("/loans/arrears");
+    return response.data.data;
+  },
+  async refreshArrears(id) {
+    const response = await client.post(`/loans/${id}/refresh-arrears`);
+    return response.data.data;
+  },
 };
