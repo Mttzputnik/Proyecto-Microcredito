@@ -4,6 +4,7 @@ import LoginPage from "../pages/auth/LoginPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import LandingPage from "../pages/LandingPage";
+import TrackApplicationPage from "../pages/public/TrackApplicationPage";
 import ApplicantLayout from "../layouts/ApplicantLayout";
 import InternalLayout from "../layouts/InternalLayout";
 import ApplicantHomePage from "../pages/applicant/ApplicantHomePage";
@@ -88,6 +89,7 @@ export default function AppRoutes() {
       </Route>
 
       <Route path="/sin-permisos" element={<UnauthorizedPage />} />
+      <Route path="/seguimiento" element={<TrackApplicationPage />} />
       <Route path="/" element={<LandingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
