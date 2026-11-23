@@ -100,11 +100,34 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : tokens.officer2;
     const assignedToken = state.assignedToken;
 
-    const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
+    const applicantId = (await prisma.loanApplication.findUnique({
+      where: { id: state.applicationId },
+      select: { applicantId: true }
+    })).applicantId;
+
+    // El otro oficial no puede consultar ni modificar el expediente original.
     assert.equal((await api("GET", "/api/applications", { token: state.otherOfficerToken })).body.data.length, 0);
     assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: state.otherOfficerToken })).status, 404);
     assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: state.otherOfficerToken })).status, 404);
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: state.otherOfficerToken, body: { status: "UNDER_REVIEW" } })).status, 404);
+
+    // Reutilizar el mismo documento en otra solicitud no debe sobrescribir el perfil existente.
+    const originalApplicant = await prisma.applicant.findUnique({ where: { id: applicantId } });
+    const secondPayload = applicationPayload();
+    secondPayload.applicant.documentNumber = originalApplicant.documentNumber;
+    secondPayload.applicant.firstName = "Intento de modificación";
+    secondPayload.applicant.monthlyIncome = 99_000_000;
+    const secondCreated = await api("POST", "/api/applications", { body: secondPayload });
+    assert.equal(secondCreated.status, 201);
+    const secondApplication = await prisma.loanApplication.findUnique({
+      where: { applicationNumber: secondCreated.body.data.applicationNumber },
+      include: { applicant: true, applicantSnapshot: true }
+    });
+    assert.equal(secondApplication.applicant.firstName, originalApplicant.firstName);
+    assert.equal(secondApplication.applicant.monthlyIncome, originalApplicant.monthlyIncome);
+    assert.equal(secondApplication.applicantSnapshot.firstName, "Intento de modificación");
+    assert.equal(secondApplication.applicantSnapshot.monthlyIncome, 99_000_000);
+
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: assignedToken, body: { status: "UNDER_REVIEW" } })).status, 200);
     assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: assignedToken })).status, 200);
   });
