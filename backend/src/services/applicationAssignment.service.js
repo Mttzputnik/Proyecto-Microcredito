@@ -17,7 +17,9 @@ export function selectOfficerByWorkload(officers, assignedApplications) {
   for (const application of assignedApplications) {
     const current = workload.get(application.assignedOfficerId);
     if (!current) continue;
-    current.activeCount += 1;
+    if (!application.status || ACTIVE_APPLICATION_STATUSES.includes(application.status)) {
+      current.activeCount += 1;
+    }
     const assignedAt = application.assignedAt ?? application.createdAt;
     if (assignedAt && (!current.lastAssignedAt || assignedAt > current.lastAssignedAt)) {
       current.lastAssignedAt = assignedAt;
@@ -54,11 +56,8 @@ export async function assignPendingApplications(db, { limit = 100 } = {}) {
   const officerIds = officers.map(({ id }) => id);
   const [assignedApplications, pendingApplications] = await Promise.all([
     db.loanApplication.findMany({
-      where: {
-        assignedOfficerId: { in: officerIds },
-        status: { in: ACTIVE_APPLICATION_STATUSES }
-      },
-      select: { assignedOfficerId: true, assignedAt: true, createdAt: true }
+      where: { assignedOfficerId: { in: officerIds } },
+      select: { assignedOfficerId: true, assignedAt: true, createdAt: true, status: true }
     }),
     db.loanApplication.findMany({
       where: {
