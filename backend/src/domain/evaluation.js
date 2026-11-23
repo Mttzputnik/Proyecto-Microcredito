@@ -61,6 +61,10 @@ export function evaluate({ applicant, application, policy, internalHistory = {},
       `Préstamos vigentes: ${internalHistory.activeLoans}; máximo permitido: ${policy.maximumSimultaneousLoans}.`);
   } else addCheck("SIMULTANEOUS_LOANS", "Endeudamiento simultáneo", "NOT_EVALUABLE", "La política no define el máximo de préstamos simultáneos.");
 
+  if (Number.isInteger(internalHistory.historicalApplications)) addCheck("INTERNAL_CREDIT_HISTORY", "Historial crediticio interno", "PASS",
+    `Solicitudes anteriores: ${internalHistory.historicalApplications}; aprobadas: ${internalHistory.previousApprovedApplications ?? 0}; rechazadas: ${internalHistory.previousRejectedApplications ?? 0}; préstamos históricos: ${internalHistory.historicalLoans ?? 0}.`);
+  else addCheck("INTERNAL_CREDIT_HISTORY", "Historial crediticio interno", "NOT_EVALUABLE", "No fue posible consultar el historial interno.");
+
   if (typeof internalHistory.hasActiveDelinquency === "boolean") addCheck("INTERNAL_DELINQUENCY", "Mora interna activa",
     internalHistory.hasActiveDelinquency ? "FAIL" : "PASS",
     internalHistory.hasActiveDelinquency ? "Se encontraron cuotas vencidas con saldo pendiente en préstamos internos."
@@ -79,6 +83,9 @@ export function evaluate({ applicant, application, policy, internalHistory = {},
       estimatedInstallment, debtToIncomeRatio, monthlyCapacity,
       internalHistory: { activeLoans: internalHistory.activeLoans ?? null,
         historicalApplications: internalHistory.historicalApplications ?? null,
+        previousApprovedApplications: internalHistory.previousApprovedApplications ?? null,
+        previousRejectedApplications: internalHistory.previousRejectedApplications ?? null,
+        historicalLoans: internalHistory.historicalLoans ?? null,
         hasActiveDelinquency: internalHistory.hasActiveDelinquency ?? null },
       residenceVerification: residenceVerification ? { verified: residenceVerification.verified,
         notes: residenceVerification.notes, verifiedAt: residenceVerification.verifiedAt } : null,
