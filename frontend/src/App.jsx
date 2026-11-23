@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import { authService } from "./services/authService";
-import { clearSession, setCurrentUser } from "./store/authSlice";
+import { clearSession, setAuthStatus, setCurrentUser } from "./store/authSlice";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -14,10 +14,12 @@ export default function App() {
     const handleUnauthorized = () => dispatch(clearSession());
     window.addEventListener("microcredito:unauthorized", handleUnauthorized);
 
-    if (token) {
+    if (token && authService.isApiMode) {
       authService.getCurrentUser()
         .then((user) => { if (active) dispatch(setCurrentUser(user)); })
         .catch(() => { if (active) dispatch(clearSession()); });
+    } else if (token) {
+      dispatch(setAuthStatus("authenticated"));
     }
 
     return () => {
