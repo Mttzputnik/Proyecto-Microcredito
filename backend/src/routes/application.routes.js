@@ -87,6 +87,7 @@ router.post("/", async (req, res, next) => {
         lastName: data.lastName,
         birthDate,
         phone: data.phone,
+        address: data.address,
         municipality: data.municipality,
         residenceZone: data.residenceZone,
         occupation: data.occupation,
