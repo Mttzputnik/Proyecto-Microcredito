@@ -5,6 +5,7 @@ import { authenticate, signToken } from "../middleware/authenticate.js";
 import { loginSchema } from "../validators/auth.validator.js";
 import { httpError, parseOrThrow } from "../utils/httpError.js";
 import { writeAudit } from "../services/audit.service.js";
+import { loginRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ const router = Router();
 const DUMMY_HASH = bcrypt.hashSync("no-es-una-contraseña-real", 10);
 
 // POST /api/auth/login  { email, password } -> { token, user }
-router.post("/login", async (req, res) => {
+router.post("/login", loginRateLimit, async (req, res) => {
   const { email, password } = parseOrThrow(loginSchema, req.body);
 
   const user = await prisma.user.findUnique({ where: { email } });

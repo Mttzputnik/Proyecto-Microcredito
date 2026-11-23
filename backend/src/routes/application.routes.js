@@ -7,12 +7,13 @@ import { writeAudit } from "../services/audit.service.js";
 import { prisma } from "../config/prisma.js";
 import { applicationSchema } from "../validators/application.validator.js";
 import { assignPendingApplications } from "../services/applicationAssignment.service.js";
+import { applicationSubmissionRateLimit, trackingRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 
 // POST /api/applications/track — consulta pública protegida por número de caso + token secreto.
 // La respuesta contiene únicamente datos mínimos de seguimiento.
-router.post("/track", async (req, res, next) => {
+router.post("/track", trackingRateLimit, async (req, res, next) => {
   const parsed = trackingLookupSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ success: false, message: "Los datos de consulta no son válidos." });
@@ -60,7 +61,7 @@ router.post("/track", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", applicationSubmissionRateLimit, async (req, res, next) => {
   const parsed = applicationSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({

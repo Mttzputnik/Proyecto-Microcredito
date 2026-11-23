@@ -6,11 +6,12 @@ import { PERMISSIONS } from "../domain/roles.js";
 import { requireObjectId, parseOrThrow } from "../utils/httpError.js";
 import { submitReconsiderationSchema, decideReconsiderationSchema } from "../validators/reconsideration.validator.js";
 import { submitReconsideration, listAssignedReconsiderations, decideReconsideration } from "../services/reconsideration.service.js";
+import { reconsiderationRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 
 // El solicitante demuestra control del caso mediante número + token privado.
-router.post("/", async (req, res, next) => {
+router.post("/", reconsiderationRateLimit, async (req, res, next) => {
   const payload = parseOrThrow(submitReconsiderationSchema, req.body, "Los datos de reconsideración no son válidos.");
   try {
     const data = await submitReconsideration(prisma, payload);
