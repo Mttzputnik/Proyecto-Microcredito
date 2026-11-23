@@ -7,7 +7,7 @@ function fakePrisma(initialStatus, { updateCount = 1 } = {}) {
   const calls = { decisions: [], audits: [], updates: [] };
   const tx = {
     loanApplication: {
-      findUnique: async () => (initialStatus ? { id: "a".repeat(24), status: initialStatus } : null),
+      findUnique: async () => (initialStatus ? { id: "a".repeat(24), status: initialStatus, assignedOfficerId: "b".repeat(24) } : null),
       updateMany: async (args) => { calls.updates.push(args); return { count: updateCount }; }
     },
     loanDecision: { create: async ({ data }) => { calls.decisions.push(data); return { id: "d".repeat(24) }; } },
@@ -71,6 +71,21 @@ test("no se puede cancelar una solicitud que ya tiene préstamo", async () => {
   await assert.rejects(
     () => changeApplicationStatus(db, { applicationId, toStatus: "CANCELLED", actor }),
     (e) => e.status === 409 && /préstamo/.test(e.message)
+  );
+  assert.equal(db.calls.updates.length, 0);
+});
+
+test("un oficial distinto al asignado no puede cambiar la solicitud", async () => {
+  const db = fakePrisma("SUBMITTED");
+  const original = db.$transaction;
+  db.$transaction = (fn) => original((tx) => {
+    const find = tx.loanApplication.findUnique;
+    tx.loanApplication.findUnique = async (args) => ({ ...(await find(args)), assignedOfficerId: "c".repeat(24) });
+    return fn(tx);
+  });
+  await assert.rejects(
+    () => changeApplicationStatus(db, { applicationId, toStatus: "UNDER_REVIEW", actor }),
+    (e) => e.status === 404
   );
   assert.equal(db.calls.updates.length, 0);
 });
