@@ -104,7 +104,7 @@ export default function RiskEvaluationPage() {
           <div className="card-heading"><div><span className="eyebrow">Información del solicitante</span><h2>{applicant.firstName} {applicant.lastName}</h2></div><Tag color="blue">{application.status}</Tag></div>
           <Descriptions column={{ xs: 1, sm: 2 }} items={[
             { key: "document", label: "Documento", children: `${applicant.documentType} ${applicant.documentNumber}` },
-            { key: "location", label: "Residencia declarada", children: `${applicant.municipality || "Sin municipio"} · Zona ${applicant.residenceZone || "no indicada"}` },
+            { key: "location", label: "Residencia declarada", children: `${applicant.address || "Dirección no registrada"} · ${applicant.municipality || "Sin municipio"} · Zona ${applicant.residenceZone || "no indicada"}` },
             { key: "activity", label: "Actividad", children: `${applicant.occupation || "No indicada"} · ${applicant.activityDuration || "Antigüedad no indicada"}` },
             { key: "dependents", label: "Personas a cargo", children: applicant.dependents },
             { key: "income", label: "Ingresos mensuales", children: cop(applicant.monthlyIncome) },
@@ -165,7 +165,7 @@ export default function RiskEvaluationPage() {
         <Card className="detail-card decision-card">
           <div className="card-heading"><div><span className="eyebrow">Registro obligatorio</span><h2>Decisión humana</h2></div><FileTextOutlined className="decision-icon" /></div>
           <p className="decision-intro">Selecciona el resultado y explica los motivos. Una recomendación del sistema no sustituye tu criterio profesional.</p>
-          <Form form={decisionForm} layout="vertical" onFinish={saveDecision} requiredMark="optional">
+          <Form form={decisionForm} layout="vertical" onFinish={saveDecision} requiredMark="optional" disabled={application.status !== "UNDER_REVIEW"}>
             <Form.Item name="outcome" label="Resultado" rules={[{ required: true, message: "Selecciona un resultado" }]}>
               <Radio.Group className="outcome-options">{Object.entries(outcomeLabels).map(([value, label]) => <Radio value={value} key={value}>{label}</Radio>)}</Radio.Group>
             </Form.Item>
@@ -178,7 +178,7 @@ export default function RiskEvaluationPage() {
                   <Input.TextArea rows={3} maxLength={2000} placeholder="Registra las condiciones que deben cumplirse antes de formalizar." />
                 </Form.Item> : null}
             </Form.Item>
-            <Button type="primary" htmlType="submit" size="large" block loading={saving} icon={<CheckCircleOutlined />}>Registrar decisión y justificación</Button>
+            <Button type="primary" htmlType="submit" size="large" block loading={saving} disabled={application.status !== "UNDER_REVIEW"} icon={<CheckCircleOutlined />}>Registrar decisión y justificación</Button>
           </Form>
         </Card>
         <Card className="detail-card"><div className="card-heading"><h2>Trazabilidad</h2><Tag color="blue">Auditable</Tag></div>
