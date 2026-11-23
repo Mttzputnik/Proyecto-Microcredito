@@ -2,6 +2,7 @@ import { evaluate } from "../domain/evaluation.js";
 import { httpError } from "../utils/httpError.js";
 import { writeAudit } from "./audit.service.js";
 import { findActivePolicy } from "./policy.service.js";
+import { extractPreviousDelinquencies } from "../domain/internalHistory.js";
 
 const ACTIVE_LOAN_STATUSES = ["PENDING_DISBURSEMENT", "ACTIVE"];
 async function loadInternalHistory(tx, applicantId, currentApplicationId, today) {
@@ -17,29 +18,7 @@ async function loadInternalHistory(tx, applicantId, currentApplicationId, today)
   const hasActiveDelinquency = activeLoans.some((loan) => loan.paymentSchedules.some((schedule) =>
     schedule.totalDue - (schedule.paidAmount ?? 0) > 0 &&
     (schedule.status === "OVERDUE" || Date.UTC(new Date(schedule.dueDate).getUTCFullYear(), new Date(schedule.dueDate).getUTCMonth(), new Date(schedule.dueDate).getUTCDate()) < todayUtc)));
-  const previousDelinquencies = loans.flatMap((loan) => loan.paymentSchedules
-    .filter((schedule) => {
-      if (!schedule.paidAt || (schedule.status !== "PAID" && (schedule.paidAmount ?? 0) < schedule.totalDue)) return false;
-      const due = new Date(schedule.dueDate);
-      const paid = new Date(schedule.paidAt);
-      return Date.UTC(paid.getUTCFullYear(), paid.getUTCMonth(), paid.getUTCDate()) >
-        Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
-    })
-    .map((schedule) => {
-      const due = new Date(schedule.dueDate);
-      const paid = new Date(schedule.paidAt);
-      const dueDay = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
-      const paidDay = Date.UTC(paid.getUTCFullYear(), paid.getUTCMonth(), paid.getUTCDate());
-      return {
-        loanId: loan.id,
-        loanNumber: loan.loanNumber,
-        dueDate: schedule.dueDate,
-        settledAt: schedule.paidAt,
-        daysLate: Math.floor((paidDay - dueDay) / (24 * 60 * 60 * 1000))
-      };
-    }))
-    .sort((a, b) => new Date(b.settledAt) - new Date(a.settledAt));
-
+  const previousDelinquencies = extractPreviousDelinquencies(loans);
   return {
     activeLoans: activeLoans.length,
     historicalApplications: applications.length,
