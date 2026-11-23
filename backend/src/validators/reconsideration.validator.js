@@ -7,6 +7,6 @@ export const submitReconsiderationSchema = z.object({
 }).strict();
 
 export const decideReconsiderationSchema = z.object({
-  outcome: z.enum(["APPROVED", "REJECTED"]),
+  outcome: z.enum(["ACCEPTED", "UPHELD"]),
   justification: z.string().trim().min(10).max(2000)
 }).strict();
