@@ -70,9 +70,12 @@ router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) 
 
 // PATCH /api/applications/:id/status  { status, justification?, note? }
 // APPROVED y REJECTED exigen justificación y generan una decisión registrada.
-router.patch("/:id/status", authorize(...PERMISSIONS.changeApplicationStatus), async (req, res) => {
+router.patch("/:id/status", authorize(...PERMISSIONS.manageApplicationWorkflow, ...PERMISSIONS.decideApplications), async (req, res) => {
   const applicationId = requireObjectId(req.params.id);
   const { status, justification, note } = parseOrThrow(changeStatusSchema, req.body);
+  if (["APPROVED", "REJECTED"].includes(status) && !PERMISSIONS.decideApplications.includes(req.user.role)) {
+    throw httpError(403, "Solo el comité supervisor o un administrador puede aprobar o rechazar solicitudes.");
+  }
 
   const result = await changeApplicationStatus(prisma, {
     applicationId,
