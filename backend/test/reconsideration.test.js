@@ -71,7 +71,7 @@ test("el oficial original no puede decidir y la solicitud original no se modific
     assignedOfficerId: originalOfficer, status: "PENDING_REVIEW"
   });
   await assert.rejects(() => decideReconsideration(db, {
-    reconsiderationId, actor: { id: originalOfficer }, outcome: "APPROVED",
+    reconsiderationId, actor: { id: originalOfficer }, outcome: "ACCEPTED",
     justification: "La nueva evidencia cambia la evaluación."
   }), (error) => error.status === 404 || error.status === 403);
   assert.equal(db.calls.appUpdates.length, 0);
@@ -84,11 +84,11 @@ test("el oficial diferente registra resultado y auditoría sin sobrescribir la s
     assignedOfficerId: alternateOfficer, status: "PENDING_REVIEW"
   });
   const result = await decideReconsideration(db, {
-    reconsiderationId, actor: { id: alternateOfficer }, outcome: "APPROVED",
+    reconsiderationId, actor: { id: alternateOfficer }, outcome: "ACCEPTED",
     justification: "La información complementaria permite reconsiderar el resultado."
   });
-  assert.equal(result.status, "APPROVED");
-  assert.equal(db.calls.updates[0].data.outcome, "APPROVED");
+  assert.equal(result.status, "ACCEPTED");
+  assert.equal(db.calls.updates[0].data.outcome, "ACCEPTED");
   assert.equal(db.calls.appUpdates.length, 0);
   assert.equal(db.calls.audits[0].action, "APPLICATION_RECONSIDERATION_DECIDED");
 });
