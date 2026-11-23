@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Spin } from "antd";
 import { useSelector } from "react-redux";
 import LoginPage from "../pages/auth/LoginPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
@@ -23,9 +24,21 @@ import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
 import ReportsPage from "../pages/internal/ReportsPage";
 import UnauthorizedPage from "../pages/shared/UnauthorizedPage";
+import { ROLES } from "../domain/roles";
 
-function ProtectedRoute() { const token = useSelector((state) => state.auth.token); const location = useLocation(); return token ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />; }
-function RoleRoute({ roles }) { const role = useSelector((state) => state.auth.user?.role); return roles.includes(role) ? <Outlet /> : <Navigate to="/sin-permisos" replace />; }
+function ProtectedRoute() {
+  const { token, status } = useSelector((state) => state.auth);
+  const location = useLocation();
+  if (status === "loading") return <div className="auth-session-loading"><Spin tip="Validando sesión..." /></div>;
+  return token ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
+}
+
+function RoleRoute({ roles }) {
+  const role = useSelector((state) => state.auth.user?.role);
+  return roles.includes(role) ? <Outlet /> : <Navigate to="/sin-permisos" replace />;
+}
+
+const INTERNAL_ACCESS = [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.RISK_ANALYST, ROLES.COMMITTEE_SUPERVISOR, ROLES.AUDITOR];
 
 export default function AppRoutes() {
   return <Routes>
@@ -33,7 +46,7 @@ export default function AppRoutes() {
     <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
     <Route path="/registro" element={<RegisterPage />} />
     <Route element={<ProtectedRoute />}>
-      <Route element={<RoleRoute roles={["solicitante"]} />}>
+      <Route element={<RoleRoute roles={[ROLES.APPLICANT]} />}>
         <Route path="/applicant" element={<ApplicantLayout />}>
           <Route index element={<ApplicantHomePage />} />
           <Route path="application" element={<ApplicationPage />} />
@@ -44,17 +57,25 @@ export default function AppRoutes() {
           <Route path="help" element={<HelpPage />} />
         </Route>
       </Route>
-      <Route element={<RoleRoute roles={["oficial_credito", "analista_riesgo", "administrativo", "comite_supervisor", "CREDIT_OFFICER", "ADMIN", "AUDITOR"]} />}>
+      <Route element={<RoleRoute roles={INTERNAL_ACCESS} />}>
         <Route path="/internal" element={<InternalLayout />}>
           <Route index element={<InternalDashboardPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/:id" element={<ApplicationDetailPage />} />
-          <Route path="applications/:id/review" element={<RiskEvaluationPage />} />
-          <Route path="applicants" element={<ApplicantsPage />} />
-          <Route path="applicants/:id" element={<ApplicantDetailPage />} />
-          <Route path="policies" element={<PoliciesPage />} />
-          <Route path="audit" element={<AuditPage />} />
-          <Route element={<RoleRoute roles={["administrativo", "comite_supervisor", "ADMIN", "AUDITOR"]} />}><Route path="reports" element={<ReportsPage />} /></Route>
+          <Route element={<RoleRoute roles={[ROLES.ADMIN, ROLES.RISK_ANALYST]} />}>
+            <Route path="applications/:id/review" element={<RiskEvaluationPage />} />
+          </Route>
+          <Route element={<RoleRoute roles={[ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.RISK_ANALYST, ROLES.COMMITTEE_SUPERVISOR, ROLES.AUDITOR]} />}>
+            <Route path="applicants" element={<ApplicantsPage />} />
+            <Route path="applicants/:id" element={<ApplicantDetailPage />} />
+            <Route path="policies" element={<PoliciesPage />} />
+          </Route>
+          <Route element={<RoleRoute roles={[ROLES.ADMIN, ROLES.AUDITOR]} />}>
+            <Route path="audit" element={<AuditPage />} />
+          </Route>
+          <Route element={<RoleRoute roles={[ROLES.ADMIN, ROLES.AUDITOR, ROLES.COMMITTEE_SUPERVISOR]} />}>
+            <Route path="reports" element={<ReportsPage />} />
+          </Route>
         </Route>
       </Route>
     </Route>
