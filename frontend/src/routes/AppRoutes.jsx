@@ -89,6 +89,7 @@ export default function AppRoutes() {
       </Route>
 
       <Route path="/sin-permisos" element={<UnauthorizedPage />} />
+      <Route path="/solicitar" element={<NewApplicationPage />} />
       <Route path="/seguimiento" element={<TrackApplicationPage />} />
       <Route path="/" element={<LandingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
