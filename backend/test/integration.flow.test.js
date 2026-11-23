@@ -96,15 +96,15 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
       where: { id: created.body.data.assignedOfficerId },
       select: { id: true, email: true }
     });
-    state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
-    state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : tokens.officer2;
+    state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? state.otherOfficerToken : tokens.officer;
+    state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : state.otherOfficerToken;
     const assignedToken = state.assignedToken;
 
     const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
-    assert.equal((await api("GET", "/api/applications", { token: tokens.officer2 })).body.data.length, 0);
-    assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: tokens.officer2 })).status, 404);
-    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: tokens.officer2 })).status, 404);
-    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer2, body: { status: "UNDER_REVIEW" } })).status, 404);
+    assert.equal((await api("GET", "/api/applications", { token: state.otherOfficerToken })).body.data.length, 0);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: state.otherOfficerToken })).status, 404);
+    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: state.otherOfficerToken })).status, 404);
+    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: state.otherOfficerToken, body: { status: "UNDER_REVIEW" } })).status, 404);
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: assignedToken, body: { status: "UNDER_REVIEW" } })).status, 200);
     assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: assignedToken })).status, 200);
   });
