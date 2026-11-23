@@ -34,13 +34,15 @@
 
 ### 3.1. Asignación de solicitudes
 
-El modelo ya contiene assignedOfficerId, y las rutas ahora aplican ese alcance. Sin embargo:
+**Estado actualizado:** implementada la asignación automática en el backend.
 
-- El formulario público crea solicitudes sin oficial asignado.
-- No se encontró una ruta de asignación en el backend.
-- Las nuevas solicitudes no aparecen en la bandeja de ningún oficial hasta que se asigne un responsable.
+- Las solicitudes nuevas entran en la cola y se asignan a oficiales activos.
+- Se selecciona al oficial con menor carga activa; los empates se resuelven por tiempo desde la última asignación y antigüedad del usuario.
+- La operación registra un evento de auditoría y se ejecuta dentro de la transacción de creación.
+- Si no hay oficiales activos, la solicitud permanece en `PENDING_ASSIGNMENT`.
+- Al crear o activar un oficial de crédito, se reprocesa la cola pendiente.
 
-No se implementó autoasignación ni se eligió un actor que distribuya las solicitudes porque el Product Owner no definió quién asigna, bajo qué criterio ni si el oficial puede tomar una solicitud libre. Se requiere esa definición antes de añadir el endpoint y la interfaz de asignación.
+**Punto de validación pendiente:** el criterio de menor carga es una decisión técnica del equipo; confirmar con el Product Owner si satisface la distribución esperada o si debe cambiarse.
 
 ### 3.2. Responsabilidad de formalización y registro del desembolso
 
