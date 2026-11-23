@@ -37,7 +37,7 @@ vive en la tabla `CreditPolicy` y lo carga un administrador con `POST /api/polic
 | F4 | Formalizar crea el préstamo en `PENDING_DISBURSEMENT`; desembolsar lo pasa a `ACTIVE` y genera el cronograma | `loan.service.js` |
 | F5 | Una solicitud con préstamo no se puede cancelar | `applicationStatus.service.js` |
 | F6 | Castigar (`WRITTEN_OFF`) lo hace solo ADMIN y exige justificación | `loan.routes.js` |
-| F7 | Valores de decisión: `APPROVED` / `REJECTED`; de evaluación: `SUPPORTS_APPROVAL` / `SUPPORTS_REJECTION` / `MANUAL_REVIEW` | `evaluation.js`, `applicationStatus.service.js` |
+| F7 | Valores de decisión: `APPROVED` / `APPROVED_WITH_CONDITIONS` / `REJECTED`; de evaluación: `SUPPORTS_APPROVAL` / `SUPPORTS_REJECTION` / `MANUAL_REVIEW` | `evaluation.js`, `applicationStatus.service.js` |
 | F8 | Una solicitud `REJECTED` es final (no hay reconsideración todavía) | `states.js` |
 | F9 | Los pagos confirmados no se corrigen: una reversión será un evento nuevo (aún no implementada) | `immutability.js` |
 | R1 | Roles ADMIN, CREDIT_OFFICER, AUDITOR y sus permisos | `src/domain/roles.js` |
@@ -59,7 +59,7 @@ Después de integrar hay que correr `npx prisma generate` y `npx prisma db push`
 2. **No hay límite de intentos de inicio de sesión** (fuerza bruta). Propuesta: `express-rate-limit` en `/api/auth/login`.
 3. **El formulario público no tiene límite de peticiones**: se puede llenar la base de solicitudes basura.
 
-## 5. Qué NO está hecho (necesita información que no existe aún)
+## 5. PO-03: criterios de elegibilidad incorporados\n\nLa política versionada incluye `maximumSimultaneousLoans`, `allowedPurposes` y `requireVerifiedResidence`. La evaluación consulta los préstamos internos de la persona para contar préstamos vigentes y detectar cuotas vencidas con saldo pendiente. La residencia se registra mediante `POST /api/applications/:id/verifications/residence`, con resultado, observaciones, oficial responsable y auditoría. No se acepta como verificación un dato enviado por el solicitante.\n\nLos criterios sin parámetro suficiente quedan como `NOT_EVALUABLE` y producen recomendación `MANUAL_REVIEW`; cualquier incumplimiento genera `SUPPORTS_REJECTION`, que sigue siendo una recomendación y no una decisión automática.\n\nLa pantalla de evaluación consume los endpoints reales de expediente, evaluaciones, historial, verificación y cambio de estado. La decisión admite aprobación, aprobación condicionada y rechazo; la aprobación condicionada conserva las condiciones y no se puede formalizar como préstamo mientras el flujo de cumplimiento de condiciones no exista.\n\n**Límite de datos actual:** el sistema identifica mora interna activa y muestra el número de solicitudes históricas, pero no conserva una clasificación estructurada de episodios de mora ya saldados ni una causa tipificada de rechazos históricos. No se inventa un período de espera por mora pasada: ese criterio requiere modelar eventos históricos verificables y parametrizar la ventana que determine la política.\n\n## 6. Qué NO está hecho (necesita información que no existe aún)
 
 - Reversión de pagos y reestructuración de préstamos (ADR-005 las deja abiertas).
 - Reconsideración de solicitudes rechazadas.
