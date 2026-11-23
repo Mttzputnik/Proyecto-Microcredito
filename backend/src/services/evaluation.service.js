@@ -11,7 +11,7 @@ export async function evaluateApplication(prisma, { applicationId, actor, policy
       where: { id: applicationId },
       include: { applicant: true }
     });
-    if (!application) throw httpError(404, "Solicitud no encontrada.");
+    if (!application || application.assignedOfficerId !== actor.id) throw httpError(404, "Solicitud no encontrada.");
     if (application.status !== "UNDER_REVIEW") {
       throw httpError(409, `La solicitud debe estar en revisión (UNDER_REVIEW) para evaluarla. Estado actual: ${application.status}.`);
     }

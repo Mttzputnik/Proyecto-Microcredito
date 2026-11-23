@@ -17,9 +17,9 @@ export async function changeApplicationStatus(prisma, { applicationId, toStatus,
   return prisma.$transaction(async (tx) => {
     const application = await tx.loanApplication.findUnique({
       where: { id: applicationId },
-      select: { id: true, status: true, loan: { select: { id: true } } }
+      select: { id: true, status: true, assignedOfficerId: true, loan: { select: { id: true } } }
     });
-    if (!application) throw httpError(404, "Solicitud no encontrada.");
+    if (!application || application.assignedOfficerId !== actor.id) throw httpError(404, "Solicitud no encontrada.");
 
     assertTransition(applicationTransitions, application.status, toStatus, "Solicitud");
 

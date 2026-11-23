@@ -1,12 +1,6 @@
-// Prueba de integración: recorre el flujo completo de la API contra una base de datos REAL.
-//
-// Se OMITE sola si no se configura TEST_DATABASE_URL. Por seguridad solo corre si el nombre de la base
-// termina en "_test" (al final BORRA esa base completa). NUNCA apuntes esto a la base "microcredito".
-//
-// Cómo correrla (PowerShell, desde la carpeta backend):
-//   $env:TEST_DATABASE_URL = "mongodb+srv://USUARIO:CLAVE@cluster0.xxxxx.mongodb.net/microcredito_test?retryWrites=true&w=majority"
-//   $env:DATABASE_URL = $env:TEST_DATABASE_URL ; npx prisma db push      # crea colecciones e índices en la base de prueba
-//   npm test
+// Prueba de integración: recorre el flujo de la API contra una base de datos REAL.
+// Solo se ejecuta si TEST_DATABASE_URL apunta a una base cuyo nombre termina en "_test".
+// Al finalizar elimina esa base de prueba completa. Nunca apuntar a la base de desarrollo/producción.
 import { describe, before, after, test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
@@ -20,7 +14,7 @@ const skip = dbName.endsWith("_test")
 
 const DAY = 24 * 60 * 60 * 1000;
 
-describe("flujo completo de la API", { skip }, () => {
+describe("flujo completo de la API y permisos por actor", { skip }, () => {
   let prisma, server, base;
   const tokens = {};
   const state = {};
@@ -44,12 +38,22 @@ describe("flujo completo de la API", { skip }, () => {
     const { default: app } = await import("../src/app.js");
 
     const passwordHash = await bcrypt.hash("Clave-de-prueba-1", 4);
-    for (const [key, role] of [["admin", "ADMIN"], ["officer", "CREDIT_OFFICER"], ["auditor", "AUDITOR"]]) {
+    const users = [
+      ["admin", "ADMIN"],
+      ["officer", "CREDIT_OFFICER"],
+      ["officer2", "CREDIT_OFFICER"],
+      ["risk", "analista_riesgo"],
+      ["administrative", "administrativo"],
+      ["committee", "comite_supervisor"],
+      ["auditor", "AUDITOR"]
+    ];
+    for (const [key, role] of users) {
       await prisma.user.create({ data: { firstName: key, lastName: "Prueba", email: `${key}@prueba.test`, passwordHash, role } });
     }
+
     server = http.createServer(app).listen(0);
     base = `http://127.0.0.1:${server.address().port}`;
-    for (const key of ["admin", "officer", "auditor"]) {
+    for (const [key] of users) {
       const login = await api("POST", "/api/auth/login", { body: { email: `${key}@prueba.test`, password: "Clave-de-prueba-1" } });
       tokens[key] = login.body.data.token;
     }
@@ -68,35 +72,54 @@ describe("flujo completo de la API", { skip }, () => {
     assert.equal((await api("POST", "/api/auth/login", { body: { email: "admin@prueba.test", password: "incorrecta" } })).status, 401);
   });
 
-  test("los roles se respetan: el auditor lee pero no crea políticas", async () => {
-    assert.equal((await api("GET", "/api/applications", { token: tokens.auditor })).status, 200);
-    assert.equal((await api("POST", "/api/policies", { token: tokens.auditor, body: { name: "Prueba" } })).status, 403);
+  test("cada actor queda limitado a sus operaciones", async () => {
+    assert.equal((await api("GET", "/api/applications", { token: tokens.officer })).status, 200);
+    assert.equal((await api("GET", "/api/applications", { token: tokens.auditor })).status, 403);
+    assert.equal((await api("GET", "/api/applications", { token: tokens.committee })).status, 403);
+    assert.equal((await api("GET", "/api/loans", { token: tokens.committee })).status, 403);
+    assert.equal((await api("GET", "/api/loans", { token: tokens.officer })).status, 403);
+    assert.equal((await api("GET", "/api/loans", { token: tokens.administrative })).status, 200);
+    assert.equal((await api("GET", "/api/policies", { token: tokens.risk })).status, 200);
+    assert.equal((await api("POST", "/api/policies", { token: tokens.admin, body: { name: "Prueba" } })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.officer, body: { name: "Prueba" } })).status, 403);
+    assert.equal((await api("POST", "/api/policies", { token: tokens.auditor, body: { name: "Prueba" } })).status, 403);
   });
 
-  test("evaluar sin política activa se rechaza con un mensaje claro", async () => {
+  test("el oficial solo consulta y gestiona solicitudes que tiene asignadas", async () => {
     const created = await api("POST", "/api/applications", { body: applicationPayload() });
     assert.equal(created.status, 201);
     state.applicationId = created.body.data.id;
+    const assignedOfficer = await prisma.user.findUnique({ where: { email: "officer@prueba.test" }, select: { id: true } });
+    await prisma.loanApplication.update({ where: { id: state.applicationId }, data: { assignedOfficerId: assignedOfficer.id } });
+
+    const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
+    assert.equal((await api("GET", "/api/applications", { token: tokens.officer2 })).body.data.length, 0);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: tokens.officer2 })).status, 404);
+    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: tokens.officer2 })).status, 404);
+    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer2, body: { status: "UNDER_REVIEW" } })).status, 404);
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "UNDER_REVIEW" } })).status, 200);
+    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: tokens.officer })).status, 200);
+  });
+
+  test("evaluar sin política activa se rechaza con un mensaje claro", async () => {
     const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: tokens.officer, body: {} });
     assert.equal(evaluation.status, 409);
     assert.match(evaluation.body.message, /política de crédito activa/);
   });
 
-  test("el admin crea políticas versionadas", async () => {
+  test("el analista de riesgo crea políticas versionadas", async () => {
     const policy = { name: "Prueba", minimumAge: 18, maximumAmount: 5_000_000, maximumTermMonths: 24, maxDebtRatio: 0.5, annualInterestRate: 24 };
-    const first = await api("POST", "/api/policies", { token: tokens.admin, body: policy });
+    const first = await api("POST", "/api/policies", { token: tokens.risk, body: policy });
     assert.equal(first.status, 201);
     assert.equal(first.body.data.version, 1);
-    const second = await api("POST", "/api/policies", { token: tokens.admin, body: { ...policy, maximumAmount: 6_000_000 } });
+    const second = await api("POST", "/api/policies", { token: tokens.risk, body: { ...policy, maximumAmount: 6_000_000 } });
     assert.equal(second.body.data.version, 2);
     const active = await api("GET", "/api/policies/active", { token: tokens.officer });
     assert.equal(active.body.data.version, 2);
-    assert.equal((await api("POST", "/api/policies", { token: tokens.admin, body: { name: "x", maxDebtRatio: 40 } })).status, 400);
+    assert.equal((await api("POST", "/api/policies", { token: tokens.risk, body: { name: "x", maxDebtRatio: 40 } })).status, 400);
   });
 
-  test("evaluación, decisión justificada y transiciones", async () => {
+  test("evaluación y decisión humana justificada", async () => {
     const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: tokens.officer, body: {} });
     assert.equal(evaluation.status, 201);
     assert.equal(evaluation.body.data.result, "SUPPORTS_APPROVAL");
@@ -115,63 +138,64 @@ describe("flujo completo de la API", { skip }, () => {
     assert.equal(invalid.status, 409);
   });
 
-  test("formalizar crea el préstamo una sola vez y bloquea cancelar la solicitud", async () => {
-    const loan = await api("POST", "/api/loans", { token: tokens.officer, body: { applicationId: state.applicationId } });
+  test("el área administrativa formaliza y registra el préstamo", async () => {
+    const loan = await api("POST", "/api/loans", { token: tokens.administrative, body: { applicationId: state.applicationId } });
     assert.equal(loan.status, 201);
     assert.equal(loan.body.data.status, "PENDING_DISBURSEMENT");
     assert.equal(loan.body.data.annualRate, 24);
     state.loanId = loan.body.data.id;
 
-    assert.equal((await api("POST", "/api/loans", { token: tokens.officer, body: { applicationId: state.applicationId } })).status, 409);
+    assert.equal((await api("POST", "/api/loans", { token: tokens.administrative, body: { applicationId: state.applicationId } })).status, 409);
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "CANCELLED" } })).status, 409);
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000 } })).status, 409);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000 } })).status, 403);
   });
 
-  test("desembolsar genera el cronograma y la mora marca las cuotas vencidas", async () => {
+  test("desembolsar genera el cronograma y la mora marca cuotas vencidas", async () => {
     const disbursementDate = new Date(Date.now() - 70 * DAY).toISOString();
-    const disbursed = await api("POST", `/api/loans/${state.loanId}/disburse`, { token: tokens.officer, body: { disbursementDate } });
+    const disbursed = await api("POST", `/api/loans/${state.loanId}/disburse`, { token: tokens.administrative, body: { disbursementDate } });
     assert.equal(disbursed.status, 201);
 
-    const detail = await api("GET", `/api/loans/${state.loanId}`, { token: tokens.auditor });
+    const detail = await api("GET", `/api/loans/${state.loanId}`, { token: tokens.administrative });
     assert.equal(detail.body.data.status, "ACTIVE");
     assert.equal(detail.body.data.paymentSchedules.length, 6);
     state.installments = detail.body.data.paymentSchedules;
     assert.equal(state.installments.reduce((sum, row) => sum + row.principal, 0), 1_200_000);
+    assert.equal((await api("GET", `/api/loans/${state.loanId}`, { token: tokens.committee })).status, 403);
 
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/disburse`, { token: tokens.officer, body: {} })).status, 409);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/disburse`, { token: tokens.administrative, body: {} })).status, 409);
 
-    const arrears = await api("POST", `/api/loans/${state.loanId}/refresh-arrears`, { token: tokens.officer });
+    const arrears = await api("POST", `/api/loans/${state.loanId}/refresh-arrears`, { token: tokens.administrative });
     assert.equal(arrears.status, 200);
     assert.equal(arrears.body.data.updated, 2);
     assert.ok(arrears.body.data.arrears.every((item) => item.daysOverdue > 0));
 
-    const list = await api("GET", "/api/loans/arrears", { token: tokens.auditor });
+    const list = await api("GET", "/api/loans/arrears", { token: tokens.administrative });
     assert.equal(list.body.data.length, 1);
     assert.equal(list.body.data[0].loanId, state.loanId);
   });
 
-  test("los pagos se reparten, cierran cuotas y no admiten excesos ni roles sin permiso", async () => {
+  test("los pagos se reparten, cierran cuotas y no admiten excesos", async () => {
     const first = state.installments[0];
     assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.auditor, body: { amount: 1000 } })).status, 403);
 
-    const partial = await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000, reference: "R-1" } });
+    const partial = await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.administrative, body: { amount: 1000, reference: "R-1" } });
     assert.equal(partial.status, 201);
-    const rest = await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: first.totalDue - 1000 } });
+    const rest = await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.administrative, body: { amount: first.totalDue - 1000 } });
     assert.equal(rest.status, 201);
 
-    const detail = await api("GET", `/api/loans/${state.loanId}`, { token: tokens.officer });
+    const detail = await api("GET", `/api/loans/${state.loanId}`, { token: tokens.administrative });
     assert.equal(detail.body.data.paymentSchedules[0].status, "PAID");
     assert.equal(detail.body.data.paymentSchedules[1].status, "OVERDUE");
     assert.equal(detail.body.data.payments.length, 2);
 
-    const tooMuch = await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 99_999_999 } });
-    assert.equal(tooMuch.status, 400);
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 10.5 } })).status, 400);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.administrative, body: { amount: 99_999_999 } })).status, 400);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.administrative, body: { amount: 10.5 } })).status, 400);
   });
 
-  test("la trazabilidad es completa y los registros no se pueden editar ni borrar", async () => {
-    const history = await api("GET", `/api/applications/${state.applicationId}/history`, { token: tokens.auditor });
+  test("la trazabilidad de la solicitud se limita al oficial asignado", async () => {
+    const history = await api("GET", `/api/applications/${state.applicationId}/history`, { token: tokens.officer });
     assert.equal(history.status, 200);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}/history`, { token: tokens.officer2 })).status, 404);
     const actions = history.body.data.map((event) => event.action);
     assert.ok(actions.includes("APPLICATION_STATUS_CHANGED") && actions.includes("RISK_EVALUATED"));
 
@@ -181,11 +205,10 @@ describe("flujo completo de la API", { skip }, () => {
     await assert.rejects(() => prisma.payment.updateMany({ data: { amount: 1 } }), (e) => e.code === "IMMUTABLE_RECORD");
   });
 
-  test("solo el admin puede castigar un préstamo y después no admite pagos", async () => {
+  test("el castigo de préstamos permanece bloqueado mientras no tenga actor autorizado", async () => {
     const body = { justification: "Cartera irrecuperable tras agotar la gestión de cobro." };
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/write-off`, { token: tokens.officer, body })).status, 403);
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/write-off`, { token: tokens.admin, body })).status, 200);
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000 } })).status, 409);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/write-off`, { token: tokens.admin, body })).status, 403);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/write-off`, { token: tokens.administrative, body })).status, 403);
   });
 });
 

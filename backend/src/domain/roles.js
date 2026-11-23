@@ -1,29 +1,42 @@
-// Roles del sistema. Los nombres se guardan como String en User.role.
-// PROPUESTA: la matriz definitiva de roles y permisos es una tarea pendiente del Project Manager.
-// Si cambia, se ajusta solo este archivo y las llamadas a authorize(...) en las rutas.
+// Roles técnicos asociados a los actores institucionales del dominio.
+// Los solicitantes no tienen una cuenta interna obligatoria: usan el flujo público.
+// ADMIN se conserva como rol técnico de bootstrap y gestión de usuarios.
+// AUDITOR se conserva únicamente por compatibilidad con cuentas antiguas; no recibe permisos operativos.
 
 export const ROLES = Object.freeze({
   ADMIN: "ADMIN",
   CREDIT_OFFICER: "CREDIT_OFFICER",
+  RISK_ANALYST: "analista_riesgo",
+  ADMINISTRATIVE_AREA: "administrativo",
+  SUPERVISORY_COMMITTEE: "comite_supervisor",
   AUDITOR: "AUDITOR"
 });
 
 export const ALL_ROLES = Object.freeze(Object.values(ROLES));
 
-const OPERATORS = [ROLES.ADMIN, ROLES.CREDIT_OFFICER];
-
-// Quién puede hacer qué (usado por las rutas).
+// Matriz inicial derivada de las responsabilidades confirmadas por el Product Owner.
+// El acceso a expedientes de oficiales debe limitarse además a sus solicitudes asignadas.
 export const PERMISSIONS = Object.freeze({
+  // Rol técnico: no equivale a un actor funcional ni hereda permisos de negocio.
   manageUsers: [ROLES.ADMIN],
-  readApplicants: ALL_ROLES,
-  editApplicants: OPERATORS,
-  readApplications: ALL_ROLES,
-  changeApplicationStatus: OPERATORS,
-  managePolicies: [ROLES.ADMIN],
-  readPolicies: ALL_ROLES,
-  evaluateApplications: OPERATORS,
-  readLoans: ALL_ROLES,
-  manageLoans: OPERATORS,
-  registerPayments: OPERATORS,
-  writeOffLoans: [ROLES.ADMIN]
+
+  // Oficiales: revisión de solicitantes y solicitudes, evaluación de apoyo y decisión humana.
+  readApplicants: [ROLES.CREDIT_OFFICER],
+  // Los datos originales de un solicitante no se editan después de presentar la solicitud.
+  editApplicants: [],
+  readApplications: [ROLES.CREDIT_OFFICER],
+  changeApplicationStatus: [ROLES.CREDIT_OFFICER],
+  evaluateApplications: [ROLES.CREDIT_OFFICER],
+
+  // Analistas de riesgo: configuración y consulta de políticas.
+  managePolicies: [ROLES.RISK_ANALYST],
+  readPolicies: [ROLES.RISK_ANALYST, ROLES.CREDIT_OFFICER],
+
+  // Área administrativa: seguimiento de préstamos, cronogramas y pagos.
+  readLoans: [ROLES.ADMINISTRATIVE_AREA],
+  manageLoans: [ROLES.ADMINISTRATIVE_AREA],
+  registerPayments: [ROLES.ADMINISTRATIVE_AREA],
+
+  // No se asigna la baja/castigo de préstamos a un actor: el PO no definió esa atribución.
+  writeOffLoans: []
 });

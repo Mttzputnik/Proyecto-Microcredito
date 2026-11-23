@@ -18,7 +18,7 @@ const applicantSummary = { id: true, firstName: true, lastName: true, documentTy
 // GET /api/applications?status=SUBMITTED&page=1&limit=20
 router.get("/", authorize(...PERMISSIONS.readApplications), async (req, res) => {
   const { status, page, limit } = parseOrThrow(listApplicationsQuery, req.query, "Los filtros no son válidos.");
-  const where = status ? { status } : {};
+  const where = { assignedOfficerId: req.user.id, ...(status ? { status } : {}) };
 
   const [total, items] = await Promise.all([
     prisma.loanApplication.count({ where }),
@@ -47,8 +47,8 @@ router.get("/", authorize(...PERMISSIONS.readApplications), async (req, res) => 
 // GET /api/applications/:id  (detalle + decisiones + estados siguientes permitidos)
 router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) => {
   const id = requireObjectId(req.params.id);
-  const application = await prisma.loanApplication.findUnique({
-    where: { id },
+  const application = await prisma.loanApplication.findFirst({
+    where: { id, assignedOfficerId: req.user.id },
     include: {
       applicant: true,
       assignedOfficer: { select: { id: true, firstName: true, lastName: true } },
@@ -87,6 +87,8 @@ router.patch("/:id/status", authorize(...PERMISSIONS.changeApplicationStatus), a
 // GET /api/applications/:id/history  (trazabilidad: quién cambió qué y cuándo)
 router.get("/:id/history", authorize(...PERMISSIONS.readApplications), async (req, res) => {
   const id = requireObjectId(req.params.id);
+  const assigned = await prisma.loanApplication.findFirst({ where: { id, assignedOfficerId: req.user.id }, select: { id: true } });
+  if (!assigned) throw httpError(404, "Solicitud no encontrada.");
   const events = await prisma.auditLog.findMany({
     where: { entityType: "LoanApplication", entityId: id },
     orderBy: { occurredAt: "asc" }
