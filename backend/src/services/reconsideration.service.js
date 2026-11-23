@@ -99,7 +99,7 @@ export async function listAssignedReconsiderations(prisma, actor) {
 }
 
 export async function decideReconsideration(prisma, { reconsiderationId, actor, outcome, justification }) {
-  if (!["APPROVED", "REJECTED"].includes(outcome)) throw httpError(400, "El resultado de la reconsideración no es válido.");
+  if (!["ACCEPTED", "UPHELD"].includes(outcome)) throw httpError(400, "El resultado de la reconsideración no es válido.");
   if (!justification?.trim() || justification.trim().length < 10) {
     throw httpError(400, "La decisión requiere una justificación de al menos 10 caracteres.");
   }
