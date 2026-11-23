@@ -4,9 +4,10 @@ import { writeAudit } from "./audit.service.js";
 export const DECISION_STATES = Object.freeze(["APPROVED", "APPROVED_WITH_CONDITIONS", "REJECTED"]);
 export async function changeApplicationStatus(prisma, { applicationId, toStatus, actor, justification, conditions, note }) {
   const isDecision = DECISION_STATES.includes(toStatus);
-  if (isDecision && !justification?.trim()) throw httpError(400, "Toda decisión requiere una justificación.");
-  if (toStatus === "APPROVED_WITH_CONDITIONS" && !conditions?.trim())
-    throw httpError(400, "La aprobación condicionada requiere registrar las condiciones.");
+  if (isDecision && (!justification?.trim() || justification.trim().length < 10))
+    throw httpError(400, "Toda decisión requiere una justificación de al menos 10 caracteres.");
+  if (toStatus === "APPROVED_WITH_CONDITIONS" && (!conditions?.trim() || conditions.trim().length < 10))
+    throw httpError(400, "La aprobación condicionada requiere condiciones de al menos 10 caracteres.");
   return prisma.$transaction(async (tx) => {
     const application = await tx.loanApplication.findUnique({
       where: { id: applicationId }, select: { id: true, status: true, assignedOfficerId: true, loan: { select: { id: true } } }
