@@ -10,6 +10,7 @@ import userRoutes from "./routes/user.routes.js";
 import policyRoutes from "./routes/policy.routes.js";
 import applicationEvaluationRoutes from "./routes/application.evaluation.routes.js";
 import loanRoutes from "./routes/loan.routes.js";
+import reconsiderationRoutes from "./routes/reconsideration.routes.js";
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use("/api/applicants", applicantRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/applications", applicationManagementRoutes);
 app.use("/api/applications", applicationEvaluationRoutes);
+app.use("/api/reconsiderations", reconsiderationRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/loans", loanRoutes);
 
