@@ -32,18 +32,24 @@ export function evaluate({ applicant, application, policy, internalHistory = {},
   if (isSet(policy.minimumAge)) {
     if (age === null) addCheck("MINIMUM_AGE", "Edad mínima", "NOT_EVALUABLE", "No hay fecha de nacimiento verificable.");
     else addCheck("MINIMUM_AGE", "Edad mínima", age >= policy.minimumAge ? "PASS" : "FAIL", `Edad ${age}; mínimo ${policy.minimumAge}.`);
-  }
+  } else addCheck("MINIMUM_AGE", "Edad mínima", "NOT_EVALUABLE", "La política no define la edad mínima.");
+
   if (isSet(policy.maximumAmount)) addCheck("MAXIMUM_AMOUNT", "Monto máximo",
     application.requestedAmount <= policy.maximumAmount ? "PASS" : "FAIL",
     `Solicitado ${application.requestedAmount}; máximo ${policy.maximumAmount}.`);
+  else addCheck("MAXIMUM_AMOUNT", "Monto máximo", "NOT_EVALUABLE", "La política no define el monto máximo.");
+
   if (isSet(policy.maximumTermMonths)) addCheck("MAXIMUM_TERM", "Plazo máximo",
     application.requestedTerm <= policy.maximumTermMonths ? "PASS" : "FAIL",
     `Solicitado ${application.requestedTerm} meses; máximo ${policy.maximumTermMonths}.`);
+  else addCheck("MAXIMUM_TERM", "Plazo máximo", "NOT_EVALUABLE", "La política no define el plazo máximo.");
+
   if (isSet(policy.maxDebtRatio)) {
     if (debtToIncomeRatio === null) addCheck("DEBT_RATIO", "Relación deuda/ingreso", "NOT_EVALUABLE", "Falta la tasa de la política o el ingreso mensual.");
     else addCheck("DEBT_RATIO", "Relación deuda/ingreso", debtToIncomeRatio <= policy.maxDebtRatio ? "PASS" : "FAIL",
       `Relación ${debtToIncomeRatio}; máximo ${policy.maxDebtRatio}.`);
-  }
+  } else addCheck("DEBT_RATIO", "Relación deuda/ingreso", "NOT_EVALUABLE", "La política no define el máximo de endeudamiento.");
+
   if (policy.requireVerifiedResidence !== false) {
     if (!residenceVerification) addCheck("VERIFIED_RESIDENCE", "Residencia verificable", "NOT_EVALUABLE", "El oficial aún no registra la verificación de residencia.");
     else addCheck("VERIFIED_RESIDENCE", "Residencia verificable", residenceVerification.verified ? "PASS" : "FAIL", residenceVerification.notes);
