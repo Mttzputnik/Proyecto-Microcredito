@@ -26,6 +26,7 @@ const stepFields = [
     "documentNumber",
     "birthDate",
     "phone",
+    "address",
     "municipality",
     "residenceZone",
   ],
@@ -119,6 +120,7 @@ export default function NewApplicationPage() {
           lastName: nameParts.slice(1).join(" "),
           birthDate: values.birthDate.startOf("day").toISOString(),
           phone: values.phone,
+          address: values.address,
           municipality: values.municipality,
           residenceZone: values.residenceZone,
           occupation: values.occupation,
@@ -281,6 +283,13 @@ export default function NewApplicationPage() {
                 rules={[{ required: true, min: 7 }]}
               >
                 <Input autoComplete="tel" />
+              </ApplicationField>
+              <ApplicationField
+                name="address"
+                label="Dirección de residencia"
+                rules={[{ required: true, min: 5, message: "Ingresa una dirección válida." }]}
+              >
+                <Input autoComplete="street-address" />
               </ApplicationField>
               <ApplicationField
                 name="municipality"

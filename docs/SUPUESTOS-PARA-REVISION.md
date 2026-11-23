@@ -5,7 +5,7 @@ solo lugar, así que si el Product Owner pide otra cosa se cambia en minutos. **
 revisar la tabla y marcar solo las que se quieran cambiar.
 
 Reglas que NO se inventaron: **no hay ninguna tasa, monto máximo, plazo máximo ni umbral escrito en el código.** Todo eso
-vive en la tabla `CreditPolicy` y lo carga un administrador con `POST /api/policies` usando los valores confirmados por el PO
+vive en la tabla `CreditPolicy` y lo configura el analista de riesgo con `POST /api/policies` usando los valores confirmados por el PO
 (ADR-003, ADR-005). Mientras no exista una política activa, evaluar solicitudes responde un error claro en vez de adivinar.
 
 ## 1. Supuestos financieros (dónde cambiarlos)
@@ -32,12 +32,12 @@ vive en la tabla `CreditPolicy` y lo carga un administrador con `POST /api/polic
 | # | Supuesto | Dónde |
 |---|---|---|
 | F1 | Evaluar solo si la solicitud está `UNDER_REVIEW`; la evaluación no cambia el estado | `evaluation.service.js` |
-| F2 | Aprobar o rechazar exige justificación (≥ 10 caracteres) y genera una `LoanDecision` | `applicationStatus.service.js` |
+| F2 | Aprobar, aprobar con condiciones o rechazar exige justificación (≥ 10 caracteres) y genera una `LoanDecision`; la aprobación condicionada exige además registrar sus condiciones | `applicationStatus.service.js` |
 | F3 | Aprobar **no** exige haber evaluado antes (la evaluación es apoyo, ADR-004). Formalizar sí exige una evaluación con política que tenga tasa | `loan.service.js` |
 | F4 | Formalizar crea el préstamo en `PENDING_DISBURSEMENT`; desembolsar lo pasa a `ACTIVE` y genera el cronograma | `loan.service.js` |
 | F5 | Una solicitud con préstamo no se puede cancelar | `applicationStatus.service.js` |
 | F6 | Castigar (`WRITTEN_OFF`) lo hace solo ADMIN y exige justificación | `loan.routes.js` |
-| F7 | Valores de decisión: `APPROVED` / `REJECTED`; de evaluación: `SUPPORTS_APPROVAL` / `SUPPORTS_REJECTION` / `MANUAL_REVIEW` | `evaluation.js`, `applicationStatus.service.js` |
+| F7 | Valores de decisión: `APPROVED` / `APPROVED_WITH_CONDITIONS` / `REJECTED`; de evaluación: `SUPPORTS_APPROVAL` / `SUPPORTS_REJECTION` / `MANUAL_REVIEW` | `evaluation.js`, `applicationStatus.service.js` |
 | F8 | Una solicitud `REJECTED` es final (no hay reconsideración todavía) | `states.js` |
 | F9 | Los pagos confirmados no se corrigen: una reversión será un evento nuevo (aún no implementada) | `immutability.js` |
 | R1 | Roles ADMIN, CREDIT_OFFICER, AUDITOR y sus permisos | `src/domain/roles.js` |
@@ -59,9 +59,19 @@ Después de integrar hay que correr `npx prisma generate` y `npx prisma db push`
 2. **No hay límite de intentos de inicio de sesión** (fuerza bruta). Propuesta: `express-rate-limit` en `/api/auth/login`.
 3. **El formulario público no tiene límite de peticiones**: se puede llenar la base de solicitudes basura.
 
-## 5. Qué NO está hecho (necesita información que no existe aún)
+## 5. PO-03: criterios de elegibilidad incorporados
+
+La política versionada incluye `maximumSimultaneousLoans`, `allowedPurposes` y `requireVerifiedResidence`. El límite de préstamos simultáneos se calcula con los préstamos internos registrados en la cooperativa; las deudas externas se reflejan en los pagos mensuales declarados, pero el sistema no verifica registros externos. La evaluación consulta las solicitudes y préstamos internos de la persona para mostrar solicitudes previas, decisiones aprobadas/rechazadas, contar préstamos vigentes y detectar cuotas vencidas con saldo pendiente. La residencia se registra mediante `POST /api/applications/:id/verifications/residence`, con resultado, observaciones, oficial responsable y auditoría. No se acepta como verificación un dato enviado por el solicitante.
+
+Los criterios sin parámetro suficiente quedan como `NOT_EVALUABLE` y producen recomendación `MANUAL_REVIEW`; cualquier incumplimiento genera `SUPPORTS_REJECTION`, que sigue siendo una recomendación y no una decisión automática.
+
+La pantalla de evaluación consume los endpoints reales de expediente, evaluaciones, historial, verificación y cambio de estado. La decisión admite aprobación, aprobación condicionada y rechazo; la aprobación condicionada conserva las condiciones y no se puede formalizar como préstamo mientras el flujo de cumplimiento de condiciones no exista.
+
+**Límite de datos actual:** el sistema identifica mora interna activa y muestra solicitudes previas, conteos de aprobaciones/rechazos y préstamos históricos, pero no conserva una clasificación estructurada de episodios de mora ya saldados ni una causa tipificada de rechazos históricos. No se inventa un período de espera por mora pasada: ese criterio requiere modelar eventos históricos verificables y parametrizar la ventana que determine la política.
+
+## 6. Qué NO está hecho (necesita información que no existe aún)
 
 - Reversión de pagos y reestructuración de préstamos (ADR-005 las deja abiertas).
 - Reconsideración de solicitudes rechazadas.
 - Alertas (no existe un modelo `Alert` en el esquema).
-- Valores reales de la política de crédito: los debe cargar el administrador con los datos del PO.
+- Valores reales de la política de crédito: debe configurarlos el analista de riesgo con los datos confirmados por el PO.
