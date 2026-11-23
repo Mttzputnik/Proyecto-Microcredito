@@ -11,12 +11,13 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
   const match = (row, where = {}) =>
     Object.entries(where).every(([key, value]) => (value !== null && typeof value === "object" && !(value instanceof Date)) || row[key] === value);
   const applicant = { id: "ap1", birthDate: "1990-01-01T00:00:00Z", monthlyIncome: 3_000_000, monthlyExpenses: 1_000_000, monthlyDebtPayments: 0 };
+  const effectivePolicy = { minimumAge: 18, maximumAmount: 5_000_000, maximumTermMonths: 24, maxDebtRatio: 0.4, requireVerifiedResidence: true, allowedPurposes: ["EDUCATION"], maximumSimultaneousLoans: 2, ...policy };
 
   const t = {
-    loanApplication: [{ id: "app1", status, assignedOfficerId: "u1", requestedAmount: 1_200_000, requestedTerm: 6, applicant }],
+    loanApplication: [{ id: "app1", applicantId: "ap1", status, assignedOfficerId: "u1", requestedAmount: 1_200_000, requestedTerm: 6, purpose: "EDUCATION", applicant, verification: { verified: true, notes: "Verificada", verifiedAt: new Date() } }],
     loanDecision: [{ id: "dec1", applicationId: "app1", outcome: "APPROVED", decidedAt: new Date() }],
-    riskEvaluation: withEvaluation ? [{ id: "ev1", applicationId: "app1", policyId: policy.id, policy }] : [],
-    creditPolicy: [{ ...policy, active: true, effectiveFrom: new Date("2026-01-01") }],
+    riskEvaluation: withEvaluation ? [{ id: "ev1", applicationId: "app1", policyId: effectivePolicy.id, policy: effectivePolicy }] : [],
+    creditPolicy: [{ ...effectivePolicy, active: true, effectiveFrom: new Date("2026-01-01") }],
     loan: [], paymentSchedule: [], payment: [], auditLog: []
   };
   const collection = (name) => ({
@@ -33,7 +34,10 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
       findUnique: async ({ where }) => {
         const application = t.loanApplication.find((r) => r.id === where.id);
         return application ? { ...application, loan: t.loan.find((l) => l.applicationId === application.id) ?? null } : null;
-      }
+      },
+      findMany: async ({ where } = {}) => t.loanApplication
+        .filter((r) => r.applicantId === where?.applicantId && r.id !== where?.id?.not)
+        .map((r) => ({ ...r, loan: t.loan.find((l) => l.applicationId === r.id) ?? null }))
     },
     loanDecision: { findFirst: async ({ where }) => t.loanDecision.filter((r) => match(r, where)).at(-1) ?? null },
     riskEvaluation: {
