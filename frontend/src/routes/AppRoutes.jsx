@@ -44,7 +44,7 @@ export default function AppRoutes() {
           <Route path="help" element={<HelpPage />} />
         </Route>
       </Route>
-      <Route element={<RoleRoute roles={["oficial_credito", "analista_riesgo", "administrativo", "comite_supervisor", "CREDIT_OFFICER", "ADMIN", "AUDITOR"]} />}>
+      <Route element={<RoleRoute roles={["oficial_credito", "analista_riesgo", "administrativo", "comite_supervisor", "CREDIT_OFFICER"]} />}>
         <Route path="/internal" element={<InternalLayout />}>
           <Route index element={<InternalDashboardPage />} />
           <Route path="applications" element={<ApplicationsPage />} />
@@ -54,7 +54,7 @@ export default function AppRoutes() {
           <Route path="applicants/:id" element={<ApplicantDetailPage />} />
           <Route path="policies" element={<PoliciesPage />} />
           <Route path="audit" element={<AuditPage />} />
-          <Route element={<RoleRoute roles={["administrativo", "comite_supervisor", "ADMIN", "AUDITOR"]} />}><Route path="reports" element={<ReportsPage />} /></Route>
+          <Route element={<RoleRoute roles={["administrativo", "comite_supervisor"]} />}><Route path="reports" element={<ReportsPage />} /></Route>
         </Route>
       </Route>
     </Route>
