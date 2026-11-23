@@ -36,12 +36,20 @@ router.get("/", authorize(...PERMISSIONS.readApplications), async (req, res) => 
         status: true,
         createdAt: true,
         applicant: { select: applicantSummary },
+        applicantSnapshot: { select: { firstName: true, lastName: true, documentType: true, documentNumber: true, municipality: true, phone: true } },
         assignedOfficer: { select: { id: true, firstName: true, lastName: true } }
       }
     })
   ]);
 
-  res.json({ success: true, data: items, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  res.json({
+    success: true,
+    data: items.map(({ applicant, applicantSnapshot, ...item }) => ({
+      ...item,
+      applicant: applicantSnapshot ?? applicant
+    })),
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+  });
 });
 
 // GET /api/applications/:id  (detalle + decisiones + estados siguientes permitidos)
@@ -51,6 +59,7 @@ router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) 
     where: { id, assignedOfficerId: req.user.id },
     include: {
       applicant: true,
+      applicantSnapshot: true,
       assignedOfficer: { select: { id: true, firstName: true, lastName: true } },
       loan: { select: { id: true, loanNumber: true, status: true } },
       evaluations: { orderBy: { evaluatedAt: "desc" }, take: 5 },
@@ -64,7 +73,11 @@ router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) 
 
   res.json({
     success: true,
-    data: { ...application, allowedNextStatuses: applicationTransitions[application.status] ?? [] }
+    data: {
+      ...application,
+      applicant: application.applicantSnapshot ?? application.applicant,
+      allowedNextStatuses: applicationTransitions[application.status] ?? []
+    }
   });
 });
 
