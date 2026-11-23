@@ -1,13 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { submitReconsideration, decideReconsideration } from "../src/services/reconsideration.service.js";
+import { hashTrackingToken } from "../src/services/applicationTracking.service.js";
 
 const originalOfficer = "a".repeat(24);
 const alternateOfficer = "b".repeat(24);
 const applicationId = "c".repeat(24);
 const reconsiderationId = "d".repeat(24);
 const token = "x".repeat(48);
-const hash = "hash";
+const hash = hashTrackingToken(token);
 
 function fakeDb({ status = "REJECTED", existing = null, assignedOfficerId = alternateOfficer } = {}) {
   const calls = { created: [], updates: [], audits: [], appUpdates: [] };
