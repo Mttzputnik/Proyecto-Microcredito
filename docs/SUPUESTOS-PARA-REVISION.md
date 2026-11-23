@@ -5,7 +5,7 @@ solo lugar, así que si el Product Owner pide otra cosa se cambia en minutos. **
 revisar la tabla y marcar solo las que se quieran cambiar.
 
 Reglas que NO se inventaron: **no hay ninguna tasa, monto máximo, plazo máximo ni umbral escrito en el código.** Todo eso
-vive en la tabla `CreditPolicy` y lo carga un administrador con `POST /api/policies` usando los valores confirmados por el PO
+vive en la tabla `CreditPolicy` y lo configura el analista de riesgo con `POST /api/policies` usando los valores confirmados por el PO
 (ADR-003, ADR-005). Mientras no exista una política activa, evaluar solicitudes responde un error claro en vez de adivinar.
 
 ## 1. Supuestos financieros (dónde cambiarlos)
@@ -32,7 +32,7 @@ vive en la tabla `CreditPolicy` y lo carga un administrador con `POST /api/polic
 | # | Supuesto | Dónde |
 |---|---|---|
 | F1 | Evaluar solo si la solicitud está `UNDER_REVIEW`; la evaluación no cambia el estado | `evaluation.service.js` |
-| F2 | Aprobar o rechazar exige justificación (≥ 10 caracteres) y genera una `LoanDecision` | `applicationStatus.service.js` |
+| F2 | Aprobar, aprobar con condiciones o rechazar exige justificación (≥ 10 caracteres) y genera una `LoanDecision`; la aprobación condicionada exige además registrar sus condiciones | `applicationStatus.service.js` |
 | F3 | Aprobar **no** exige haber evaluado antes (la evaluación es apoyo, ADR-004). Formalizar sí exige una evaluación con política que tenga tasa | `loan.service.js` |
 | F4 | Formalizar crea el préstamo en `PENDING_DISBURSEMENT`; desembolsar lo pasa a `ACTIVE` y genera el cronograma | `loan.service.js` |
 | F5 | Una solicitud con préstamo no se puede cancelar | `applicationStatus.service.js` |
