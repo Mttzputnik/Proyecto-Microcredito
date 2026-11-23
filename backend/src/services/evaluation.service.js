@@ -7,7 +7,7 @@ const ACTIVE_LOAN_STATUSES = ["PENDING_DISBURSEMENT", "ACTIVE"];
 async function loadInternalHistory(tx, applicantId, today) {
   const applications = await tx.loanApplication.findMany({
     where: { applicantId },
-    select: { id: true, loan: { select: { id: true, status: true, paymentSchedules: {
+    select: { id: true, status: true, loan: { select: { id: true, status: true, paymentSchedules: {
       select: { dueDate: true, totalDue: true, paidAmount: true, status: true }
     } } } }
   });
@@ -17,7 +17,14 @@ async function loadInternalHistory(tx, applicantId, today) {
   const hasActiveDelinquency = activeLoans.some((loan) => loan.paymentSchedules.some((schedule) =>
     schedule.totalDue - (schedule.paidAmount ?? 0) > 0 &&
     Date.UTC(new Date(schedule.dueDate).getUTCFullYear(), new Date(schedule.dueDate).getUTCMonth(), new Date(schedule.dueDate).getUTCDate()) < todayUtc));
-  return { activeLoans: activeLoans.length, historicalApplications: applications.length, hasActiveDelinquency };
+  return {
+    activeLoans: activeLoans.length,
+    historicalApplications: applications.length,
+    previousApprovedApplications: applications.filter((item) => item.status === "APPROVED").length,
+    previousRejectedApplications: applications.filter((item) => item.status === "REJECTED").length,
+    historicalLoans: loans.length,
+    hasActiveDelinquency
+  };
 }
 
 export async function evaluateApplication(prisma, { applicationId, actor, policyId, now = new Date() }) {
