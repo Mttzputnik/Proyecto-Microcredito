@@ -10,7 +10,7 @@ const completeEvidence = {
   internalHistory: { activeLoans: 0, historicalApplications: 0, previousApprovedApplications: 0, previousRejectedApplications: 0, historicalLoans: 0, hasActiveDelinquency: false },
   residenceVerification: { verified: true, notes: "Verificada", verifiedAt: today }
 };
-const evaluateWithCompleteEvidence = (args) => evaluateWithCompleteEvidence({ ...args, ...completeEvidence });
+const evaluateWithCompleteEvidence = (args) => evaluate({ ...args, ...completeEvidence });
 
 test("ageInYears respeta si ya pasó el cumpleaños", () => {
   assert.equal(ageInYears("1990-11-12T00:00:00Z", today), 36);
