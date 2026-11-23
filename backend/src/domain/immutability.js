@@ -2,7 +2,7 @@
 // ni se borran en silencio. Una corrección se registra como un NUEVO evento, nunca editando el anterior.
 // Se aplica en src/config/prisma.js a TODAS las consultas que pasan por el cliente compartido.
 
-export const IMMUTABLE_MODELS = Object.freeze(["AuditLog", "LoanDecision", "Payment"]);
+export const IMMUTABLE_MODELS = Object.freeze(["AuditLog", "LoanDecision", "Payment", "ApplicationApplicantSnapshot"]);
 
 const MUTATING_OPERATION = /^(update|upsert|delete)/;
 
