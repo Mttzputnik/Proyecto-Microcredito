@@ -2,7 +2,7 @@ import client from "../api/client";
 import { mockApplications } from "../mocks/data";
 const wait = (data, delay = 300) =>
   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-const useApi = import.meta.env.VITE_AUTH_MODE === "api";
+const useApi = (import.meta.env.VITE_AUTH_MODE || "api") === "api";
 export async function createLoanApplication(payload) {
   const response = await client.post("/applications", payload);
   if (!response.data?.success || !response.data?.data?.applicationNumber)
