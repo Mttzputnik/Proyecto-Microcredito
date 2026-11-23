@@ -1,0 +1,25 @@
+export const ROLES = Object.freeze({
+  ADMIN: "ADMIN",
+  CREDIT_OFFICER: "CREDIT_OFFICER",
+  RISK_ANALYST: "RISK_ANALYST",
+  COMMITTEE_SUPERVISOR: "COMMITTEE_SUPERVISOR",
+  AUDITOR: "AUDITOR",
+  APPLICANT: "APPLICANT",
+});
+
+export const ROLE_LABELS = Object.freeze({
+  [ROLES.ADMIN]: "Administrador",
+  [ROLES.CREDIT_OFFICER]: "Oficial de crédito",
+  [ROLES.RISK_ANALYST]: "Analista de riesgo",
+  [ROLES.COMMITTEE_SUPERVISOR]: "Comité supervisor",
+  [ROLES.AUDITOR]: "Auditor",
+  [ROLES.APPLICANT]: "Solicitante",
+});
+
+export const INTERNAL_ROLES = Object.freeze([
+  ROLES.ADMIN,
+  ROLES.CREDIT_OFFICER,
+  ROLES.RISK_ANALYST,
+  ROLES.COMMITTEE_SUPERVISOR,
+  ROLES.AUDITOR,
+]);
