@@ -4,7 +4,7 @@ import { ageInYears, evaluate, RECOMMENDATIONS } from "../src/domain/evaluation.
 
 const today = new Date("2026-11-12T12:00:00Z");
 const applicant = { birthDate: "1990-05-20T00:00:00.000Z", monthlyIncome: 2_000_000, monthlyExpenses: 800_000, monthlyDebtPayments: 100_000 };
-const application = { requestedAmount: 1_000_000, requestedTerm: 12 };
+const application = { requestedAmount: 1_000_000, requestedTerm: 12, purpose: "EDUCATION" };
 const fullPolicy = { minimumAge: 18, maximumAmount: 5_000_000, maximumTermMonths: 24, maxDebtRatio: 0.4, annualInterestRate: 24, requireVerifiedResidence: true, allowedPurposes: ["EDUCATION"], maximumSimultaneousLoans: 2 };
 const completeEvidence = {
   internalHistory: { activeLoans: 0, historicalApplications: 0, previousApprovedApplications: 0, previousRejectedApplications: 0, historicalLoans: 0, hasActiveDelinquency: false },
