@@ -3,10 +3,11 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
-import { PERMISSIONS } from "../domain/roles.js";
+import { PERMISSIONS, ROLES } from "../domain/roles.js";
 import { createUserSchema } from "../validators/auth.validator.js";
 import { httpError, parseOrThrow } from "../utils/httpError.js";
 import { writeAudit } from "../services/audit.service.js";
+import { assignPendingApplications } from "../services/applicationAssignment.service.js";
 
 const router = Router();
 router.use(authenticate, authorize(...PERMISSIONS.manageUsers));
@@ -37,6 +38,11 @@ router.post("/", async (req, res) => {
     entityId: user.id,
     description: `Usuario ${user.email} creado con rol ${user.role}`
   });
+
+  // Si se habilita un oficial después de que existían casos pendientes, se reprocesa la cola.
+  if (user.role === ROLES.CREDIT_OFFICER && user.active) {
+    await prisma.$transaction((tx) => assignPendingApplications(tx));
+  }
   res.status(201).json({ success: true, data: user });
 });
 
