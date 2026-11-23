@@ -3,8 +3,6 @@ import { matchesTrackingToken } from "./applicationTracking.service.js";
 import { selectOfficerByWorkload } from "./applicationAssignment.service.js";
 import { writeAudit } from "./audit.service.js";
 
-const ACTIVE_APPLICATION_STATUSES = ["SUBMITTED", "UNDER_REVIEW", "NEEDS_INFORMATION"];
-
 async function selectReconsiderationOfficer(tx, originalOfficerId) {
   const officers = await tx.user.findMany({
     where: { role: "CREDIT_OFFICER", active: true, id: { not: originalOfficerId } },
@@ -89,7 +87,11 @@ export async function listAssignedReconsiderations(prisma, actor) {
       application: {
         select: {
           id: true, applicationNumber: true, status: true, requestedAmount: true, requestedTerm: true, purpose: true,
-          applicantSnapshot: { select: { firstName: true, lastName: true, documentType: true, documentNumber: true } }
+          applicantSnapshot: { select: { firstName: true, lastName: true, documentType: true, documentNumber: true } },
+          decisions: {
+            where: { outcome: "REJECTED" }, orderBy: { decidedAt: "desc" }, take: 1,
+            include: { officer: { select: { id: true, firstName: true, lastName: true } } }
+          }
         }
       }
     }
