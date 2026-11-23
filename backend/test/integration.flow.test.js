@@ -96,7 +96,9 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
       where: { id: created.body.data.assignedOfficerId },
       select: { id: true, email: true }
     });
-    const assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
+    state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
+    state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : tokens.officer2;
+    const assignedToken = state.assignedToken;
 
     const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
     assert.equal((await api("GET", "/api/applications", { token: tokens.officer2 })).body.data.length, 0);
@@ -202,7 +204,7 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
   test("la trazabilidad de la solicitud se limita al oficial asignado", async () => {
     const history = await api("GET", `/api/applications/${state.applicationId}/history`, { token: state.assignedToken });
     assert.equal(history.status, 200);
-    assert.equal((await api("GET", `/api/applications/${state.applicationId}/history`, { token: state.assignedToken2 })).status, 404);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}/history`, { token: state.otherOfficerToken })).status, 404);
     const actions = history.body.data.map((event) => event.action);
     assert.ok(actions.includes("APPLICATION_AUTO_ASSIGNED"));
     assert.ok(actions.includes("APPLICATION_STATUS_CHANGED") && actions.includes("RISK_EVALUATED"));
