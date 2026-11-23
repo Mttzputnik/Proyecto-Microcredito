@@ -39,7 +39,7 @@ function ReviewCard({ item, onResolved }) {
       </div>
       <Form form={form} layout="vertical" onFinish={submit}>
         <Form.Item name="outcome" label="Resultado de la reconsideración" rules={[{ required: true, message: "Selecciona el resultado." }]}>
-          <Radio.Group options={[{ label: "Aceptar reconsideración", value: "APPROVED" }, { label: "Mantener el rechazo", value: "REJECTED" }]} />
+          <Radio.Group options={[{ label: "Aceptar reconsideración y continuar revisión", value: "ACCEPTED" }, { label: "Confirmar el rechazo original", value: "UPHELD" }]} />
         </Form.Item>
         <Form.Item name="justification" label="Justificación del resultado" rules={[{ required: true, message: "Registra la justificación." }, { min: 10, message: "Escribe al menos 10 caracteres." }, { max: 2000, message: "No superes los 2000 caracteres." }]}>
           <Input.TextArea rows={3} maxLength={2000} showCount />
