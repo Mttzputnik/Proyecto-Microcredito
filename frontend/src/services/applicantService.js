@@ -2,7 +2,7 @@ import client from "../api/client";
 import { mockUsers } from "../mocks/data";
 const wait = (data, delay = 300) =>
   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-const useApi = import.meta.env.VITE_AUTH_MODE === "api";
+const useApi = (import.meta.env.VITE_AUTH_MODE || "api") === "api";
 export const applicantService = {
   async list({ search = "", page = 1, limit = 20 } = {}) {
     if (useApi) {
