@@ -1,14 +1,19 @@
 import client from "../api/client";
 import { mockUsers } from "../mocks/data";
+import { ROLE_LABELS } from "../domain/roles";
 
 const wait = (data, delay = 350) => new Promise((resolve) => setTimeout(() => resolve(data), delay));
 const authMode = import.meta.env.VITE_AUTH_MODE || "api";
-const backendRoleLabels = { ADMIN: "Administrador", CREDIT_OFFICER: "Oficial de crédito", AUDITOR: "Auditor" };
 
 function normalizeUser(user) {
   if (!user) return user;
-  return { ...user, name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(), roleLabel: user.roleLabel || backendRoleLabels[user.role] || user.role };
+  return {
+    ...user,
+    name: user.name || `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+    roleLabel: ROLE_LABELS[user.role] || user.role,
+  };
 }
+
 function normalizeSession(payload) {
   const session = payload?.data?.token ? payload.data : payload;
   if (!session?.token || !session?.user) throw new Error("El servidor no devolvió una sesión válida.");
