@@ -20,6 +20,7 @@ import ApplicationDetailPage from "../pages/internal/ApplicationDetailPage";
 import ApplicantsPage from "../pages/internal/ApplicantsPage";
 import ApplicantDetailPage from "../pages/internal/ApplicantDetailPage";
 import RiskEvaluationPage from "../pages/internal/RiskEvaluationPage";
+import ReconsiderationsPage from "../pages/internal/ReconsiderationsPage";
 import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
 import ReportsPage from "../pages/internal/ReportsPage";
@@ -72,6 +73,7 @@ export default function AppRoutes() {
               <Route path="applications" element={<ApplicationsPage />} />
               <Route path="applications/:id" element={<ApplicationDetailPage />} />
               <Route path="applications/:id/review" element={<RiskEvaluationPage />} />
+              <Route path="reconsiderations" element={<ReconsiderationsPage />} />
               <Route path="applicants" element={<ApplicantsPage />} />
               <Route path="applicants/:id" element={<ApplicantDetailPage />} />
             </Route>
@@ -91,6 +93,7 @@ export default function AppRoutes() {
       <Route path="/sin-permisos" element={<UnauthorizedPage />} />
       <Route path="/solicitar" element={<NewApplicationPage />} />
       <Route path="/seguimiento" element={<TrackApplicationPage />} />
+      <Route path="/reconsiderar" element={<ReconsiderationPage />} />
       <Route path="/" element={<LandingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
