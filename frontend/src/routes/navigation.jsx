@@ -1,74 +1,16 @@
 import {
-  BarChartOutlined,
-  DashboardOutlined,
-  FileSearchOutlined,
-  ProfileOutlined,
-  SafetyCertificateOutlined,
-  TeamOutlined,
+  BarChartOutlined, DashboardOutlined, FileSearchOutlined, ProfileOutlined,
+  SafetyCertificateOutlined, TeamOutlined,
 } from "@ant-design/icons";
+import { ROLES } from "../domain/roles";
 
 export const internalNavigation = [
-  {
-    key: "/internal",
-    label: "Resumen",
-    icon: <DashboardOutlined />,
-    roles: [
-      "oficial_credito",
-      "analista_riesgo",
-      "administrativo",
-      "comite_supervisor",
-      "CREDIT_OFFICER",
-      "ADMIN",
-      "AUDITOR",
-    ],
-  },
-  {
-    key: "/internal/applications",
-    label: "Solicitudes",
-    icon: <FileSearchOutlined />,
-    roles: [
-      "oficial_credito",
-      "analista_riesgo",
-      "administrativo",
-      "comite_supervisor",
-      "CREDIT_OFFICER",
-      "ADMIN",
-      "AUDITOR",
-    ],
-  },
-  {
-    key: "/internal/applicants",
-    label: "Solicitantes",
-    icon: <TeamOutlined />,
-    roles: [
-      "oficial_credito",
-      "analista_riesgo",
-      "administrativo",
-      "comite_supervisor",
-      "CREDIT_OFFICER",
-      "ADMIN",
-      "AUDITOR",
-    ],
-  },
-  {
-    key: "/internal/policies",
-    label: "Políticas",
-    icon: <SafetyCertificateOutlined />,
-    roles: ["analista_riesgo", "comite_supervisor", "ADMIN", "AUDITOR"],
-  },
-  {
-    key: "/internal/audit",
-    label: "Auditoría",
-    icon: <ProfileOutlined />,
-    roles: ["administrativo", "comite_supervisor", "ADMIN", "AUDITOR"],
-  },
-  {
-    key: "/internal/reports",
-    label: "Reportes",
-    icon: <BarChartOutlined />,
-    roles: ["administrativo", "comite_supervisor", "ADMIN", "AUDITOR"],
-  },
+  { key: "/internal", label: "Resumen", icon: <DashboardOutlined />, roles: [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.RISK_ANALYST, ROLES.COMMITTEE_SUPERVISOR, ROLES.AUDITOR] },
+  { key: "/internal/applications", label: "Solicitudes", icon: <FileSearchOutlined />, roles: [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.RISK_ANALYST, ROLES.COMMITTEE_SUPERVISOR, ROLES.AUDITOR] },
+  { key: "/internal/applicants", label: "Solicitantes", icon: <TeamOutlined />, roles: [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.RISK_ANALYST, ROLES.COMMITTEE_SUPERVISOR, ROLES.AUDITOR] },
+  { key: "/internal/policies", label: "Políticas", icon: <SafetyCertificateOutlined />, roles: [ROLES.ADMIN, ROLES.CREDIT_OFFICER, ROLES.RISK_ANALYST, ROLES.COMMITTEE_SUPERVISOR, ROLES.AUDITOR] },
+  { key: "/internal/audit", label: "Auditoría", icon: <ProfileOutlined />, roles: [ROLES.ADMIN, ROLES.AUDITOR] },
+  { key: "/internal/reports", label: "Reportes", icon: <BarChartOutlined />, roles: [ROLES.ADMIN, ROLES.AUDITOR, ROLES.COMMITTEE_SUPERVISOR] },
 ];
 
-export const roleHome = (role) =>
-  role === "solicitante" ? "/applicant" : role ? "/internal" : "/login";
+export const roleHome = (role) => role === ROLES.APPLICANT ? "/applicant" : role ? "/internal" : "/login";
