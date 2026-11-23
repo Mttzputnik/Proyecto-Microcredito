@@ -2,7 +2,7 @@ import client from "../api/client";
 import { mockUsers } from "../mocks/data";
 
 const wait = (data, delay = 350) => new Promise((resolve) => setTimeout(() => resolve(data), delay));
-const authMode = import.meta.env.VITE_AUTH_MODE || "mock";
+const authMode = import.meta.env.VITE_AUTH_MODE || "api";
 const backendRoleLabels = { ADMIN: "Administrador", CREDIT_OFFICER: "Oficial de crédito", AUDITOR: "Auditor" };
 
 function normalizeUser(user) {
@@ -35,7 +35,7 @@ export const authService = {
     return wait({ success: true, message: "Si el correo existe, recibirás instrucciones." }, 500);
   },
   async logout() {
-    if (authMode === "api") { try { await client.post("/auth/logout"); } catch { /* El cierre local sigue siendo obligatorio. */ } }
+    // JWT stateless: el cierre de sesión se realiza eliminando la sesión local.
     return wait({ success: true }, 150);
   },
 };
