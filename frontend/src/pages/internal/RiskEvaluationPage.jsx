@@ -184,6 +184,24 @@ export default function RiskEvaluationPage() {
             <Button type="primary" htmlType="submit" size="large" block loading={saving} disabled={application.status !== "UNDER_REVIEW"} icon={<CheckCircleOutlined />}>Registrar decisión y justificación</Button>
           </Form>
         </Card>
+        <Card className="detail-card">
+          <div className="card-heading"><h2>Historial de decisiones</h2><Tag color="blue">{application.decisions?.length ?? 0} registradas</Tag></div>
+          {application.decisions?.length ? application.decisions.map((decision) => (
+            <div className="decision-history-item" key={decision.id}>
+              <div className="card-heading">
+                <Tag color={decision.outcome === "APPROVED" ? "success" : decision.outcome === "APPROVED_WITH_CONDITIONS" ? "processing" : "error"}>
+                  {outcomeLabels[decision.outcome] || decision.outcome}
+                </Tag>
+                <Typography.Text type="secondary">{formatDate(decision.decidedAt)}</Typography.Text>
+              </div>
+              <Typography.Text type="secondary">
+                Responsable: {decision.officer ? `${decision.officer.firstName} ${decision.officer.lastName}` : "Oficial no disponible"}
+              </Typography.Text>
+              <JustificationBlock title="Justificación">{decision.justification}</JustificationBlock>
+              {decision.conditions && <JustificationBlock title="Condiciones registradas">{decision.conditions}</JustificationBlock>}
+            </div>
+          )) : <Alert type="info" showIcon message="Esta solicitud aún no tiene decisiones registradas." />}
+        </Card>
         <Card className="detail-card"><div className="card-heading"><h2>Trazabilidad</h2><Tag color="blue">Auditable</Tag></div>
           <AuditTimeline items={historyItems} />
         </Card>

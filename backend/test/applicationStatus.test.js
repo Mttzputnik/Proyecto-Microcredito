@@ -36,6 +36,11 @@ test("aprobar exige justificación y no escribe nada sin ella", async () => {
     (e) => e.status === 400
   );
   assert.equal(db.calls.updates.length, 0);
+  await assert.rejects(
+    () => changeApplicationStatus(db, { applicationId, toStatus: "APPROVED", actor, justification: "corto" }),
+    (e) => e.status === 400 && /10 caracteres/.test(e.message)
+  );
+  assert.equal(db.calls.updates.length, 0);
 });
 
 test("aprobar con justificación registra la decisión y la auditoría", async () => {
@@ -48,6 +53,24 @@ test("aprobar con justificación registra la decisión y la auditoría", async (
   assert.equal(db.calls.decisions[0].officerId, actor.id);
   assert.equal(db.calls.decisions[0].justification, "Ingresos suficientes y buen historial.");
   assert.equal(db.calls.audits[0].metadata.to, "APPROVED");
+});
+
+test("aprobar con condiciones exige y conserva condiciones justificadas", async () => {
+  const db = fakePrisma("UNDER_REVIEW");
+  await assert.rejects(
+    () => changeApplicationStatus(db, { applicationId, toStatus: "APPROVED_WITH_CONDITIONS", actor, justification: "Evaluación favorable con requisitos.", conditions: "corto" }),
+    (e) => e.status === 400 && /condiciones de al menos 10/.test(e.message)
+  );
+  assert.equal(db.calls.updates.length, 0);
+  const result = await changeApplicationStatus(db, {
+    applicationId, toStatus: "APPROVED_WITH_CONDITIONS", actor,
+    justification: "La capacidad es suficiente con compromisos adicionales.",
+    conditions: "Presentar soporte actualizado de ingresos antes del desembolso."
+  });
+  assert.equal(result.status, "APPROVED_WITH_CONDITIONS");
+  assert.equal(db.calls.decisions[0].outcome, "APPROVED_WITH_CONDITIONS");
+  assert.equal(db.calls.decisions[0].conditions, "Presentar soporte actualizado de ingresos antes del desembolso.");
+  assert.equal(db.calls.audits[0].metadata.to, "APPROVED_WITH_CONDITIONS");
 });
 
 test("una transición no permitida responde 409 y no escribe nada", async () => {
