@@ -13,8 +13,10 @@ async function loadInternalHistory(tx, applicantId, today) {
   });
   const loans = applications.map((item) => item.loan).filter(Boolean);
   const activeLoans = loans.filter((loan) => ACTIVE_LOAN_STATUSES.includes(loan.status));
+  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
   const hasActiveDelinquency = activeLoans.some((loan) => loan.paymentSchedules.some((schedule) =>
-    schedule.totalDue - (schedule.paidAmount ?? 0) > 0 && new Date(schedule.dueDate).getTime() < today.getTime()));
+    schedule.totalDue - (schedule.paidAmount ?? 0) > 0 &&
+    Date.UTC(new Date(schedule.dueDate).getUTCFullYear(), new Date(schedule.dueDate).getUTCMonth(), new Date(schedule.dueDate).getUTCDate()) < todayUtc));
   return { activeLoans: activeLoans.length, historicalApplications: applications.length, hasActiveDelinquency };
 }
 
