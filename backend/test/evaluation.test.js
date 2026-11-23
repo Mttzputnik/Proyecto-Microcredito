@@ -75,3 +75,24 @@ test("avisa cuando la capacidad mensual es negativa", () => {
   assert.ok(result.indicators.monthlyCapacity < 0);
   assert.match(result.observations, /capacidad mensual estimada es negativa/);
 });
+
+
+test("muestra antecedentes de mora ya saldados sin convertirlos automáticamente en rechazo", () => {
+  const previousDelinquencies = [{
+    loanId: "loan-previous",
+    loanNumber: "MC-ANT-001",
+    dueDate: "2026-07-01T00:00:00.000Z",
+    settledAt: "2026-07-12T00:00:00.000Z",
+    daysLate: 11
+  }];
+  const result = evaluate({
+    applicant, application, policy: fullPolicy, today,
+    ...completeEvidence,
+    internalHistory: { ...completeEvidence.internalHistory, previousDelinquencies }
+  });
+
+  assert.equal(result.indicators.internalHistory.previousDelinquencyCount, 1);
+  assert.deepEqual(result.indicators.internalHistory.previousDelinquencies, previousDelinquencies);
+  assert.equal(result.indicators.internalHistory.hasActiveDelinquency, false);
+  assert.equal(result.recommendation, RECOMMENDATIONS.SUPPORTS_APPROVAL);
+});
