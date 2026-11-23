@@ -81,6 +81,11 @@ export function evaluate({ applicant, application, policy, internalHistory = {},
     : checks.length === 0 || checks.some((c) => c.status === "NOT_EVALUABLE") ? RECOMMENDATIONS.MANUAL_REVIEW
     : RECOMMENDATIONS.SUPPORTS_APPROVAL;
   const notes = checks.filter((c) => c.status !== "PASS").map((c) => `${c.label}: ${c.detail}`);
+  const configuredLimits = ["minimumAge", "maximumAmount", "maximumTermMonths", "maxDebtRatio"]
+    .some((key) => isSet(policy[key]));
+  if (!configuredLimits) notes.unshift("La política no define ningún límite financiero o de elegibilidad.");
+  if (monthlyCapacity !== null && monthlyCapacity < 0)
+    notes.push("La capacidad mensual estimada es negativa; requiere revisión de capacidad de pago.");
   return {
     estimatedInstallment, debtToIncomeRatio, recommendation, observations: notes.length ? notes.join(" ") : null,
     indicators: {
