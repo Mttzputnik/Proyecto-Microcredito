@@ -89,11 +89,7 @@ export async function listAssignedReconsiderations(prisma, actor) {
       application: {
         select: {
           id: true, applicationNumber: true, status: true, requestedAmount: true, requestedTerm: true, purpose: true,
-          applicantSnapshot: { select: { firstName: true, lastName: true, documentType: true, documentNumber: true } },
-          decisions: {
-            where: { id: { equals: undefined } },
-            take: 0
-          }
+          applicantSnapshot: { select: { firstName: true, lastName: true, documentType: true, documentNumber: true } }
         }
       }
     }
