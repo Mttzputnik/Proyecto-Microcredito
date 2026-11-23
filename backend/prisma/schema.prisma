@@ -15,6 +15,7 @@ model User {
   active Boolean @default(true)
   assignedApplications LoanApplication[] @relation("AssignedOfficer")
   decisions LoanDecision[]
+  reconsiderations Reconsideration[] @relation("ReconsiderationOfficer")
   verifications ApplicationVerification[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,6 +60,7 @@ model LoanApplication {
   status String @default("PENDING_ASSIGNMENT")
   evaluations RiskEvaluation[]
   decisions LoanDecision[]
+  reconsideration Reconsideration?
   loan Loan?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -208,4 +210,22 @@ model ApplicationVerification {
   verifiedBy User @relation(fields: [verifiedById], references: [id])
   verifiedAt DateTime @updatedAt
   createdAt DateTime @default(now())
+}
+
+
+model Reconsideration {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId String @unique @db.ObjectId
+  application LoanApplication @relation(fields: [applicationId], references: [id])
+  originalDecisionId String @db.ObjectId
+  originalOfficerId String @db.ObjectId
+  assignedOfficerId String @db.ObjectId
+  assignedOfficer User @relation("ReconsiderationOfficer", fields: [assignedOfficerId], references: [id])
+  applicantMessage String
+  status String @default("PENDING_REVIEW")
+  outcome String?
+  justification String?
+  submittedAt DateTime @default(now())
+  decidedAt DateTime?
+  @@index([assignedOfficerId, status, submittedAt])
 }
