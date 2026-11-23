@@ -3,7 +3,14 @@ import { mockUsers } from "../mocks/data";
 
 const wait = (data, delay = 350) => new Promise((resolve) => setTimeout(() => resolve(data), delay));
 const authMode = import.meta.env.VITE_AUTH_MODE || "api";
-const backendRoleLabels = { ADMIN: "Administrador", CREDIT_OFFICER: "Oficial de crédito", AUDITOR: "Auditor" };
+const backendRoleLabels = {
+  ADMIN: "Administrador técnico",
+  CREDIT_OFFICER: "Oficial de crédito",
+  analista_riesgo: "Analista de riesgo",
+  administrativo: "Área administrativa",
+  comite_supervisor: "Comité supervisor",
+  AUDITOR: "Auditor (rol legado sin permisos operativos)",
+};
 
 function normalizeUser(user) {
   if (!user) return user;
