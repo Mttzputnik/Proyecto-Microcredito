@@ -25,5 +25,5 @@ test("solo ADMIN administra usuarios y políticas", () => {
 
 test("evaluación y decisión final son responsabilidades separadas", () => {
   assert.deepEqual(PERMISSIONS.evaluateApplications, [ROLES.ADMIN, ROLES.RISK_ANALYST]);
-  assert.deepEqual(PERMISSIONS.changeApplicationStatus, [ROLES.ADMIN, ROLES.COMMITTEE_SUPERVISOR]);
+  assert.deepEqual(PERMISSIONS.manageApplicationWorkflow, [ROLES.ADMIN, ROLES.CREDIT_OFFICER]);\n  assert.deepEqual(PERMISSIONS.decideApplications, [ROLES.ADMIN, ROLES.COMMITTEE_SUPERVISOR]);
 });
