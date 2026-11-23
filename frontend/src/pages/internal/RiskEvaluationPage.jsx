@@ -120,8 +120,8 @@ export default function RiskEvaluationPage() {
           <div className="card-heading"><div><span className="eyebrow">Verificación de residencia</span><h2>Validación por el oficial</h2></div>
             <Tag color={residence?.verified ? "success" : residence ? "error" : "warning"}>{residence ? (residence.verified ? "Verificada" : "No verificada") : "Pendiente"}</Tag>
           </div>
-          {residence && <Typography.Paragraph>{residence.notes} · {formatDate(residence.verifiedAt)}</Typography.Paragraph>}
-          <Form form={verificationForm} layout="vertical" onFinish={verifyResidence}>
+          {residence && <Typography.Paragraph>{residence.notes} · {residence.verifiedBy ? `${residence.verifiedBy.firstName} ${residence.verifiedBy.lastName}` : "Oficial responsable"} · {formatDate(residence.verifiedAt)}</Typography.Paragraph>}
+          <Form form={verificationForm} layout="vertical" onFinish={verifyResidence} disabled={!["UNDER_REVIEW", "NEEDS_INFORMATION"].includes(application.status)}>
             <Form.Item name="verified" label="Resultado de la verificación" rules={[{ required: true, message: "Selecciona el resultado" }]}>
               <Radio.Group options={[{ label: "Residencia confirmada", value: true }, { label: "No fue posible confirmarla", value: false }]} />
             </Form.Item>
@@ -155,6 +155,8 @@ export default function RiskEvaluationPage() {
                 <Statistic title="Relación deuda / ingreso" value={evaluation.debtToIncomeRatio == null ? "N/D" : `${(evaluation.debtToIncomeRatio * 100).toFixed(1)} %`} />
                 <Statistic title="Préstamos internos vigentes" value={evaluation.indicators?.internalHistory?.activeLoans ?? "N/D"} />
                 <Statistic title="Solicitudes históricas" value={evaluation.indicators?.internalHistory?.historicalApplications ?? "N/D"} />
+                <Statistic title="Aprobaciones previas" value={evaluation.indicators?.internalHistory?.previousApprovedApplications ?? "N/D"} />
+                <Statistic title="Rechazos previos" value={evaluation.indicators?.internalHistory?.previousRejectedApplications ?? "N/D"} />
               </div>
               {policy && <><div className="card-heading"><div><span className="eyebrow">Política aplicada</span><h3>{policy.name}</h3></div><Tag color="green">Versión {policy.version}</Tag></div>
                 <Typography.Paragraph className="policy-note"><SafetyCertificateOutlined /> La evaluación conserva la versión de política utilizada.</Typography.Paragraph></>}
