@@ -75,7 +75,7 @@ export default function ApplicationPage() {
           reconsideración.
         </span>
         <Button>
-          <Link to="/applicant/application/reconsideration">
+          <Link to="/reconsiderar">
             Solicitar reconsideración
           </Link>
         </Button>
