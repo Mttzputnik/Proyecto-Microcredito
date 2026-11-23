@@ -1,7 +1,7 @@
 # Implementación PO-01 — Matriz de actores y permisos
 
-**Rama:** feat/po-01-matriz-permisos-actores  
-**Estado:** implementación inicial para revisión; no fusionada.  
+**Rama de origen:** feat/po-01-matriz-permisos-actores  
+**Estado:** integrada en main; documento actualizado con el estado de asignación y pendientes de validación.  
 **Fuente funcional:** docs/RESPUESTAS-PRODUCT-OWNER.md.
 
 ## 1. Matriz aplicada en backend
@@ -81,6 +81,6 @@ Las cuentas con rol AUDITOR dejan de acceder a las rutas protegidas por permisos
 
 ## 6. Próximo trabajo recomendado
 
-1. Consultar al Product Owner quién asigna solicitudes y cómo se distribuyen.
-2. Consultar quién formaliza el préstamo y registra el desembolso.
-3. Continuar con PO-02: corregir la actualización pública de solicitantes existentes y diseñar el seguimiento seguro por número de caso más verificación independiente.
+1. Validar con el Product Owner si la asignación automática por menor carga activa y desempate por última asignación representa el criterio esperado.
+2. Confirmar quién es responsable de formalizar el préstamo y registrar el desembolso; esa atribución sigue siendo provisional.
+3. Completar PO-02: protección del perfil existente, limitación de peticiones y pruebas de aislamiento del seguimiento seguro. La corrección de sobrescritura del perfil está desarrollada en la rama `fix/po-02-proteger-perfil-solicitante`, pendiente de validación y revisión.
