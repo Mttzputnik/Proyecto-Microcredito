@@ -4,9 +4,9 @@ import { writeAudit } from "./audit.service.js";
 import { findActivePolicy } from "./policy.service.js";
 
 const ACTIVE_LOAN_STATUSES = ["PENDING_DISBURSEMENT", "ACTIVE"];
-async function loadInternalHistory(tx, applicantId, today) {
+async function loadInternalHistory(tx, applicantId, currentApplicationId, today) {
   const applications = await tx.loanApplication.findMany({
-    where: { applicantId },
+    where: { applicantId, id: { not: currentApplicationId } },
     select: { id: true, status: true, loan: { select: { id: true, status: true, paymentSchedules: {
       select: { dueDate: true, totalDue: true, paidAmount: true, status: true }
     } } } }
@@ -16,7 +16,7 @@ async function loadInternalHistory(tx, applicantId, today) {
   const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
   const hasActiveDelinquency = activeLoans.some((loan) => loan.paymentSchedules.some((schedule) =>
     schedule.totalDue - (schedule.paidAmount ?? 0) > 0 &&
-    Date.UTC(new Date(schedule.dueDate).getUTCFullYear(), new Date(schedule.dueDate).getUTCMonth(), new Date(schedule.dueDate).getUTCDate()) < todayUtc));
+    (schedule.status === "OVERDUE" || Date.UTC(new Date(schedule.dueDate).getUTCFullYear(), new Date(schedule.dueDate).getUTCMonth(), new Date(schedule.dueDate).getUTCDate()) < todayUtc)));
   return {
     activeLoans: activeLoans.length,
     historicalApplications: applications.length,
@@ -43,7 +43,7 @@ export async function evaluateApplication(prisma, { applicationId, actor, policy
       if (!policy) throw httpError(409, "No hay una política de crédito activa.");
     }
     const applicantData = application.applicantSnapshot ?? application.applicant;
-    const internalHistory = await loadInternalHistory(tx, application.applicantId, now);
+    const internalHistory = await loadInternalHistory(tx, application.applicantId, application.id, now);
     const result = evaluate({ applicant: applicantData, application, policy, internalHistory,
       residenceVerification: application.verification, today: now });
     const evaluation = await tx.riskEvaluation.create({ data: {
