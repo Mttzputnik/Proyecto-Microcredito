@@ -25,6 +25,15 @@ test("en empate selecciona al oficial con asignación más antigua", () => {
   assert.equal(selected.officer.id, "officer-b");
 });
 
+test("las asignaciones cerradas no cuentan como carga, pero sí para desempatar", () => {
+  const selected = selectOfficerByWorkload(officers, [
+    { assignedOfficerId: "officer-a", status: "APPROVED", assignedAt: new Date("2026-01-10T00:00:00Z") },
+    { assignedOfficerId: "officer-b", status: "REJECTED", assignedAt: new Date("2026-01-01T00:00:00Z") }
+  ]);
+  assert.equal(selected.officer.id, "officer-b");
+  assert.equal(selected.activeCount, 0);
+});
+
 test("si nunca han recibido asignaciones, desempata por antigüedad de cuenta", () => {
   const selected = selectOfficerByWorkload(officers, []);
   assert.equal(selected.officer.id, "officer-a");
