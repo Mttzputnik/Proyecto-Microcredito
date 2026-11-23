@@ -2,13 +2,14 @@ import { evaluate } from "../domain/evaluation.js";
 import { httpError } from "../utils/httpError.js";
 import { writeAudit } from "./audit.service.js";
 import { findActivePolicy } from "./policy.service.js";
+import { extractPreviousDelinquencies } from "../domain/internalHistory.js";
 
 const ACTIVE_LOAN_STATUSES = ["PENDING_DISBURSEMENT", "ACTIVE"];
 async function loadInternalHistory(tx, applicantId, currentApplicationId, today) {
   const applications = await tx.loanApplication.findMany({
     where: { applicantId, id: { not: currentApplicationId } },
-    select: { id: true, status: true, loan: { select: { id: true, status: true, paymentSchedules: {
-      select: { dueDate: true, totalDue: true, paidAmount: true, status: true }
+    select: { id: true, status: true, loan: { select: { id: true, loanNumber: true, status: true, paymentSchedules: {
+      select: { dueDate: true, paidAt: true, totalDue: true, paidAmount: true, status: true }
     } } } }
   });
   const loans = applications.map((item) => item.loan).filter(Boolean);
@@ -17,13 +18,15 @@ async function loadInternalHistory(tx, applicantId, currentApplicationId, today)
   const hasActiveDelinquency = activeLoans.some((loan) => loan.paymentSchedules.some((schedule) =>
     schedule.totalDue - (schedule.paidAmount ?? 0) > 0 &&
     (schedule.status === "OVERDUE" || Date.UTC(new Date(schedule.dueDate).getUTCFullYear(), new Date(schedule.dueDate).getUTCMonth(), new Date(schedule.dueDate).getUTCDate()) < todayUtc)));
+  const previousDelinquencies = extractPreviousDelinquencies(loans);
   return {
     activeLoans: activeLoans.length,
     historicalApplications: applications.length,
     previousApprovedApplications: applications.filter((item) => item.status === "APPROVED").length,
     previousRejectedApplications: applications.filter((item) => item.status === "REJECTED").length,
     historicalLoans: loans.length,
-    hasActiveDelinquency
+    hasActiveDelinquency,
+    previousDelinquencies
   };
 }
 
