@@ -26,7 +26,10 @@ export default function PoliciesPage() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const [activePolicy, versions] = await Promise.all([policyService.getActive(), policyService.list()]);
+      const versions = await policyService.list();
+      let activePolicy = null;
+      try { activePolicy = await policyService.getActive(); }
+      catch (err) { if (err.response?.status !== 404) throw err; }
       setActive(activePolicy);
       setPolicies(versions);
     } catch (err) {
