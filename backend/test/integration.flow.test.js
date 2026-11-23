@@ -96,8 +96,8 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
       where: { id: created.body.data.assignedOfficerId },
       select: { id: true, email: true }
     });
-    state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? state.otherOfficerToken : tokens.officer;
-    state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : state.otherOfficerToken;
+    state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
+    state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : tokens.officer2;
     const assignedToken = state.assignedToken;
 
     const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
