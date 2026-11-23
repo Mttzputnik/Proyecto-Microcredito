@@ -13,7 +13,7 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
   const applicant = { id: "ap1", birthDate: "1990-01-01T00:00:00Z", monthlyIncome: 3_000_000, monthlyExpenses: 1_000_000, monthlyDebtPayments: 0 };
 
   const t = {
-    loanApplication: [{ id: "app1", status, requestedAmount: 1_200_000, requestedTerm: 6, applicant }],
+    loanApplication: [{ id: "app1", status, assignedOfficerId: "u1", requestedAmount: 1_200_000, requestedTerm: 6, applicant }],
     loanDecision: [{ id: "dec1", applicationId: "app1", outcome: "APPROVED", decidedAt: new Date() }],
     riskEvaluation: withEvaluation ? [{ id: "ev1", applicationId: "app1", policyId: policy.id, policy }] : [],
     creditPolicy: [{ ...policy, active: true, effectiveFrom: new Date("2026-01-01") }],

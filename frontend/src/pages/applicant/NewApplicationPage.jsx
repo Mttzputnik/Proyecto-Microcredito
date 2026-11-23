@@ -14,6 +14,7 @@ import {
   Steps,
 } from "antd";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/GeneralComponents";
 import { createLoanApplication } from "../../services/applicationService";
 
@@ -75,6 +76,7 @@ export default function NewApplicationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
   const [applicationNumber, setApplicationNumber] = useState("");
+  const [trackingToken, setTrackingToken] = useState("");
 
   const goNext = async () => {
     try {
@@ -134,6 +136,7 @@ export default function NewApplicationPage() {
         purpose: values.purpose,
       });
       setApplicationNumber(result.applicationNumber);
+      setTrackingToken(result.trackingToken || "");
       setStep(4);
     } catch (error) {
       setApiError(
@@ -158,6 +161,7 @@ export default function NewApplicationPage() {
               onClick={() => {
                 form.resetFields();
                 setApplicationNumber("");
+                setTrackingToken("");
                 setStep(0);
               }}
             >
@@ -165,6 +169,23 @@ export default function NewApplicationPage() {
             </Button>
           }
         />
+        {trackingToken && (
+          <Alert
+            type="warning"
+            showIcon
+            message="Guarda tu código privado de consulta"
+            description={
+              <div>
+                <p>Este código se muestra una sola vez. Lo necesitarás junto con tu número de solicitud para consultar el estado. No lo compartas con otras personas.</p>
+                <strong style={{ wordBreak: "break-all" }}>{trackingToken}</strong>
+              </div>
+            }
+            style={{ maxWidth: 720, margin: "0 auto 24px" }}
+          />
+        )}
+        <div style={{ textAlign: "center" }}>
+          <Link to="/seguimiento"><Button>Consultar el estado de mi solicitud</Button></Link>
+        </div>
       </div>
     );
   }

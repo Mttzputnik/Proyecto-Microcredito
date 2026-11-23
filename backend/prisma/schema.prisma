@@ -53,6 +53,7 @@ model LoanApplication {
   assignedOfficerId String?          @db.ObjectId
   assignedOfficer   User?            @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
   assignedAt        DateTime?
+  trackingCredential ApplicationTrackingCredential?
   requestedAmount   Float
   requestedTerm     Int
   purpose           String
@@ -173,4 +174,15 @@ model AuditLog {
   description String
   metadata    Json?
   occurredAt  DateTime @default(now())
+}
+
+
+model ApplicationTrackingCredential {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId String          @unique @db.ObjectId
+  application   LoanApplication @relation(fields: [applicationId], references: [id])
+  tokenHash     String          @unique
+  createdAt     DateTime        @default(now())
+  lastUsedAt    DateTime?
+  revokedAt     DateTime?
 }
