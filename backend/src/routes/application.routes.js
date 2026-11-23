@@ -142,7 +142,12 @@ router.post("/", async (req, res, next) => {
       message: application.status === "PENDING_ASSIGNMENT"
         ? "La solicitud fue recibida y quedó pendiente de asignación. Guarda el código privado de consulta; solo se muestra una vez."
         : "La solicitud fue recibida y asignada a un oficial de crédito. Guarda el código privado de consulta; solo se muestra una vez.",
-      data: application
+      data: {
+        applicationNumber: application.applicationNumber,
+        status: application.status,
+        createdAt: application.createdAt,
+        trackingToken: application.trackingToken
+      }
     });
   } catch (error) {
     if (error.code === "P2002") {
