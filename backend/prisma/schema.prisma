@@ -186,6 +186,7 @@ model ApplicationApplicantSnapshot {
   lastName String
   birthDate DateTime
   phone String
+  address String?
   municipality String
   residenceZone String
   occupation String
