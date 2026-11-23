@@ -20,7 +20,7 @@ function normalizeSession(payload) {
   return { token: session.token, user: normalizeUser(session.user) };
 }
 
-export const authService = {
+export const authService = {\n  isApiMode: authMode === "api",
   async login({ email, password }) {
     const normalizedEmail = email?.trim().toLowerCase();
     if (authMode === "api") {
