@@ -81,7 +81,7 @@ export async function submitReconsideration(prisma, { applicationNumber, accessT
 
 export async function listAssignedReconsiderations(prisma, actor) {
   return prisma.reconsideration.findMany({
-    where: { assignedOfficerId: actor.id },
+    where: { assignedOfficerId: actor.id, status: "PENDING_REVIEW" },
     orderBy: { submittedAt: "asc" },
     include: {
       application: {
