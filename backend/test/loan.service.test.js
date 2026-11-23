@@ -202,6 +202,32 @@ test("evaluar guarda la evaluación con la política usada y registra la auditor
   assert.equal(db.t.loanApplication[0].status, "UNDER_REVIEW");
 });
 
+test("evaluar utiliza la copia histórica y no el perfil actualizado del solicitante", async () => {
+  const db = memoryDb({
+    status: "UNDER_REVIEW",
+    policy: { id: "p1", name: "Base", version: 3, annualInterestRate: 24, maximumAmount: 5_000_000 }
+  });
+  db.t.loanApplication[0].applicantSnapshot = {
+    birthDate: new Date("1990-01-01T00:00:00Z"),
+    monthlyIncome: 2_000_000,
+    monthlyExpenses: 1_250_000,
+    monthlyDebtPayments: 150_000
+  };
+
+  const evaluation = await evaluateApplication(db, {
+    applicationId: "app1",
+    actor,
+    now: new Date("2026-11-12T00:00:00Z")
+  });
+
+  assert.equal(evaluation.monthlyIncome, 2_000_000);
+  assert.equal(evaluation.monthlyExpenses, 1_250_000);
+  assert.equal(evaluation.existingObligations, 150_000);
+  assert.equal(evaluation.indicators.monthlyIncome, 2_000_000);
+  assert.equal(evaluation.indicators.monthlyExpenses, 1_250_000);
+  assert.equal(evaluation.indicators.monthlyDebtPayments, 150_000);
+});
+
 test("evaluar exige solicitud en revisión y una política activa", async () => {
   await assert.rejects(() => evaluateApplication(memoryDb({ status: "SUBMITTED" }), { applicationId: "app1", actor }), (e) => e.status === 409 && /UNDER_REVIEW/.test(e.message));
   const noPolicy = memoryDb({ status: "UNDER_REVIEW" });

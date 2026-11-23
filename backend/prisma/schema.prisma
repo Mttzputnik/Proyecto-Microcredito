@@ -54,6 +54,7 @@ model LoanApplication {
   assignedOfficer   User?            @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
   assignedAt        DateTime?
   trackingCredential ApplicationTrackingCredential?
+  applicantSnapshot ApplicationApplicantSnapshot?
   requestedAmount   Float
   requestedTerm     Int
   purpose           String
@@ -185,4 +186,29 @@ model ApplicationTrackingCredential {
   createdAt     DateTime        @default(now())
   lastUsedAt    DateTime?
   revokedAt     DateTime?
+}
+
+
+// Copia inmutable de los datos declarados al presentar una solicitud.
+// Applicant conserva el perfil vigente; esta entidad conserva la evidencia histórica del expediente.
+model ApplicationApplicantSnapshot {
+  id                  String          @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId       String          @unique @db.ObjectId
+  application         LoanApplication @relation(fields: [applicationId], references: [id])
+  documentType        String
+  documentNumber      String
+  firstName           String
+  lastName            String
+  birthDate           DateTime
+  phone               String
+  municipality        String
+  residenceZone       String
+  occupation          String
+  activityDuration    String
+  monthlyIncome       Float
+  monthlyExpenses     Float
+  dependents          Int
+  hasExistingDebts    Boolean
+  monthlyDebtPayments Float
+  submittedAt         DateTime        @default(now())
 }

@@ -9,7 +9,7 @@ export async function evaluateApplication(prisma, { applicationId, actor, policy
   return prisma.$transaction(async (tx) => {
     const application = await tx.loanApplication.findUnique({
       where: { id: applicationId },
-      include: { applicant: true }
+      include: { applicant: true, applicantSnapshot: true }
     });
     if (!application || application.assignedOfficerId !== actor.id) throw httpError(404, "Solicitud no encontrada.");
     if (application.status !== "UNDER_REVIEW") {
@@ -27,15 +27,18 @@ export async function evaluateApplication(prisma, { applicationId, actor, policy
       }
     }
 
-    const result = evaluate({ applicant: application.applicant, application, policy, today: now });
+    // Solicitudes nuevas se evalúan con la copia histórica del expediente.
+    // Fallback a Applicant conserva compatibilidad con solicitudes anteriores a este cambio.
+    const applicantData = application.applicantSnapshot ?? application.applicant;
+    const result = evaluate({ applicant: applicantData, application, policy, today: now });
 
     const evaluation = await tx.riskEvaluation.create({
       data: {
         applicationId,
         policyId: policy.id,
-        monthlyIncome: application.applicant.monthlyIncome ?? 0,
-        monthlyExpenses: application.applicant.monthlyExpenses ?? 0,
-        existingObligations: application.applicant.monthlyDebtPayments ?? 0,
+        monthlyIncome: applicantData.monthlyIncome ?? 0,
+        monthlyExpenses: applicantData.monthlyExpenses ?? 0,
+        existingObligations: applicantData.monthlyDebtPayments ?? 0,
         estimatedInstallment: result.estimatedInstallment,
         debtToIncomeRatio: result.debtToIncomeRatio,
         indicators: result.indicators,
