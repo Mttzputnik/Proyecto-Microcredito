@@ -5,7 +5,7 @@ import { authorize } from "../middleware/authorize.js";
 import { PERMISSIONS } from "../domain/roles.js";
 import { evaluationSchema } from "../validators/finance.validator.js";
 import { evaluateApplication } from "../services/evaluation.service.js";
-import { parseOrThrow, requireObjectId } from "../utils/httpError.js";
+import { parseOrThrow, requireObjectId, httpError } from "../utils/httpError.js";
 
 // Se monta en /api/applications. La evaluación es apoyo a la decisión humana; no cambia el estado.
 const router = Router();
@@ -22,6 +22,8 @@ router.post("/:id/evaluations", authorize(...PERMISSIONS.evaluateApplications), 
 // GET /api/applications/:id/evaluations  -> historial de evaluaciones
 router.get("/:id/evaluations", authorize(...PERMISSIONS.readApplications), async (req, res) => {
   const applicationId = requireObjectId(req.params.id);
+  const assigned = await prisma.loanApplication.findFirst({ where: { id: applicationId, assignedOfficerId: req.user.id }, select: { id: true } });
+  if (!assigned) throw httpError(404, "Solicitud no encontrada.");
   const evaluations = await prisma.riskEvaluation.findMany({
     where: { applicationId },
     orderBy: { evaluatedAt: "desc" },
