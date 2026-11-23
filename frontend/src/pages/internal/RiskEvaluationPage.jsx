@@ -154,6 +154,7 @@ export default function RiskEvaluationPage() {
                 <Statistic title="Cuota estimada" value={cop(evaluation.estimatedInstallment)} />
                 <Statistic title="Relación deuda / ingreso" value={evaluation.debtToIncomeRatio == null ? "N/D" : `${(evaluation.debtToIncomeRatio * 100).toFixed(1)} %`} />
                 <Statistic title="Préstamos internos vigentes" value={evaluation.indicators?.internalHistory?.activeLoans ?? "N/D"} />
+                <Statistic title="Solicitudes históricas" value={evaluation.indicators?.internalHistory?.historicalApplications ?? "N/D"} />
               </div>
               {policy && <><div className="card-heading"><div><span className="eyebrow">Política aplicada</span><h3>{policy.name}</h3></div><Tag color="green">Versión {policy.version}</Tag></div>
                 <Typography.Paragraph className="policy-note"><SafetyCertificateOutlined /> La evaluación conserva la versión de política utilizada.</Typography.Paragraph></>}
