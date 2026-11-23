@@ -1,10 +1,62 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
+import { createTrackingCredential, matchesTrackingToken } from "../services/applicationTracking.service.js";
+import { trackingLookupSchema } from "../validators/application.validator.js";
+import { writeAudit } from "../services/audit.service.js";
 import { prisma } from "../config/prisma.js";
 import { applicationSchema } from "../validators/application.validator.js";
 import { assignPendingApplications } from "../services/applicationAssignment.service.js";
 
 const router = Router();
+
+// POST /api/applications/track — consulta pública protegida por número de caso + token secreto.
+// La respuesta contiene únicamente datos mínimos de seguimiento.
+router.post("/track", async (req, res, next) => {
+  const parsed = trackingLookupSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, message: "Los datos de consulta no son válidos." });
+  }
+
+  try {
+    const { applicationNumber, accessToken } = parsed.data;
+    const application = await prisma.loanApplication.findUnique({
+      where: { applicationNumber },
+      select: {
+        id: true,
+        applicationNumber: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        trackingCredential: { select: { tokenHash: true, revokedAt: true } }
+      }
+    });
+
+    // Misma respuesta para caso inexistente, token incorrecto o credencial revocada.
+    if (!application?.trackingCredential ||
+        application.trackingCredential.revokedAt ||
+        !matchesTrackingToken(accessToken, application.trackingCredential.tokenHash)) {
+      return res.status(404).json({ success: false, message: "No fue posible validar los datos de consulta." });
+    }
+
+    await prisma.applicationTrackingCredential.update({
+      where: { applicationId: application.id },
+      data: { lastUsedAt: new Date() }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        applicationNumber: application.applicationNumber,
+        status: application.status,
+        createdAt: application.createdAt,
+        updatedAt: application.updatedAt
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 
 router.post("/", async (req, res, next) => {
   const parsed = applicationSchema.safeParse(req.body);
@@ -23,6 +75,7 @@ router.post("/", async (req, res, next) => {
   }
 
   try {
+    const trackingCredential = createTrackingCredential();
     const application = await prisma.$transaction(async (tx) => {
       const existingApplicant = await tx.applicant.findUnique({
         where: { documentNumber: data.documentNumber }
@@ -63,6 +116,17 @@ router.post("/", async (req, res, next) => {
         }
       });
 
+      await tx.applicationTrackingCredential.create({
+        data: { applicationId: created.id, tokenHash: trackingCredential.tokenHash }
+      });
+      await writeAudit(tx, {
+        actorId: null,
+        action: "APPLICATION_TRACKING_CREDENTIAL_ISSUED",
+        entityType: "LoanApplication",
+        entityId: created.id,
+        description: "Se emitió una credencial privada para consultar el estado de la solicitud."
+      });
+
       // Se intenta asignar toda la cola pendiente, no solo el caso recién creado.
       // Si no hay oficiales activos, la solicitud conserva PENDING_ASSIGNMENT.
       await assignPendingApplications(tx);
@@ -70,15 +134,20 @@ router.post("/", async (req, res, next) => {
         where: { id: created.id },
         select: { id: true, status: true, assignedOfficerId: true, assignedAt: true }
       });
-      return { ...created, ...current };
+      return { ...created, ...current, trackingToken: trackingCredential.token };
     });
 
     return res.status(201).json({
       success: true,
       message: application.status === "PENDING_ASSIGNMENT"
-        ? "La solicitud fue recibida y quedó pendiente de asignación."
-        : "La solicitud fue recibida y asignada a un oficial de crédito.",
-      data: application
+        ? "La solicitud fue recibida y quedó pendiente de asignación. Guarda el código privado de consulta; solo se muestra una vez."
+        : "La solicitud fue recibida y asignada a un oficial de crédito. Guarda el código privado de consulta; solo se muestra una vez.",
+      data: {
+        applicationNumber: application.applicationNumber,
+        status: application.status,
+        createdAt: application.createdAt,
+        trackingToken: application.trackingToken
+      }
     });
   } catch (error) {
     if (error.code === "P2002") {

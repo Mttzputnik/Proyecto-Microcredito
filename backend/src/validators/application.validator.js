@@ -22,3 +22,10 @@ export const applicationSchema = z.object({
   requestedTerm: z.number().int().min(1).max(120),
   purpose: z.enum(["negocio", "herramientas", "estudio", "hogar", "otro"])
 }).strict();
+
+
+// El token es una credencial secreta; nunca se acepta por query string.
+export const trackingLookupSchema = z.object({
+  applicationNumber: z.string().trim().min(8).max(40),
+  accessToken: z.string().min(40).max(64).regex(/^[A-Za-z0-9_-]+$/)
+}).strict();
