@@ -14,15 +14,16 @@ router.use(authenticate);
 // GET /api/applicants?search=1234&page=1&limit=20  (busca por documento o nombre)
 router.get("/", authorize(...PERMISSIONS.readApplicants), async (req, res) => {
   const { search, page, limit } = parseOrThrow(listApplicantsQuery, req.query, "Los filtros no son válidos.");
-  const where = search
-    ? {
-        OR: [
-          { documentNumber: { contains: search } },
-          { firstName: { contains: search, mode: "insensitive" } },
-          { lastName: { contains: search, mode: "insensitive" } }
-        ]
-      }
-    : {};
+  const where = {
+    applications: { some: { assignedOfficerId: req.user.id } },
+    ...(search ? {
+      OR: [
+        { documentNumber: { contains: search } },
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } }
+      ]
+    } : {})
+  };
 
   const [total, items] = await Promise.all([
     prisma.applicant.count({ where }),
@@ -39,10 +40,11 @@ router.get("/", authorize(...PERMISSIONS.readApplicants), async (req, res) => {
 // GET /api/applicants/:id  (con sus solicitudes)
 router.get("/:id", authorize(...PERMISSIONS.readApplicants), async (req, res) => {
   const id = requireObjectId(req.params.id);
-  const applicant = await prisma.applicant.findUnique({
-    where: { id },
+  const applicant = await prisma.applicant.findFirst({
+    where: { id, applications: { some: { assignedOfficerId: req.user.id } } },
     include: {
       applications: {
+        where: { assignedOfficerId: req.user.id },
         orderBy: { createdAt: "desc" },
         select: { id: true, applicationNumber: true, requestedAmount: true, requestedTerm: true, status: true, createdAt: true }
       }
