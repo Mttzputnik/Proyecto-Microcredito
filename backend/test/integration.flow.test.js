@@ -124,7 +124,7 @@ describe("flujo completo de la API", { skip }, () => {
 
     assert.equal((await api("POST", "/api/loans", { token: tokens.officer, body: { applicationId: state.applicationId } })).status, 409);
     assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "CANCELLED" } })).status, 409);
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000 } })).status, 409);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000 } })).status, 403);
   });
 
   test("desembolsar genera el cronograma y la mora marca las cuotas vencidas", async () => {
@@ -138,7 +138,7 @@ describe("flujo completo de la API", { skip }, () => {
     state.installments = detail.body.data.paymentSchedules;
     assert.equal(state.installments.reduce((sum, row) => sum + row.principal, 0), 1_200_000);
 
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/disburse`, { token: tokens.officer, body: {} })).status, 409);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/disburse`, { token: tokens.administrative, body: {} })).status, 409);
 
     const arrears = await api("POST", `/api/loans/${state.loanId}/refresh-arrears`, { token: tokens.officer });
     assert.equal(arrears.status, 200);
