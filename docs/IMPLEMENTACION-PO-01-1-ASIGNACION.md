@@ -14,7 +14,7 @@ El Product Owner confirmó que una solicitud recién registrada permanece pendie
 4. Si persiste el empate, se prioriza la cuenta creada primero.
 5. Cada asignación registra fecha, método, criterio y oficial destinatario en `AuditLog`.
 
-La carga activa cuenta solicitudes en `SUBMITTED`, `UNDER_REVIEW` y `NEEDS_INFORMATION`. Los estados aprobados, rechazados y cancelados no incrementan la carga activa.
+La carga activa cuenta solicitudes en `SUBMITTED`, `UNDER_REVIEW` y `NEEDS_INFORMATION`. Los estados aprobados, rechazados y cancelados no incrementan la carga activa, pero su fecha de asignación sí se considera para el desempate por antigüedad.
 
 ## 2. Flujo implementado
 
