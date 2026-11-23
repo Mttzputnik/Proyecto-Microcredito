@@ -12,8 +12,35 @@ import applicationEvaluationRoutes from "./routes/application.evaluation.routes.
 import loanRoutes from "./routes/loan.routes.js";
 
 const app = express();
+
+function normalizeOrigin(value) {
+  try {
+    return new URL(value.trim()).origin;
+  } catch {
+    throw new Error(`Invalid FRONTEND_URL origin: ${value}`);
+  }
+}
+
+const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
+  .split(",")
+  .map(normalizeOrigin);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Requests without Origin (curl, health checks and server-to-server) are allowed.
+    if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+      return callback(null, true);
+    }
+    return callback(new Error("Origin not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204
+};
+
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL ?? "http://localhost:5173" }));
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
@@ -39,7 +66,6 @@ app.use((req, res) => res.status(404).json({
 }));
 
 app.use((error, _req, res, _next) => {
-  // Los errores esperados (401, 403, 404, 409...) no necesitan imprimir la traza completa.
   if (!error.status || error.status >= 500) console.error(error);
   res.status(error.status ?? 500).json({
     success: false,
