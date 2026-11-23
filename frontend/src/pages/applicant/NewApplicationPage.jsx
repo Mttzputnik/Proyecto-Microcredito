@@ -14,6 +14,7 @@ import {
   Steps,
 } from "antd";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/GeneralComponents";
 import { createLoanApplication } from "../../services/applicationService";
 
@@ -183,7 +184,7 @@ export default function NewApplicationPage() {
           />
         )}
         <div style={{ textAlign: "center" }}>
-          <Button href="/seguimiento">Consultar el estado de mi solicitud</Button>
+          <Link to="/seguimiento"><Button>Consultar el estado de mi solicitud</Button></Link>
         </div>
       </div>
     );
