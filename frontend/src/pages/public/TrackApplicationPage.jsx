@@ -69,6 +69,8 @@ export default function TrackApplicationPage() {
             extra={
               <div>
                 <Tag color="blue">{statusLabels[result.status] || result.status}</Tag>
+                {result.status === "REJECTED" && !result.reconsideration && <p><Link to="/reconsiderar">Solicitar reconsideración</Link></p>}
+                {result.reconsideration && <p style={{ marginTop: 12 }}>Reconsideración: {result.reconsideration.status === "PENDING_REVIEW" ? "Pendiente de revisión" : result.reconsideration.outcome === "ACCEPTED" ? "Aceptada para continuar la revisión" : "Rechazo original confirmado"}</p>}
                 <p style={{ marginTop: 12 }}>Fecha de registro: {new Date(result.createdAt).toLocaleString("es-CO")}</p>
                 <p>Última actualización: {new Date(result.updatedAt).toLocaleString("es-CO")}</p>
               </div>

@@ -34,7 +34,8 @@ router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) 
       assignedOfficer: { select: { id: true, firstName: true, lastName: true } },
       loan: { select: { id: true, loanNumber: true, status: true } },
       evaluations: { orderBy: { evaluatedAt: "desc" }, take: 5 },
-      decisions: { orderBy: { decidedAt: "desc" }, include: { officer: { select: { id: true, firstName: true, lastName: true } } } }
+      decisions: { orderBy: { decidedAt: "desc" }, include: { officer: { select: { id: true, firstName: true, lastName: true } } } },
+      reconsideration: { include: { assignedOfficer: { select: { id: true, firstName: true, lastName: true } } } }
     }
   });
   if (!application) throw httpError(404, "Solicitud no encontrada.");

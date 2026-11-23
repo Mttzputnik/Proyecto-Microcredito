@@ -27,7 +27,8 @@ router.post("/track", async (req, res, next) => {
         status: true,
         createdAt: true,
         updatedAt: true,
-        trackingCredential: { select: { tokenHash: true, revokedAt: true } }
+        trackingCredential: { select: { tokenHash: true, revokedAt: true } },
+        reconsideration: { select: { status: true, outcome: true, submittedAt: true, decidedAt: true } }
       }
     });
 
@@ -49,7 +50,8 @@ router.post("/track", async (req, res, next) => {
         applicationNumber: application.applicationNumber,
         status: application.status,
         createdAt: application.createdAt,
-        updatedAt: application.updatedAt
+        updatedAt: application.updatedAt,
+        reconsideration: application.reconsideration
       }
     });
   } catch (error) {

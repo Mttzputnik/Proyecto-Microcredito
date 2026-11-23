@@ -2,6 +2,7 @@ import {
   BarChartOutlined,
   DashboardOutlined,
   FileSearchOutlined,
+  RetweetOutlined,
   ProfileOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
@@ -26,6 +27,12 @@ export const internalNavigation = [
     key: "/internal/applications",
     label: "Solicitudes",
     icon: <FileSearchOutlined />,
+    roles: CREDIT_OFFICERS,
+  },
+  {
+    key: "/internal/reconsiderations",
+    label: "Reconsideraciones",
+    icon: <RetweetOutlined />,
     roles: CREDIT_OFFICERS,
   },
   {
