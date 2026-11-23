@@ -52,15 +52,19 @@ model LoanApplication {
   applicant         Applicant        @relation(fields: [applicantId], references: [id])
   assignedOfficerId String?          @db.ObjectId
   assignedOfficer   User?            @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
+  assignedAt        DateTime?
   requestedAmount   Float
   requestedTerm     Int
   purpose           String
-  status            String           @default("SUBMITTED")
+  status            String           @default("PENDING_ASSIGNMENT")
   evaluations       RiskEvaluation[]
   decisions         LoanDecision[]
   loan              Loan?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+
+  @@index([status, createdAt])
+  @@index([assignedOfficerId, status])
 }
 
 model CreditPolicy {

@@ -2,10 +2,9 @@ import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { applicationSchema } from "../validators/application.validator.js";
+import { assignPendingApplications } from "../services/applicationAssignment.service.js";
 
 const router = Router();
-
-
 
 router.post("/", async (req, res, next) => {
   const parsed = applicationSchema.safeParse(req.body);
@@ -51,8 +50,8 @@ router.post("/", async (req, res, next) => {
         : await tx.applicant.create({ data: applicantData });
 
       const applicationNumber = `MC-${new Date().getFullYear()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-      return tx.loanApplication.create({
-        data: { applicationNumber, applicantId: applicant.id, requestedAmount, requestedTerm, purpose, status: "SUBMITTED" },
+      const created = await tx.loanApplication.create({
+        data: { applicationNumber, applicantId: applicant.id, requestedAmount, requestedTerm, purpose, status: "PENDING_ASSIGNMENT" },
         select: {
           id: true,
           applicationNumber: true,
@@ -63,11 +62,22 @@ router.post("/", async (req, res, next) => {
           createdAt: true
         }
       });
+
+      // Se intenta asignar toda la cola pendiente, no solo el caso recién creado.
+      // Si no hay oficiales activos, la solicitud conserva PENDING_ASSIGNMENT.
+      await assignPendingApplications(tx);
+      const current = await tx.loanApplication.findUnique({
+        where: { id: created.id },
+        select: { id: true, status: true, assignedOfficerId: true, assignedAt: true }
+      });
+      return { ...created, ...current };
     });
 
     return res.status(201).json({
       success: true,
-      message: "La solicitud fue recibida correctamente.",
+      message: application.status === "PENDING_ASSIGNMENT"
+        ? "La solicitud fue recibida y quedó pendiente de asignación."
+        : "La solicitud fue recibida y asignada a un oficial de crédito.",
       data: application
     });
   } catch (error) {

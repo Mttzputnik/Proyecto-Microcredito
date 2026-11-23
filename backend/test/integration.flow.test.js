@@ -85,24 +85,32 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     assert.equal((await api("POST", "/api/policies", { token: tokens.auditor, body: { name: "Prueba" } })).status, 403);
   });
 
-  test("el oficial solo consulta y gestiona solicitudes que tiene asignadas", async () => {
+  test("las nuevas solicitudes se asignan automáticamente y quedan aisladas por oficial", async () => {
     const created = await api("POST", "/api/applications", { body: applicationPayload() });
     assert.equal(created.status, 201);
+    assert.equal(created.body.data.status, "SUBMITTED");
+    assert.ok(created.body.data.assignedOfficerId);
+    assert.ok(created.body.data.assignedAt);
     state.applicationId = created.body.data.id;
-    const assignedOfficer = await prisma.user.findUnique({ where: { email: "officer@prueba.test" }, select: { id: true } });
-    await prisma.loanApplication.update({ where: { id: state.applicationId }, data: { assignedOfficerId: assignedOfficer.id } });
+    const assignedOfficer = await prisma.user.findUnique({
+      where: { id: created.body.data.assignedOfficerId },
+      select: { id: true, email: true }
+    });
+    state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
+    state.otherOfficerToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer : tokens.officer2;
+    const assignedToken = state.assignedToken;
 
     const applicantId = (await prisma.loanApplication.findUnique({ where: { id: state.applicationId }, select: { applicantId: true } })).applicantId;
-    assert.equal((await api("GET", "/api/applications", { token: tokens.officer2 })).body.data.length, 0);
-    assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: tokens.officer2 })).status, 404);
-    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: tokens.officer2 })).status, 404);
-    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer2, body: { status: "UNDER_REVIEW" } })).status, 404);
-    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "UNDER_REVIEW" } })).status, 200);
-    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: tokens.officer })).status, 200);
+    assert.equal((await api("GET", "/api/applications", { token: state.otherOfficerToken })).body.data.length, 0);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}`, { token: state.otherOfficerToken })).status, 404);
+    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: state.otherOfficerToken })).status, 404);
+    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: state.otherOfficerToken, body: { status: "UNDER_REVIEW" } })).status, 404);
+    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: assignedToken, body: { status: "UNDER_REVIEW" } })).status, 200);
+    assert.equal((await api("GET", `/api/applicants/${applicantId}`, { token: assignedToken })).status, 200);
   });
 
   test("evaluar sin política activa se rechaza con un mensaje claro", async () => {
-    const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: tokens.officer, body: {} });
+    const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: state.assignedToken, body: {} });
     assert.equal(evaluation.status, 409);
     assert.match(evaluation.body.message, /política de crédito activa/);
   });
@@ -113,28 +121,29 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     assert.equal(first.status, 201);
     assert.equal(first.body.data.version, 1);
     const second = await api("POST", "/api/policies", { token: tokens.risk, body: { ...policy, maximumAmount: 6_000_000 } });
+    assert.equal(second.status, 201);
     assert.equal(second.body.data.version, 2);
-    const active = await api("GET", "/api/policies/active", { token: tokens.officer });
+    const active = await api("GET", "/api/policies/active", { token: state.assignedToken });
     assert.equal(active.body.data.version, 2);
     assert.equal((await api("POST", "/api/policies", { token: tokens.risk, body: { name: "x", maxDebtRatio: 40 } })).status, 400);
   });
 
   test("evaluación y decisión humana justificada", async () => {
-    const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: tokens.officer, body: {} });
+    const evaluation = await api("POST", `/api/applications/${state.applicationId}/evaluations`, { token: state.assignedToken, body: {} });
     assert.equal(evaluation.status, 201);
     assert.equal(evaluation.body.data.result, "SUPPORTS_APPROVAL");
     assert.equal(evaluation.body.data.policy.version, 2);
 
-    const noJustification = await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "APPROVED" } });
+    const noJustification = await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: state.assignedToken, body: { status: "APPROVED" } });
     assert.equal(noJustification.status, 400);
 
     const approved = await api("PATCH", `/api/applications/${state.applicationId}/status`, {
-      token: tokens.officer, body: { status: "APPROVED", justification: "Ingresos suficientes y capacidad de pago verificada." }
+      token: state.assignedToken, body: { status: "APPROVED", justification: "Ingresos suficientes y capacidad de pago verificada." }
     });
     assert.equal(approved.status, 200);
     assert.ok(approved.body.data.decisionId);
 
-    const invalid = await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "UNDER_REVIEW" } });
+    const invalid = await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: state.assignedToken, body: { status: "UNDER_REVIEW" } });
     assert.equal(invalid.status, 409);
   });
 
@@ -146,8 +155,8 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     state.loanId = loan.body.data.id;
 
     assert.equal((await api("POST", "/api/loans", { token: tokens.administrative, body: { applicationId: state.applicationId } })).status, 409);
-    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: tokens.officer, body: { status: "CANCELLED" } })).status, 409);
-    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: tokens.officer, body: { amount: 1000 } })).status, 403);
+    assert.equal((await api("PATCH", `/api/applications/${state.applicationId}/status`, { token: state.assignedToken, body: { status: "CANCELLED" } })).status, 409);
+    assert.equal((await api("POST", `/api/loans/${state.loanId}/payments`, { token: state.assignedToken, body: { amount: 1000 } })).status, 403);
   });
 
   test("desembolsar genera el cronograma y la mora marca cuotas vencidas", async () => {
@@ -193,10 +202,11 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
   });
 
   test("la trazabilidad de la solicitud se limita al oficial asignado", async () => {
-    const history = await api("GET", `/api/applications/${state.applicationId}/history`, { token: tokens.officer });
+    const history = await api("GET", `/api/applications/${state.applicationId}/history`, { token: state.assignedToken });
     assert.equal(history.status, 200);
-    assert.equal((await api("GET", `/api/applications/${state.applicationId}/history`, { token: tokens.officer2 })).status, 404);
+    assert.equal((await api("GET", `/api/applications/${state.applicationId}/history`, { token: state.otherOfficerToken })).status, 404);
     const actions = history.body.data.map((event) => event.action);
+    assert.ok(actions.includes("APPLICATION_AUTO_ASSIGNED"));
     assert.ok(actions.includes("APPLICATION_STATUS_CHANGED") && actions.includes("RISK_EVALUATED"));
 
     await assert.rejects(() => prisma.auditLog.updateMany({ data: { description: "alterado" } }), (e) => e.code === "IMMUTABLE_RECORD");
