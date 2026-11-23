@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import { createTrackingCredential, matchesTrackingToken } from "../services/applicationTracking.service.js";
+import { getOrCreateApplicantForSubmission } from "../services/applicantSubmission.service.js";
 import { trackingLookupSchema } from "../validators/application.validator.js";
 import { writeAudit } from "../services/audit.service.js";
 import { prisma } from "../config/prisma.js";
@@ -59,7 +60,6 @@ router.post("/track", async (req, res, next) => {
   }
 });
 
-
 router.post("/", async (req, res, next) => {
   const parsed = applicationSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -79,9 +79,8 @@ router.post("/", async (req, res, next) => {
   try {
     const trackingCredential = createTrackingCredential();
     const application = await prisma.$transaction(async (tx) => {
-      const existingApplicant = await tx.applicant.findUnique({
-        where: { documentNumber: data.documentNumber }
-      });
+      // Una solicitud pública nueva nunca actualiza el perfil existente.
+      // Los datos enviados quedan asociados exclusivamente al snapshot del nuevo expediente.
       const applicantData = {
         documentType: data.documentType,
         documentNumber: data.documentNumber,
@@ -101,9 +100,7 @@ router.post("/", async (req, res, next) => {
         monthlyDebtPayments: data.monthlyDebtPayments
       };
 
-      const applicant = existingApplicant
-        ? await tx.applicant.update({ where: { id: existingApplicant.id }, data: applicantData })
-        : await tx.applicant.create({ data: applicantData });
+      const applicant = await getOrCreateApplicantForSubmission(tx, applicantData);
 
       const applicationNumber = `MC-${new Date().getFullYear()}-${randomUUID().slice(0, 8).toUpperCase()}`;
       const created = await tx.loanApplication.create({
@@ -119,6 +116,7 @@ router.post("/", async (req, res, next) => {
         }
       });
 
+      // Snapshot inmutable de los datos que el solicitante declaró para ESTE expediente.
       await tx.applicationApplicantSnapshot.create({
         data: { applicationId: created.id, ...applicantData }
       });
