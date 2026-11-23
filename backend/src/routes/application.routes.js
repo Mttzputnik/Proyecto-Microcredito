@@ -116,6 +116,10 @@ router.post("/", async (req, res, next) => {
         }
       });
 
+      await tx.applicationApplicantSnapshot.create({
+        data: { applicationId: created.id, ...applicantData }
+      });
+
       await tx.applicationTrackingCredential.create({
         data: { applicationId: created.id, tokenHash: trackingCredential.tokenHash }
       });
