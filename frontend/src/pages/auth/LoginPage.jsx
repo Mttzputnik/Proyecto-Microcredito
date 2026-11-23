@@ -118,12 +118,7 @@ export default function LoginPage() {
           >
             Ingresar al portal
           </Button>
-        </Form>
-        <p className="demo-note">
-          Modo local:Puedes usar cualquier contraseña
-          de 6 caracteres con un correo demo.
-        </p>
-        <p className="login-register-link">¿Todavía no tienes una cuenta? <Link to="/registro">Crear mi registro solidario</Link></p>
+        </Form><p className="login-register-link">¿Todavía no tienes una cuenta? <Link to="/registro">Crear mi registro solidario</Link></p>
       </Card>
     </main>
   );
