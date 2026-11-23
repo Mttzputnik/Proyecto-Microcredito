@@ -26,11 +26,25 @@ Archivo de pruebas: `backend/test/applicantSubmission.test.js`.
 
 ## Pendiente para completar PO-02
 
-- Añadir limitación de peticiones al formulario público y al inicio de sesión.
+- [x] Añadir limitación de peticiones por IP al formulario público, inicio de sesión, seguimiento y envío de reconsideraciones (ventanas y máximos configurables por variables de entorno).
 - Ejecutar la prueba de integración HTTP añadida para demostrar que una segunda solicitud con el mismo documento no altera el perfil anterior y conserva su propio snapshot.
 - Verificar el aislamiento de consultas de seguimiento y el manejo de tokens revocados.
 - Definir y probar un flujo seguro para correcciones o información complementaria sin modificar los datos originales.
 - Ejecutar las pruebas contra una base de integración cuyo nombre termine en `_test`.
+
+## Limitación de intentos públicos
+
+Se incorporó `backend/src/middleware/rateLimit.js` con ventanas fijas por dirección IP y respuestas HTTP 429 con cabeceras `RateLimit-*` y `Retry-After`.
+
+Valores iniciales:
+- Inicio de sesión: 10 intentos cada 15 minutos.
+- Seguimiento: 20 consultas cada 15 minutos.
+- Presentación de solicitudes: 5 envíos por hora.
+- Reconsideraciones: 3 envíos por hora.
+
+Los límites se pueden ajustar con `LOGIN_RATE_LIMIT_MAX`, `LOGIN_RATE_LIMIT_WINDOW_MS`, `TRACKING_RATE_LIMIT_MAX`, `TRACKING_RATE_LIMIT_WINDOW_MS`, `SUBMISSION_RATE_LIMIT_MAX`, `SUBMISSION_RATE_LIMIT_WINDOW_MS`, `RECONSIDERATION_RATE_LIMIT_MAX` y `RECONSIDERATION_RATE_LIMIT_WINDOW_MS`.
+
+**Limitación operativa:** el almacenamiento actual es en memoria por instancia. En un despliegue con varias instancias o reinicios frecuentes se debe configurar un almacén compartido (por ejemplo Redis) antes de producción. La IP se obtiene de `req.ip`; solo se debe configurar `trust proxy` cuando la aplicación esté detrás de proxies conocidos y confiables.
 
 ## Seguridad y alcance
 
