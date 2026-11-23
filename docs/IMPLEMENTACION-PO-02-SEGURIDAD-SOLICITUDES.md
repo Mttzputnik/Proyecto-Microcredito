@@ -18,15 +18,16 @@ El Product Owner establece que el solicitante no puede modificar los datos origi
 
 ## Pruebas añadidas
 
-- Reutilización del perfil existente sin modificar nombre, apellidos ni información financiera.
-- Creación de un perfil cuando el documento todavía no existe.
+- Reutilización del perfil existente sin modificar nombre, apellidos ni información financiera (prueba unitaria).
+- Creación de un perfil cuando el documento todavía no existe (prueba unitaria).
+- Segunda solicitud HTTP con el mismo documento: el perfil global permanece intacto y el snapshot conserva los datos declarados para el segundo expediente (prueba de integración).
 
 Archivo de pruebas: `backend/test/applicantSubmission.test.js`.
 
 ## Pendiente para completar PO-02
 
 - Añadir limitación de peticiones al formulario público y al inicio de sesión.
-- Añadir pruebas de integración HTTP para demostrar que una segunda solicitud con el mismo documento no altera el perfil anterior y conserva su propio snapshot.
+- Ejecutar la prueba de integración HTTP añadida para demostrar que una segunda solicitud con el mismo documento no altera el perfil anterior y conserva su propio snapshot.
 - Verificar el aislamiento de consultas de seguimiento y el manejo de tokens revocados.
 - Definir y probar un flujo seguro para correcciones o información complementaria sin modificar los datos originales.
 - Ejecutar las pruebas contra una base de integración cuyo nombre termine en `_test`.
