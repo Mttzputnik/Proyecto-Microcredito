@@ -61,7 +61,7 @@ Después de integrar hay que correr `npx prisma generate` y `npx prisma db push`
 
 ## 5. PO-03: criterios de elegibilidad incorporados
 
-La política versionada incluye `maximumSimultaneousLoans`, `allowedPurposes` y `requireVerifiedResidence`. La evaluación consulta las solicitudes y préstamos internos de la persona para mostrar solicitudes previas, decisiones aprobadas/rechazadas, contar préstamos vigentes y detectar cuotas vencidas con saldo pendiente. La residencia se registra mediante `POST /api/applications/:id/verifications/residence`, con resultado, observaciones, oficial responsable y auditoría. No se acepta como verificación un dato enviado por el solicitante.
+La política versionada incluye `maximumSimultaneousLoans`, `allowedPurposes` y `requireVerifiedResidence`. El límite de préstamos simultáneos se calcula con los préstamos internos registrados en la cooperativa; las deudas externas se reflejan en los pagos mensuales declarados, pero el sistema no verifica registros externos. La evaluación consulta las solicitudes y préstamos internos de la persona para mostrar solicitudes previas, decisiones aprobadas/rechazadas, contar préstamos vigentes y detectar cuotas vencidas con saldo pendiente. La residencia se registra mediante `POST /api/applications/:id/verifications/residence`, con resultado, observaciones, oficial responsable y auditoría. No se acepta como verificación un dato enviado por el solicitante.
 
 Los criterios sin parámetro suficiente quedan como `NOT_EVALUABLE` y producen recomendación `MANUAL_REVIEW`; cualquier incumplimiento genera `SUPPORTS_REJECTION`, que sigue siendo una recomendación y no una decisión automática.
 
