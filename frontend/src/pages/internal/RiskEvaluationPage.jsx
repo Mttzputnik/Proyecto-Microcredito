@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Descriptions, Form, Input, Radio, Row, Statistic, Tag, Typography, message } from "antd";
+import { Alert, Button, Card, Col, Descriptions, Form, Input, List, Radio, Row, Statistic, Tag, Typography, message } from "antd";
 import { ArrowLeftOutlined, CheckCircleOutlined, FileTextOutlined, InfoCircleOutlined, SafetyCertificateOutlined, WarningOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "../../components/GeneralComponents";
@@ -158,6 +158,24 @@ export default function RiskEvaluationPage() {
                 <Statistic title="Aprobaciones previas" value={evaluation.indicators?.internalHistory?.previousApprovedApplications ?? "N/D"} />
                 <Statistic title="Rechazos previos" value={evaluation.indicators?.internalHistory?.previousRejectedApplications ?? "N/D"} />
               </div>
+              {(() => {
+                const previousDelinquencies = evaluation.indicators?.internalHistory?.previousDelinquencies ?? [];
+                return <Card size="small" className="history-card" title={`Antecedentes de mora saldados (${previousDelinquencies.length})`}>
+                  {previousDelinquencies.length ? <>
+                    <Alert type="warning" showIcon message="Se encontraron retrasos históricos que ya fueron saldados."
+                      description="Este antecedente se presenta para revisión del oficial. No genera por sí solo un rechazo ni aplica un período de espera no definido en la política." />
+                    <List size="small" dataSource={previousDelinquencies} renderItem={(item) => <List.Item>
+                      <div>
+                        <Typography.Text strong>{item.loanNumber || "Préstamo histórico"}</Typography.Text>
+                        <div><Typography.Text type="secondary">
+                          Vencimiento: {formatDate(item.dueDate)} · Pago: {formatDate(item.settledAt)} · Retraso: {item.daysLate} días
+                        </Typography.Text></div>
+                      </div>
+                    </List.Item>} />
+                  </> : <Typography.Text type="secondary">No se encontraron cuotas históricas pagadas después de su vencimiento.</Typography.Text>}
+                </Card>;
+              })()}
+
               {policy && <><div className="card-heading"><div><span className="eyebrow">Política aplicada</span><h3>{policy.name}</h3></div><Tag color="green">Versión {policy.version}</Tag></div>
                 <Typography.Paragraph className="policy-note"><SafetyCertificateOutlined /> La evaluación conserva la versión de política utilizada.</Typography.Paragraph></>}
               <JustificationBlock title="Observaciones del análisis">{evaluation.observations || "Sin observaciones adicionales."}</JustificationBlock>
