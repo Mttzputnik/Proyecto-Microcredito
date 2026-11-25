@@ -16,8 +16,10 @@ export default function LoansPage() {
   const [selected, setSelected] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [collectionOpen, setCollectionOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [paymentForm] = Form.useForm();
+  const [collectionForm] = Form.useForm();
 
   const load = async () => {
     setLoading(true);
@@ -57,6 +59,25 @@ export default function LoansPage() {
     finally { setSaving(false); }
   };
 
+  const submitCollectionAction = async (values) => {
+    setSaving(true);
+    try {
+      await loanService.registerCollectionAction(selected.id, {
+        description: values.description,
+        ...(values.result ? { result: values.result } : {}),
+      });
+      message.success("Gestión de cobro registrada.");
+      setCollectionOpen(false);
+      collectionForm.resetFields();
+      await openDetail(selected);
+      await load();
+    } catch (error) {
+      message.error(error.response?.data?.message || "No fue posible registrar la gestión de cobro.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns = [
     { title: "Préstamo", dataIndex: "loanNumber", key: "loanNumber" },
     { title: "Solicitante", key: "applicant", render: (_, row) => row.application?.applicant ? `${row.application.applicant.firstName} ${row.application.applicant.lastName}` : "—" },
@@ -90,6 +111,7 @@ export default function LoansPage() {
         <Space style={{ margin: "18px 0" }} wrap>
           {selected.status === "PENDING_DISBURSEMENT" && <Button type="primary" loading={saving} onClick={() => Modal.confirm({ title: "Confirmar desembolso", content: "Se registrará la fecha de desembolso y se generará el cronograma. La entrega efectiva del dinero ocurre fuera del sistema.", okText: "Confirmar", cancelText: "Cancelar", onOk: disburse })}>Registrar desembolso</Button>}
           {selected.status === "ACTIVE" && <Button type="primary" icon={<DollarOutlined />} onClick={() => setPaymentOpen(true)}>Registrar pago</Button>}
+          {selected.status === "ACTIVE" && <Button onClick={() => setCollectionOpen(true)}>Registrar gestión de cobro</Button>}
         </Space>
         <Typography.Title level={5}>Cronograma de pagos</Typography.Title>
         <Table size="small" rowKey="id" dataSource={selected.paymentSchedules || []} pagination={false} scroll={{ x: 650 }} columns={[
@@ -108,6 +130,13 @@ export default function LoansPage() {
           { title: "Referencia", dataIndex: "reference", render: (v) => v || "—" },
           { title: "Registrado por", dataIndex: "recordedById" },
         ]} />
+        <Typography.Title level={5} style={{ marginTop: 24 }}>Gestiones de cobro</Typography.Title>
+        <Table size="small" rowKey="id" dataSource={selected.collectionActions || []} pagination={{ pageSize: 5 }} locale={{ emptyText: "No hay gestiones registradas." }} columns={[
+          { title: "Fecha", dataIndex: "performedAt", render: (value) => dayjs(value).format("DD/MM/YYYY HH:mm") },
+          { title: "Gestión realizada", dataIndex: "description" },
+          { title: "Resultado", dataIndex: "result", render: (value) => value || "—" },
+          { title: "Registrado por", dataIndex: "recordedById" },
+        ]} />
       </>}
     </Drawer>
     <Modal title="Registrar pago" open={paymentOpen} onCancel={() => setPaymentOpen(false)} onOk={() => paymentForm.submit()} confirmLoading={saving} okText="Registrar pago" cancelText="Cancelar">
@@ -116,6 +145,16 @@ export default function LoansPage() {
         <Form.Item name="paymentDate" label="Fecha del pago"><DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" disabledDate={(date) => date.isAfter(dayjs(), "day")} /></Form.Item>
         <Form.Item name="reference" label="Referencia"><Input maxLength={100} /></Form.Item>
         <Form.Item name="notes" label="Observaciones"><Input.TextArea maxLength={500} rows={3} /></Form.Item>
+      </Form>
+    </Modal>
+    <Modal title="Registrar gestión de cobro" open={collectionOpen} onCancel={() => setCollectionOpen(false)} onOk={() => collectionForm.submit()} confirmLoading={saving} okText="Guardar gestión" cancelText="Cancelar">
+      <Form form={collectionForm} layout="vertical" onFinish={submitCollectionAction}>
+        <Form.Item name="description" label="Gestión realizada" rules={[{ required: true, min: 10, message: "Describe la gestión realizada (mínimo 10 caracteres)." }]}>
+          <Input.TextArea maxLength={1000} rows={4} placeholder="Describe la gestión de seguimiento o cobro realizada." />
+        </Form.Item>
+        <Form.Item name="result" label="Resultado u observaciones">
+          <Input.TextArea maxLength={1000} rows={3} />
+        </Form.Item>
       </Form>
     </Modal>
   </div>;
