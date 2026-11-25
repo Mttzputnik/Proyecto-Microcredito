@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BarChartOutlined, DownloadOutlined, ReloadOutlined, RiseOutlined, TeamOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Col, DatePicker, Empty, Progress, Row, Statistic, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Card, Col, DatePicker, Empty, Row, Statistic, Table, Tag, Typography, message } from "antd";
 import dayjs from "dayjs";
 import { PageHeader } from "../../components/GeneralComponents";
 import { reportService } from "../../services/reportService";
@@ -8,10 +8,9 @@ import { reportService } from "../../services/reportService";
 const { RangePicker } = DatePicker;
 const cop = (value) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value || 0);
 const categoryLabels = { LIGHT_DELAY: "Retraso leve", EARLY_ARREARS: "Mora temprana", ESTABLISHED_ARREARS: "Mora establecida" };
-const outcomeLabels = { APPROVED: "Aprobadas", APPROVED_WITH_CONDITIONS: "Aprobadas con condiciones", REJECTED: "Rechazadas" };
 const statusLabels = {
-  PENDING_ASSIGNMENT: "Pendientes de asignación", UNDER_REVIEW: "En revisión",
-  PENDING_DOCUMENTS: "Pendientes de documentos", APPROVED: "Aprobadas",
+  PENDING_ASSIGNMENT: "Pendientes de asignación", SUBMITTED: "Recibidas", UNDER_REVIEW: "En revisión",
+  NEEDS_INFORMATION: "Pendientes de información", APPROVED: "Aprobadas",
   APPROVED_WITH_CONDITIONS: "Aprobadas con condiciones", REJECTED: "Rechazadas",
   CANCELLED: "Canceladas"
 };
