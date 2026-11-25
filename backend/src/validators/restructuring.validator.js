@@ -17,6 +17,7 @@ export const restructuringPolicySchema = z.object({
   includeAccruedInterest: z.boolean(),
   lateInterestTreatment: z.enum(["MANUAL_CAPITALIZE", "WAIVE", "NOT_APPLICABLE"]),
   approvalReference: z.string().trim().min(5).max(200),
+  approvalDate: z.string().datetime(),
   effectiveFrom: z.string().datetime()
 }).strict();
 
