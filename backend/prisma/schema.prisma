@@ -129,6 +129,7 @@ model Loan {
   payments Payment[]
   alerts Alert[]
   collectionActions CollectionAction[]
+  restructurings LoanRestructuring[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -137,6 +138,8 @@ model PaymentSchedule {
   loanId String @db.ObjectId
   loan Loan @relation(fields: [loanId], references: [id])
   installment Int
+  scheduleVersion Int @default(1)
+  isCurrent Boolean @default(true)
   dueDate DateTime
   principal Float
   interest Float
@@ -147,7 +150,8 @@ model PaymentSchedule {
   status String @default("PENDING")
   alerts Alert[]
   createdAt DateTime @default(now())
-  @@unique([loanId, installment])
+  @@unique([loanId, scheduleVersion, installment])
+  @@index([loanId, isCurrent, installment])
 }
 model Payment {
   id String @id @default(auto()) @map("_id") @db.ObjectId
@@ -263,4 +267,68 @@ model CollectionAction {
   recordedById String @db.ObjectId
   createdAt DateTime @default(now())
   @@index([loanId, performedAt])
+}
+
+
+model RestructuringPolicy {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  version Int
+  maximumTermMonths Int
+  maximumGracePeriodDays Int
+  maximumUsuryRate Float
+  maximumOfficerApprovalAmount Float
+  allowRateChange Boolean
+  allowRepeatedRestructuring Boolean
+  maximumRestructurings Int
+  overdueInstallmentsTreatment String
+  includeAccruedInterest Boolean
+  lateInterestTreatment String
+  effectiveFrom DateTime
+  effectiveUntil DateTime?
+  active Boolean @default(true)
+  restructurings LoanRestructuring[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([name, version])
+  @@index([active, effectiveFrom])
+}
+
+model LoanRestructuring {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  loanId String @db.ObjectId
+  loan Loan @relation(fields: [loanId], references: [id])
+  policyId String @db.ObjectId
+  policy RestructuringPolicy @relation(fields: [policyId], references: [id])
+  version Int
+  status String @default("PENDING_REVIEW")
+  reason String
+  requestedById String
+  reviewedById String?
+  acceptedById String?
+  decision String?
+  justification String?
+  principalOutstanding Float
+  accruedInterestOutstanding Float
+  includedInterest Float
+  lateInterestAmount Float
+  waivedInterest Float
+  newPrincipal Float
+  previousAnnualRate Float
+  proposedAnnualRate Float
+  previousTermMonths Int
+  proposedTermMonths Int
+  gracePeriodDays Int
+  firstDueDate DateTime
+  overdueBalance Float
+  acceptanceMethod String?
+  acceptanceEvidence String?
+  acceptedAt DateTime?
+  decidedAt DateTime?
+  activatedAt DateTime?
+  scheduleVersion Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([loanId, status, createdAt])
+  @@index([status, createdAt])
 }
