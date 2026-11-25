@@ -55,7 +55,7 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
     paymentSchedule: {
       ...collection("paymentSchedule"),
       createMany: async ({ data }) => {
-        data.forEach((d) => t.paymentSchedule.push({ id: nextId(), paidAmount: 0, paidAt: null, status: "PENDING", ...d }));
+        data.forEach((d) => t.paymentSchedule.push({ id: nextId(), paidAmount: 0, paidAt: null, status: "PENDING", scheduleVersion: 1, isCurrent: true, ...d }));
         return { count: data.length };
       }
     },
