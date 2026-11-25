@@ -36,3 +36,8 @@ export const listLoansQuery = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20)
 });
+
+export const collectionActionSchema = z.object({
+  description: z.string().trim().min(10, "Describe la gestión realizada (mínimo 10 caracteres).").max(1000),
+  result: z.string().trim().max(1000).optional()
+}).strict();
