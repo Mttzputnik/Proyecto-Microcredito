@@ -53,6 +53,7 @@ export default function ReportsPage() {
       ...report.applications.byStatus.map((item) => ["Solicitudes por estado", statusLabels[item.status] || item.status, item.count]),
       ...report.arrears.map((item) => ["Mora", categoryLabels[item.category] || item.category, item.installments]),
       ...report.supervision.byMunicipality.map((item) => ["Municipio", item.municipality, item.applications]),
+      ...report.supervision.byResidenceZone.map((item) => ["Zona de residencia", item.residenceZone, item.applications]),
       ...report.supervision.byPurpose.map((item) => ["Propósito", item.purpose, item.applications]),
     ];
     const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
@@ -72,6 +73,13 @@ export default function ReportsPage() {
     { title: "Rechazadas", dataIndex: "rejected", key: "rejected" },
     { title: "Tasa de aprobación", dataIndex: "approvalRate", key: "approvalRate", render: (value) => `${value}%` },
     { title: "Días promedio de decisión", dataIndex: "averageDecisionDays", key: "averageDecisionDays", render: (value) => value === null ? "—" : value },
+  ];
+  const residenceColumns = [
+    { title: "Zona de residencia", dataIndex: "residenceZone", key: "residenceZone", render: (value) => value === "urbana" ? "Urbana" : value === "rural" ? "Rural" : value },
+    { title: "Solicitudes", dataIndex: "applications", key: "applications" },
+    { title: "Aprobadas", dataIndex: "approved", key: "approved" },
+    { title: "Rechazadas", dataIndex: "rejected", key: "rejected" },
+    { title: "Tasa de aprobación", dataIndex: "approvalRate", key: "approvalRate", render: (value) => `${value}%` },
   ];
   const purposeColumns = [
     { title: "Destino", dataIndex: "purpose", key: "purpose" },
@@ -144,6 +152,11 @@ export default function ReportsPage() {
         <Typography.Title level={5}>Supervisión por municipio</Typography.Title>
         <Alert type="info" showIcon message="Protección de grupos pequeños" description={`Solo se muestran grupos con al menos ${report.supervision.minimumGroupSize} solicitudes. No se exponen datos personales ni dimensiones demográficas que no estén definidas en el modelo de datos.`} style={{ marginBottom: 14 }} />
         <Table rowKey="municipality" dataSource={report.supervision.byMunicipality} columns={municipalityColumns} loading={loading} pagination={{ pageSize: 8 }} locale={{ emptyText: <Empty description="No hay grupos con volumen suficiente para mostrar." /> }} />
+      </Card>
+
+      <Card className="detail-card" style={{ marginBottom: 18 }}>
+        <Typography.Title level={5}>Supervisión por zona de residencia</Typography.Title>
+        <Table rowKey="residenceZone" dataSource={report.supervision.byResidenceZone} columns={residenceColumns} pagination={false} locale={{ emptyText: "Sin grupos con volumen suficiente." }} />
       </Card>
 
       <Row gutter={[18, 18]} style={{ marginBottom: 18 }}>
