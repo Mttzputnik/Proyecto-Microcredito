@@ -21,13 +21,12 @@ export function calculateRestructuringBalance({
   }
 
   const paidFor = (row) => {
-    const recorded = paidBySchedule.get(row.id);
-    if (recorded) return recorded;
+    const recorded = paidBySchedule.get(row.id) || { principal: 0, interest: 0 };
     const paidAmount = Number(row.paidAmount || 0);
     const interest = Number(row.interest || 0);
     return {
-      interest: Math.min(paidAmount, interest),
-      principal: Math.max(0, paidAmount - interest)
+      interest: Math.max(recorded.interest, Math.min(paidAmount, interest)),
+      principal: Math.max(recorded.principal, Math.max(0, paidAmount - interest))
     };
   };
 
