@@ -14,6 +14,8 @@ const router = Router();
 // POST /api/applications/track — consulta pública protegida por número de caso + token secreto.
 // La respuesta contiene únicamente datos mínimos de seguimiento.
 router.post("/track", trackingRateLimit, async (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  res.setHeader("Pragma", "no-cache");
   const parsed = trackingLookupSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ success: false, message: "Los datos de consulta no son válidos." });
@@ -21,8 +23,6 @@ router.post("/track", trackingRateLimit, async (req, res, next) => {
 
   try {
     const data = await lookupApplicationTracking(prisma, parsed.data);
-    res.setHeader("Cache-Control", "no-store, private");
-    res.setHeader("Pragma", "no-cache");
     return res.json({ success: true, data });
   } catch (error) {
     return next(error);
