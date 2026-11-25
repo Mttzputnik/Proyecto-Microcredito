@@ -7,12 +7,21 @@ import { httpError } from "../utils/httpError.js";
 
 const POLICY_MODES = ["CAPITALIZE", "REQUIRE_PAYMENT"];
 
-export async function listRestructuringPolicies(prisma) {
+export async function listRestructuringPolicies(prisma, now = new Date()) {
+  // Filtrar effectiveUntil en memoria evita el caso de MongoDB donde null no coincide
+  // con documentos antiguos en los que el campo opcional no existe.
   const policies = await prisma.restructuringPolicy.findMany({
-    where: { active: true, effectiveFrom: { lte: new Date() }, OR: [{ effectiveUntil: null }, { effectiveUntil: { gt: new Date() } }] },
+    where: { active: true, effectiveFrom: { lte: now } },
     orderBy: [{ name: "asc" }, { version: "desc" }]
   });
-  return policies.filter((policy) => typeof policy.approvalReference === "string" && policy.approvalReference.trim().length >= 5 && policy.approvalDate && !Number.isNaN(new Date(policy.approvalDate).getTime()));
+  return policies.filter((policy) =>
+    (!policy.effectiveUntil || new Date(policy.effectiveUntil) > now) &&
+    typeof policy.approvalReference === "string" &&
+    policy.approvalReference.trim().length >= 5 &&
+    policy.approvalDate &&
+    !Number.isNaN(new Date(policy.approvalDate).getTime()) &&
+    new Date(policy.approvalDate) <= now
+  );
 }
 
 export async function createRestructuringPolicy(prisma, { payload, actor }) {
