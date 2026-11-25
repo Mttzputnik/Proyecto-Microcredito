@@ -238,7 +238,7 @@
 
 ### PO-11 — Auditoría de operaciones críticas
 **Prioridad:** P1 transversal  
-**Estado:** consulta detallada e interfaz implementadas en rama `feat/po-09-10-reportes-supervision`; falta verificación transversal final de cobertura e inmutabilidad.
+**Estado:** implementación transversal completada en esta rama; validación local dirigida pendiente. Ver `docs/IMPLEMENTACION-PO-11-CIERRE.md`.
 
 **Trabajo:**
 - Verificar auditoría de decisiones, reconsideraciones, cambios de política, pagos y alertas; reestructuraciones se auditarán cuando se implementen.
