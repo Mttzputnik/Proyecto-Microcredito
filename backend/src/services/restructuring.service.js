@@ -216,7 +216,7 @@ export async function acceptRestructuring(prisma, { restructuringId, acceptanceM
     if (changed.count !== 1) throw httpError(409, "El préstamo cambió durante la aceptación. Recarga e intenta nuevamente.");
 
     await tx.alert.updateMany({
-      where: { loanId: item.loanId, status: "UNREAD", schedule: { isCurrent: true } },
+      where: { scheduleId: { in: currentSchedules.map((row) => row.id) }, status: "UNREAD" },
       data: { status: "CANCELLED", readAt: now }
     });
     await tx.paymentSchedule.updateMany({
