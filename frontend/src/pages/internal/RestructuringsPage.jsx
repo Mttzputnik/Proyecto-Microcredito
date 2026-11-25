@@ -80,6 +80,7 @@ export default function RestructuringsPage() {
     try {
       await loanService.createRestructuringPolicy({
         ...values,
+        approvalDate: values.approvalDate.toISOString(),
         effectiveFrom: values.effectiveFrom.toISOString(),
       });
       message.success("Política de reestructuración publicada.");
@@ -196,6 +197,7 @@ export default function RestructuringsPage() {
           <Form.Item name="includeAccruedInterest" label="¿Capitalizar intereses corrientes vencidos?" rules={[{ required: true }]}><Select options={[{ value: true, label: "Sí" }, { value: false, label: "No" }]} /></Form.Item>
         </Space>
         <Form.Item name="approvalReference" label="Referencia del acta o resolución aprobatoria" rules={[{ required: true, min: 5, max: 200 }]}><Input maxLength={200} /></Form.Item>
+        <Form.Item name="approvalDate" label="Fecha de aprobación institucional" rules={[{ required: true }]}><DatePicker style={{ width: "100%" }} /></Form.Item>
         <Form.Item name="effectiveFrom" label="Vigente desde" rules={[{ required: true }]}><DatePicker showTime style={{ width: "100%" }} /></Form.Item>
         <Alert type="warning" showIcon message="Publica únicamente parámetros aprobados por la cooperativa. Registra la referencia institucional. El motor solo genera cuotas mensuales; no calcula intereses de mora automáticamente y exige soporte contable para cualquier importe manual capitalizado." />
       </Form>
