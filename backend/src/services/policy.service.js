@@ -22,8 +22,8 @@ export async function findActivePolicy(db, now = new Date()) {
   return candidates.find((policy) => isCreditPolicyReady(policy) && (!policy.effectiveUntil || new Date(policy.effectiveUntil) >= now)) ?? null;
 }
 
-// Las políticas NO se editan (ADR-003): crear una con el mismo nombre genera una versión nueva
-// y deja las anteriores inactivas. Las evaluaciones antiguas siguen apuntando a su versión.
+// Las políticas NO se editan (ADR-003): crear una versión nueva cierra la vigencia anterior.
+// Si la nueva versión tiene fecha futura, la anterior sigue activa hasta ese momento.
 export async function createPolicyVersion(prisma, { data, actor }) {
   const effectiveFrom = data.effectiveFrom ? new Date(data.effectiveFrom) : new Date();
   const approvalDate = new Date(data.approvalDate);
