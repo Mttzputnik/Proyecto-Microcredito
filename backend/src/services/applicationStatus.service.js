@@ -58,8 +58,18 @@ export async function verifyConditionalApproval(prisma, { applicationId, actor, 
     if (!application || application.assignedOfficerId !== actor.id) throw httpError(404, "Solicitud no encontrada.");
     if (application.status !== "APPROVED_WITH_CONDITIONS") throw httpError(409, "La solicitud no está pendiente de cumplimiento de condiciones.");
     if (application.loan) throw httpError(409, "La solicitud ya tiene un préstamo formalizado.");
-    const conditional = await tx.conditionalApproval.findUnique({ where: { applicationId } });
-    if (!conditional || conditional.status !== "PENDING") throw httpError(409, "No existe una aprobación condicionada pendiente de verificar.");
+    let conditional = await tx.conditionalApproval.findUnique({ where: { applicationId } });
+    // Compatibilidad con decisiones condicionadas históricas creadas antes de este modelo.
+    if (!conditional) {
+      const originalDecision = await tx.loanDecision.findFirst({
+        where: { applicationId, outcome: "APPROVED_WITH_CONDITIONS" }, orderBy: { decidedAt: "desc" }
+      });
+      if (!originalDecision?.conditions?.trim()) throw httpError(409, "No existe una decisión condicionada con condiciones registradas para verificar.");
+      conditional = await tx.conditionalApproval.create({ data: {
+        applicationId, decisionId: originalDecision.id, conditions: originalDecision.conditions, status: "PENDING"
+      } });
+    }
+    if (conditional.status !== "PENDING") throw httpError(409, "La aprobación condicionada ya fue procesada.");
     const verified = await tx.conditionalApproval.updateMany({
       where: { id: conditional.id, status: "PENDING" },
       data: { status: "VERIFIED", verificationNotes: notes.trim(), verifiedById: actor.id, verifiedAt: now }
