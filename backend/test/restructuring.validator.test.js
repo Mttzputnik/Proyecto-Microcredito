@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { restructuringPolicySchema, createRestructuringSchema } from "../src/validators/restructuring.validator.js";
+import { listRestructuringPolicies } from "../src/services/restructuring.service.js";
 
 const policy = {
   name: "Política de normalización",
@@ -36,4 +37,17 @@ test("solicitudes solo admiten cronogramas mensuales", () => {
   };
   assert.equal(createRestructuringSchema.safeParse(base).success, true);
   assert.equal(createRestructuringSchema.safeParse({ ...base, scheduleFrequency: "WEEKLY" }).success, false);
+});
+
+
+test("lista políticas autorizadas aun cuando MongoDB no almacena effectiveUntil", async () => {
+  const now = new Date("2026-11-25T12:00:00.000Z");
+  const policyRow = {
+    id: "policy-1", active: true, effectiveFrom: new Date("2026-11-01T00:00:00.000Z"),
+    approvalReference: "ACTA-COOP-2026-02", approvalDate: new Date("2026-10-20T00:00:00.000Z")
+  };
+  let query;
+  const rows = await listRestructuringPolicies({ restructuringPolicy: { findMany: async (args) => { query = args; return [policyRow]; } } }, now);
+  assert.equal(rows.length, 1);
+  assert.equal("OR" in query.where, false);
 });
