@@ -94,7 +94,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     const firstDueDate = new Date(payload.firstDueDate);
     if (firstDueDate <= now) throw httpError(400, "El primer vencimiento debe ser posterior a la fecha de solicitud.");
     const standardFirstDueDate = addMonths(now, 1);
-    const actualGraceDays = Math.ceil((firstDueDate.getTime() - standardFirstDueDate.getTime()) / 86_400_000);
+    const actualGraceDays = daysOverdue(standardFirstDueDate, firstDueDate);
     if (actualGraceDays < 0 || actualGraceDays !== payload.gracePeriodDays) {
       throw httpError(400, "La fecha del primer vencimiento debe corresponder al primer vencimiento mensual más el período de gracia indicado.");
     }
@@ -105,7 +105,8 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
       schedules, payments,
       includeAccruedInterest: policy.includeAccruedInterest,
       lateInterestTreatment: policy.lateInterestTreatment,
-      lateInterestAmount: payload.lateInterestAmount
+      lateInterestAmount: payload.lateInterestAmount,
+      asOf: now
     });
     if (balance.newPrincipal <= 0) throw httpError(409, "El saldo calculado no permite generar una reestructuración.");
 
