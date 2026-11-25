@@ -15,6 +15,13 @@ test("el vencimiento es día cero y el día siguiente inicia la mora", () => {
   assert.equal(daysOverdue("2026-11-26T05:00:00.000Z", today), -1);
 });
 
+test("interpreta vencimientos a medianoche UTC como la fecha calendario del cronograma", () => {
+  const localEndOfDay = new Date("2026-04-10T15:00:00.000Z");
+  assert.equal(daysOverdue("2026-03-01T00:00:00.000Z", localEndOfDay), 40);
+  assert.equal(daysOverdue("2026-04-01T00:00:00.000Z", localEndOfDay), 9);
+  assert.equal(daysOverdue("2026-04-10T00:00:00.000Z", localEndOfDay), 0);
+});
+
 test("clasifica correctamente los límites de días de mora", () => {
   assert.equal(classifyArrearsDays(0), null);
   assert.equal(classifyArrearsDays(1), ARREARS_CATEGORIES.LIGHT_DELAY);
