@@ -43,10 +43,10 @@ const due = (daysFromToday) => new Date(Date.UTC(2026, 10, 25 - daysFromToday));
 
 test("monitoreo actualiza cuotas vencidas y genera alertas de mora y vencimiento", async () => {
   const db = memoryDb([
-    { id: "s1", loanId: "l1", installment: 1, dueDate: due(1), status: "PENDING" },
-    { id: "s31", loanId: "l2", installment: 1, dueDate: due(31), status: "PARTIALLY_PAID" },
-    { id: "s61", loanId: "l3", installment: 1, dueDate: due(61), status: "PENDING" },
-    { id: "sFuture", loanId: "l4", installment: 1, dueDate: due(-2), status: "PENDING" }
+    { id: "s1", loanId: "l1", installment: 1, dueDate: due(1), status: "PENDING", totalDue: 100, paidAmount: 0 },
+    { id: "s31", loanId: "l2", installment: 1, dueDate: due(31), status: "PARTIALLY_PAID", totalDue: 100, paidAmount: 20 },
+    { id: "s61", loanId: "l3", installment: 1, dueDate: due(61), status: "PENDING", totalDue: 100, paidAmount: 0 },
+    { id: "sFuture", loanId: "l4", installment: 1, dueDate: due(-2), status: "PENDING", totalDue: 100, paidAmount: 0 }
   ]);
 
   const result = await monitorArrears(db, { today, upcomingDays: 3 });
@@ -62,7 +62,7 @@ test("monitoreo actualiza cuotas vencidas y genera alertas de mora y vencimiento
 
 test("monitoreo es idempotente: no duplica alertas ni vuelve a actualizar cuotas", async () => {
   const db = memoryDb([
-    { id: "s1", loanId: "l1", installment: 1, dueDate: due(31), status: "PENDING" }
+    { id: "s1", loanId: "l1", installment: 1, dueDate: due(31), status: "PENDING", totalDue: 100, paidAmount: 0 }
   ]);
 
   const first = await monitorArrears(db, { today, upcomingDays: 3 });
