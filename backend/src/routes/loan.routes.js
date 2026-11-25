@@ -81,7 +81,7 @@ router.post("/:id/collection-actions", authorize(...PERMISSIONS.manageLoans), as
 // GET /api/loans?status=ACTIVE&page=1&limit=20
 router.get("/", authorize(...PERMISSIONS.readLoans), async (req, res) => {
   const { status, page, limit } = parseOrThrow(listLoansQuery, req.query, "Los filtros no son válidos.");
-  const where = status ? { status } : {};
+  const where = { ...(status ? { status } : {}), ...(req.user.role === "CREDIT_OFFICER" ? { application: { assignedOfficerId: req.user.id } } : {}) };
   const [total, items] = await Promise.all([
     prisma.loan.count({ where }),
     prisma.loan.findMany({
@@ -107,7 +107,7 @@ router.get("/:id", authorize(...PERMISSIONS.readLoans), async (req, res) => {
       collectionActions: { orderBy: { performedAt: "desc" } }
     }
   });
-  if (!loan) throw httpError(404, "Préstamo no encontrado.");
+  if (!loan || (req.user.role === "CREDIT_OFFICER" && loan.application.assignedOfficerId !== req.user.id)) throw httpError(404, "Préstamo no encontrado.");
   const scheduleHistory = await prisma.paymentSchedule.findMany({
     where: { loanId: id, isCurrent: false },
     orderBy: [{ scheduleVersion: "desc" }, { installment: "asc" }]
