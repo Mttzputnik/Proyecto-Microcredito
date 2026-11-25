@@ -81,6 +81,7 @@ export async function getPortfolioAndSupervisionReports(prisma, filters = {}) {
   const statusCounts = new Map();
   const municipalityGroups = new Map();
   const purposeGroups = new Map();
+  const residenceGroups = new Map();
   const decisionsByOutcome = new Map();
   let decisionDaysTotal = 0;
   let decisionDaysCount = 0;
@@ -116,6 +117,8 @@ export async function getPortfolioAndSupervisionReports(prisma, filters = {}) {
       outcome,
       decisionDays
     });
+    const residenceZone = application.applicantSnapshot?.residenceZone ?? application.applicant?.residenceZone ?? "Sin dato";
+    increment(residenceGroups, residenceZone, { requestedAmount: application.requestedAmount, outcome, decisionDays });
   }
 
   const arrearsByCategory = new Map();
@@ -176,6 +179,7 @@ export async function getPortfolioAndSupervisionReports(prisma, filters = {}) {
     supervision: {
       minimumGroupSize: MINIMUM_GROUP_SIZE,
       byMunicipality: finishGroups(municipalityGroups, "municipality"),
+      byResidenceZone: finishGroups(residenceGroups, "residenceZone"),
       byPurpose: finishGroups(purposeGroups, "purpose"),
       portfolioByPurpose: [...performanceByPurpose.values()].filter((item) => item.activeLoans >= MINIMUM_GROUP_SIZE).map((item) => ({
         ...item,
