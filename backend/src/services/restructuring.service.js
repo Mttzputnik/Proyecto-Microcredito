@@ -1,6 +1,6 @@
 import { buildSchedule, addMonths } from "../domain/finance.js";
 import { outstanding } from "../domain/payments.js";
-import { calculateGraceDays, calculateRestructuringBalance } from "../domain/restructuring.js";
+import { calculateRestructuringBalance } from "../domain/restructuring.js";
 import { loanTransitions, assertTransition } from "../domain/states.js";
 import { writeAudit } from "./audit.service.js";
 import { httpError } from "../utils/httpError.js";
@@ -86,10 +86,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (payload.termMonths > policy.maximumTermMonths) throw httpError(400, "El plazo propuesto supera el máximo de la política.");
     if (payload.gracePeriodDays > policy.maximumGracePeriodDays) throw httpError(400, "El período de gracia supera el máximo de la política.");
 
-    const graceDays = calculateGraceDays(now, payload.firstDueDate);
-    if (graceDays > payload.gracePeriodDays) {
-      throw httpError(400, "La fecha del primer vencimiento excede el período de gracia indicado.");
-    }
+    if (new Date(payload.firstDueDate) <= now) throw httpError(400, "El primer vencimiento debe ser posterior a la fecha de solicitud.");
     const balance = calculateRestructuringBalance({
       schedules, payments,
       includeAccruedInterest: policy.includeAccruedInterest,
@@ -131,7 +128,10 @@ export async function decideRestructuring(prisma, { restructuringId, outcome, ju
     }
     const escalated = item.newPrincipal > item.policy.maximumOfficerApprovalAmount;
     const isCommittee = actor.role === "comite_supervisor";
-    if (escalated && !isCommittee) {
+    if (item.status === "PENDING_REVIEW" && isCommittee) {
+      throw httpError(403, "El comité solo interviene en propuestas escaladas.");
+    }
+    if (outcome === "APPROVED" && escalated && !isCommittee) {
       await tx.loanRestructuring.update({ where: { id: restructuringId }, data: { status: "PENDING_COMMITTEE_REVIEW" } });
       await writeAudit(tx, {
         actorId: actor.id, action: "RESTRUCTURING_ESCALATED",
