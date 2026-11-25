@@ -7,7 +7,7 @@ import {
   disburseSchema, formalizeSchema, listLoansQuery, paymentSchema, writeOffSchema
 } from "../validators/finance.validator.js";
 import {
-  disburseLoan, formalizeLoan, listArrears, refreshArrears, registerPayment, writeOffLoan
+  disburseLoan, formalizeLoan, listArrears, listArrearsAlerts, refreshArrears, registerPayment, writeOffLoan
 } from "../services/loan.service.js";
 import { httpError, parseOrThrow, requireObjectId } from "../utils/httpError.js";
 
@@ -20,6 +20,11 @@ const applicantSummary = { id: true, firstName: true, lastName: true, documentTy
 // GET /api/loans/arrears  -> cuotas vencidas de préstamos activos, agrupadas por préstamo (definida ANTES de /:id)
 router.get("/arrears", authorize(...PERMISSIONS.readLoans), async (_req, res) => {
   res.json({ success: true, data: await listArrears(prisma) });
+});
+
+// GET /api/loans/alerts -> alertas administrativas pendientes de lectura.
+router.get("/alerts", authorize(...PERMISSIONS.readLoans), async (_req, res) => {
+  res.json({ success: true, data: await listArrearsAlerts(prisma) });
 });
 
 // GET /api/loans?status=ACTIVE&page=1&limit=20
