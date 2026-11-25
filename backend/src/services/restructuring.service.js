@@ -47,7 +47,7 @@ export async function listRestructurings(prisma, { loanId, actor } = {}) {
   return prisma.loanRestructuring.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: { policy: true }
+    include: { policy: true, loan: { select: { loanNumber: true, application: { select: { applicant: { select: { firstName: true, lastName: true } } } } } } }
   });
 }
 
