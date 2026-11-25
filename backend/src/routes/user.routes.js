@@ -20,29 +20,37 @@ router.get("/", async (_req, res) => {
   res.json({ success: true, data: users });
 });
 
-// POST /api/users  (solo ADMIN) crea un usuario interno
+// POST /api/users  (solo ADMIN) crea un usuario interno y deja constancia atómica.
 router.post("/", async (req, res) => {
   const data = parseOrThrow(createUserSchema, req.body);
   const exists = await prisma.user.findUnique({ where: { email: data.email } });
   if (exists) throw httpError(409, "Ya existe un usuario con ese correo.");
 
   const { password, ...rest } = data;
-  const user = await prisma.user.create({
-    data: { ...rest, passwordHash: await bcrypt.hash(password, 10) },
-    select: publicUser
-  });
-  await writeAudit(prisma, {
-    actorId: req.user.id,
-    action: "USER_CREATED",
-    entityType: "User",
-    entityId: user.id,
-    description: `Usuario ${user.email} creado con rol ${user.role}`
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: { ...rest, passwordHash },
+      select: publicUser
+    });
+
+    await writeAudit(tx, {
+      actorId: req.user.id,
+      action: "USER_CREATED",
+      entityType: "User",
+      entityId: created.id,
+      description: `Usuario interno creado con rol ${created.role}`,
+      metadata: { role: created.role, active: created.active }
+    });
+
+    // Si se habilita un oficial, el reprocesamiento de la cola y sus eventos
+    // quedan en la misma transacción que la creación del usuario.
+    if (created.role === ROLES.CREDIT_OFFICER && created.active) {
+      await assignPendingApplications(tx);
+    }
+    return created;
   });
 
-  // Si se habilita un oficial después de que existían casos pendientes, se reprocesa la cola.
-  if (user.role === ROLES.CREDIT_OFFICER && user.active) {
-    await prisma.$transaction((tx) => assignPendingApplications(tx));
-  }
   res.status(201).json({ success: true, data: user });
 });
 
