@@ -15,6 +15,7 @@ const policy = {
   includeAccruedInterest: false,
   lateInterestTreatment: "NOT_APPLICABLE",
   approvalReference: "ACTA-COOP-2026-02",
+  approvalDate: "2026-10-20T00:00:00.000Z",
   effectiveFrom: "2026-11-01T00:00:00.000Z"
 };
 
