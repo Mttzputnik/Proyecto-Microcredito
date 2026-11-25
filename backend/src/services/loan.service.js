@@ -23,10 +23,16 @@ export async function formalizeLoan(prisma, { applicationId, actor }) {
     if (application.loan) throw httpError(409, "Esta solicitud ya tiene un préstamo.");
 
     const decision = await tx.loanDecision.findFirst({
-      where: { applicationId, outcome: "APPROVED" },
+      where: { applicationId, outcome: { in: ["APPROVED", "APPROVED_WITH_CONDITIONS"] } },
       orderBy: { decidedAt: "desc" }
     });
     if (!decision) throw httpError(409, "La solicitud no tiene una decisión de aprobación registrada.");
+    if (decision.outcome === "APPROVED_WITH_CONDITIONS") {
+      const conditional = await tx.conditionalApproval.findUnique({ where: { applicationId } });
+      if (!conditional || conditional.status !== "VERIFIED") {
+        throw httpError(409, "No se puede formalizar: las condiciones de aprobación aún no han sido verificadas por el oficial asignado.");
+      }
+    }
 
     const evaluation = await tx.riskEvaluation.findFirst({
       where: { applicationId },
