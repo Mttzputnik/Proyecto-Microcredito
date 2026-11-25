@@ -26,7 +26,7 @@ El monitor diario:
 - Evita duplicados por cuota, tipo de alerta y fecha de referencia.
 - Registra los eventos de monitoreo en `AuditLog`.
 
-Las alertas administrativas se consultan desde `GET /api/loans/alerts` y se marcan como atendidas con `PATCH /api/loans/alerts/:id/read`.
+Las alertas administrativas se consultan desde `GET /api/loans/alerts` y se marcan como atendidas con `PATCH /api/loans/alerts/:id/read`. Las gestiones de cobro se registran con `POST /api/loans/:id/collection-actions` y se consultan en el detalle del préstamo.
 
 ## Configuración
 
@@ -41,7 +41,7 @@ El monitor se ejecuta al iniciar el backend y luego cada intervalo configurado. 
 
 ## Modelo de datos
 
-Se agrega `Alert`, relacionada con `Loan` y `PaymentSchedule`. Las alertas conservan el tipo, fecha de referencia, hito de días, mensaje, estado de atención y fecha de creación/lectura.
+Se agrega `Alert`, relacionada con `Loan` y `PaymentSchedule`. Las alertas conservan el tipo, fecha de referencia, hito de días, mensaje, estado de atención y fecha de creación/lectura. También se agrega `CollectionAction`, que conserva la descripción, resultado, fecha y usuario que registró cada gestión de cobro.
 
 ## Validación
 
@@ -52,6 +52,7 @@ Se agregan pruebas para:
 - Generación de alertas de vencimiento y de hitos de mora.
 - Idempotencia de ejecuciones sucesivas.
 - Validación de la ventana configurable.
+- Registro y auditoría de gestiones de cobro.
 
 Después de actualizar la rama:
 ```bash
