@@ -45,6 +45,12 @@ La consulta devuelve actor, acción, entidad, identificador, descripción y fech
 - No se generan indicadores por género o edad: el modelo no define esas dimensiones como atributos de perfil autorizados para estos reportes. No se utilizan datos personales ni identificadores en los agregados.
 - La comparación entre propósito y mora es descriptiva; no demuestra causalidad.
 
+## Eventos de auditoría ya identificados en los servicios
+
+La revisión del código encontró registros para emisión de credencial de seguimiento, asignación automática, evaluación de riesgo, verificación de residencia, cambios de estado/decisión, creación de políticas, presentación y resolución de reconsideraciones, formalización, desembolso, pagos confirmados, refresco y monitoreo de mora, registro de gestiones de cobro, atención de alertas y castigo de préstamos.
+
+La revisión final de PO-11 debe comprobar que cada ruta que ejecuta estas operaciones usa el servicio correspondiente y que no existe una ruta alternativa que omita la auditoría. La reestructuración todavía no está implementada y deberá auditarse cuando se desarrolle.
+
 ## Interfaz
 
 - `ReportsPage` consume la API real, permite seleccionar un periodo y exportar un CSV de agregados.
