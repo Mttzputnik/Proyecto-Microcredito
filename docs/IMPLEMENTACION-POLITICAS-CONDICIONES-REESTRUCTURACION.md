@@ -47,7 +47,7 @@ Se incorpora el modelo `ConditionalApproval`, separado de `LoanDecision` para no
 5. El servicio valida que el expediente siga asignado al oficial, que esté pendiente y que no tenga un préstamo formalizado.
 6. En una transacción se marca el cumplimiento como `VERIFIED`, se registra responsable/fecha/evidencia y se cambia el estado de la solicitud a `APPROVED`.
 7. Se generan eventos de auditoría para la verificación y el cambio de estado.
-8. La formalización comprueba nuevamente que, si la decisión fue condicionada, exista un seguimiento `VERIFIED`.
+8. La formalización comprueba nuevamente que, si la decisión fue condicionada, exista un seguimiento `VERIFIED`. Para expedientes históricos sin el nuevo registro, la primera verificación inicializa el seguimiento a partir de la decisión original y luego exige la evidencia del oficial.
 
 La API impide cambiar directamente de `APPROVED_WITH_CONDITIONS` a `APPROVED` mediante el endpoint genérico de estados. La única vía es la verificación de condiciones.
 
