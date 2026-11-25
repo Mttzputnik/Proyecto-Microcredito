@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { buildSchedule } from "../domain/finance.js";
 import { allocatePayment, outstanding, totalOutstanding } from "../domain/payments.js";
-import { classifyArrears, classifyArrearsDays, daysOverdue, startOfDayUTC } from "../domain/arrears.js";
+import { classifyArrears, classifyArrearsDays, daysOverdue, startOfCalendarDay } from "../domain/arrears.js";
 import { assertTransition, installmentTransitions, loanTransitions } from "../domain/states.js";
 import { httpError } from "../utils/httpError.js";
 import { writeAudit } from "./audit.service.js";
@@ -198,7 +198,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
 // Lista de mora de todos los préstamos activos (solo lectura).
 export async function listArrears(prisma, { today = new Date() } = {}) {
   const installments = await prisma.paymentSchedule.findMany({
-    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: new Date(startOfDayUTC(today) + DAY_MS) }, loan: { status: "ACTIVE" } },
+    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: new Date(startOfCalendarDay(today) + DAY_MS) }, loan: { status: "ACTIVE" } },
     orderBy: [{ loanId: "asc" }, { installment: "asc" }],
     include: {
       loan: {
@@ -254,7 +254,7 @@ export async function monitorArrears(prisma, {
   if (!Number.isInteger(upcomingDays) || upcomingDays < 0 || upcomingDays > 90) {
     throw new RangeError("UPCOMING_PAYMENT_ALERT_DAYS debe ser un entero entre 0 y 90.");
   }
-  const todayStart = startOfDayUTC(today);
+  const todayStart = startOfCalendarDay(today);
   const horizonEnd = new Date(todayStart + (upcomingDays + 1) * DAY_MS - 1);
 
   return prisma.$transaction(async (tx) => {
@@ -279,7 +279,7 @@ export async function monitorArrears(prisma, {
         updatedCount += updated.count;
       }
 
-      const dueDay = startOfDayUTC(schedule.dueDate);
+      const dueDay = startOfCalendarDay(schedule.dueDate);
       const referenceDate = new Date(dueDay);
       const upcomingDaysLeft = -overdueDays;
       if (outstanding(schedule) > 0 && upcomingDaysLeft >= 0 && upcomingDaysLeft <= upcomingDays) {
