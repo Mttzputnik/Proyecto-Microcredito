@@ -23,6 +23,10 @@ export const riskService = {
     });
     return response.data.data;
   },
+  async verifyConditionalApproval(applicationId, { notes }) {
+    const response = await client.patch(`/applications/${applicationId}/conditional-approval/verify`, { notes });
+    return response.data.data;
+  },
   async verifyResidence(applicationId, { verified, notes }) {
     const response = await client.post(`/applications/${applicationId}/verifications/residence`, { verified, notes });
     return response.data.data;
