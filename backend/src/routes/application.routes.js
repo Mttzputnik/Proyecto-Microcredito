@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
-import { createTrackingCredential, matchesTrackingToken } from "../services/applicationTracking.service.js";
+import { createTrackingCredential, matchesTrackingToken, toPublicTrackingStatus } from "../services/applicationTracking.service.js";
 import { getOrCreateApplicantForSubmission } from "../services/applicantSubmission.service.js";
 import { trackingLookupSchema } from "../validators/application.validator.js";
 import { writeAudit } from "../services/audit.service.js";
@@ -29,8 +29,7 @@ router.post("/track", trackingRateLimit, async (req, res, next) => {
         status: true,
         createdAt: true,
         updatedAt: true,
-        trackingCredential: { select: { tokenHash: true, revokedAt: true } },
-        reconsideration: { select: { status: true, outcome: true, submittedAt: true, decidedAt: true } }
+        trackingCredential: { select: { tokenHash: true, revokedAt: true } }
       }
     });
 
@@ -46,16 +45,9 @@ router.post("/track", trackingRateLimit, async (req, res, next) => {
       data: { lastUsedAt: new Date() }
     });
 
-    return res.json({
-      success: true,
-      data: {
-        applicationNumber: application.applicationNumber,
-        status: application.status,
-        createdAt: application.createdAt,
-        updatedAt: application.updatedAt,
-        reconsideration: application.reconsideration
-      }
-    });
+    res.setHeader("Cache-Control", "no-store, private");
+    res.setHeader("Pragma", "no-cache");
+    return res.json({ success: true, data: toPublicTrackingStatus(application) });
   } catch (error) {
     return next(error);
   }
