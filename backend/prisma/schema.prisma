@@ -330,6 +330,7 @@ model LoanRestructuring {
   scheduleVersion Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@unique([loanId, version])
   @@index([loanId, status, createdAt])
   @@index([status, createdAt])
 }
