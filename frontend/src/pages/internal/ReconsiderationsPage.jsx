@@ -13,7 +13,22 @@ function ReviewCard({ item, onResolved }) {
   const application = item.application || {};
   const originalDecision = application.decisions?.[0];
   const applicant = application.applicantSnapshot || {};
-  const downloadDocument = async (document) => {\n    try {\n      const blob = await reconsiderationService.downloadDocument(item.id, document.id);\n      const url = window.URL.createObjectURL(blob);\n      const link = window.document.createElement("a");\n      link.href = url;\n      link.download = document.originalName;\n      window.document.body.appendChild(link);\n      link.click();\n      link.remove();\n      window.URL.revokeObjectURL(url);\n    } catch (error) {\n      message.error(error.response?.data?.message || "No fue posible descargar el documento.");\n    }\n  };\n  const submit = async (values) => {
+  const downloadDocument = async (document) => {
+    try {
+      const blob = await reconsiderationService.downloadDocument(item.id, document.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement("a");
+      link.href = url;
+      link.download = document.originalName;
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      message.error(error.response?.data?.message || "No fue posible descargar el documento.");
+    }
+  };
+  const submit = async (values) => {
     setSaving(true);
     try {
       await reconsiderationService.decide(item.id, values);
@@ -31,7 +46,19 @@ function ReviewCard({ item, onResolved }) {
       </div>
       <Typography.Paragraph><strong>Monto:</strong> {cop(application.requestedAmount)} · <strong>Plazo:</strong> {application.requestedTerm} meses</Typography.Paragraph>
       <Typography.Paragraph strong>Información nueva del solicitante</Typography.Paragraph>
-      <Typography.Paragraph>{item.applicantMessage}</Typography.Paragraph>\n      <div style={{ marginBottom: 20 }}>\n        <Typography.Text strong>Documentos de soporte</Typography.Text>\n        {item.documents?.length ? (\n          <Space wrap style={{ display: "flex", marginTop: 8 }}>\n            {item.documents.map((document) => (\n              <Button key={document.id} icon={<DownloadOutlined />} onClick={() => downloadDocument(document)}>\n                {document.originalName} ({(document.size / 1024).toFixed(0)} KB)\n              </Button>\n            ))}\n          </Space>\n        ) : <Typography.Paragraph type="secondary">No se adjuntaron documentos.</Typography.Paragraph>}\n      </div>
+      <Typography.Paragraph>{item.applicantMessage}</Typography.Paragraph>
+      <div style={{ marginBottom: 20 }}>
+        <Typography.Text strong>Documentos de soporte</Typography.Text>
+        {item.documents?.length ? (
+          <Space wrap style={{ display: "flex", marginTop: 8 }}>
+            {item.documents.map((document) => (
+              <Button key={document.id} icon={<DownloadOutlined />} onClick={() => downloadDocument(document)}>
+                {document.originalName} ({(document.size / 1024).toFixed(0)} KB)
+              </Button>
+            ))}
+          </Space>
+        ) : <Typography.Paragraph type="secondary">No se adjuntaron documentos.</Typography.Paragraph>}
+      </div>
       <div className="decision-history-item">
         <Typography.Text strong>Decisión original</Typography.Text>
         <Typography.Paragraph type="secondary">Responsable: {originalDecision?.officer ? `${originalDecision.officer.firstName} ${originalDecision.officer.lastName}` : "No disponible"} · {date(originalDecision?.decidedAt)}</Typography.Paragraph>
