@@ -40,7 +40,7 @@ export default function RestructuringsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const policyPromise = loanService.listRestructuringPolicies();
+      const policyPromise = canCreate || canConfigure ? loanService.listRestructuringPolicies() : Promise.resolve([]);
       const requestPromise = canDecide || canAccept ? loanService.listRestructurings() : Promise.resolve([]);
       const loanPromise = canCreate ? loanService.list({ status: "ACTIVE", limit: 50 }) : Promise.resolve({ data: [] });
       const [policyRows, requestRows, loanRows] = await Promise.all([policyPromise, requestPromise, loanPromise]);
