@@ -7,7 +7,8 @@ export function calculateRestructuringBalance({
   payments,
   includeAccruedInterest,
   lateInterestTreatment,
-  lateInterestAmount = 0
+  lateInterestAmount = 0,
+  asOf = new Date()
 }) {
   const scheduleIds = new Set(schedules.map((row) => row.id));
   const paidBySchedule = new Map();
