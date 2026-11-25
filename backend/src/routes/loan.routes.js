@@ -7,7 +7,7 @@ import {
   disburseSchema, formalizeSchema, listLoansQuery, paymentSchema, writeOffSchema
 } from "../validators/finance.validator.js";
 import {
-  disburseLoan, formalizeLoan, listArrears, listArrearsAlerts, refreshArrears, registerPayment, writeOffLoan
+  disburseLoan, formalizeLoan, listArrears, listArrearsAlerts, markAlertRead, refreshArrears, registerPayment, writeOffLoan
 } from "../services/loan.service.js";
 import { httpError, parseOrThrow, requireObjectId } from "../utils/httpError.js";
 
@@ -25,6 +25,11 @@ router.get("/arrears", authorize(...PERMISSIONS.readLoans), async (_req, res) =>
 // GET /api/loans/alerts -> alertas administrativas pendientes de lectura.
 router.get("/alerts", authorize(...PERMISSIONS.readLoans), async (_req, res) => {
   res.json({ success: true, data: await listArrearsAlerts(prisma) });
+});
+
+router.patch("/alerts/:id/read", authorize(...PERMISSIONS.manageLoans), async (req, res) => {
+  const alertId = requireObjectId(req.params.id);
+  res.json({ success: true, data: await markAlertRead(prisma, { alertId, actor: req.user }) });
 });
 
 // GET /api/loans?status=ACTIVE&page=1&limit=20
