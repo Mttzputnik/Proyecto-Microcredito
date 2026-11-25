@@ -26,7 +26,7 @@ test("clasifica correctamente los límites de días de mora", () => {
 
 test("clasifica solo cuotas con saldo pendiente y vencimiento anterior al día actual", () => {
   const rows = classifyArrears([
-    { id: "a", installment: 1, dueDate: "2026-11-24T00:00:00.000Z", totalDue: 100, paidAmount: 0, status: "PENDING" },
+    { id: "a", installment: 1, dueDate: "2026-11-24T05:00:00.000Z", totalDue: 100, paidAmount: 0, status: "PENDING" },
     { id: "b", installment: 2, dueDate: "2026-11-25T05:00:00.000Z", totalDue: 100, paidAmount: 0, status: "PENDING" },
     { id: "c", installment: 3, dueDate: "2026-11-20T00:00:00.000Z", totalDue: 100, paidAmount: 100, status: "PAID" }
   ], today);
