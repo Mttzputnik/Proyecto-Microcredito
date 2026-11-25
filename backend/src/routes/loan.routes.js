@@ -48,7 +48,7 @@ router.post("/restructurings/:id/accept", authorize(...PERMISSIONS.acceptRestruc
 });
 router.get("/:id/restructurings", authorize(...PERMISSIONS.readRestructurings), async (req, res) => {
   const loanId = requireObjectId(req.params.id);
-  res.json({ success: true, data: await listRestructurings(prisma, { loanId }) });
+  res.json({ success: true, data: await listRestructurings(prisma, { loanId, actor: req.user }) });
 });
 router.post("/:id/restructurings", authorize(...PERMISSIONS.createRestructurings), async (req, res) => {
   const loanId = requireObjectId(req.params.id);
@@ -57,12 +57,12 @@ router.post("/:id/restructurings", authorize(...PERMISSIONS.createRestructurings
 });
 
 // GET /api/loans/arrears  -> cuotas vencidas de préstamos activos, agrupadas por préstamo (definida ANTES de /:id)
-router.get("/arrears", authorize(...PERMISSIONS.readLoans), async (_req, res) => {
+router.get("/arrears", authorize(...PERMISSIONS.readArrears), async (_req, res) => {
   res.json({ success: true, data: await listArrears(prisma) });
 });
 
 // GET /api/loans/alerts -> alertas administrativas pendientes de lectura.
-router.get("/alerts", authorize(...PERMISSIONS.readLoans), async (_req, res) => {
+router.get("/alerts", authorize(...PERMISSIONS.readArrears), async (_req, res) => {
   res.json({ success: true, data: await listArrearsAlerts(prisma) });
 });
 
@@ -101,7 +101,7 @@ router.get("/:id", authorize(...PERMISSIONS.readLoans), async (req, res) => {
   const loan = await prisma.loan.findUnique({
     where: { id },
     include: {
-      application: { select: { id: true, applicationNumber: true, applicant: { select: applicantSummary } } },
+      application: { select: { id: true, applicationNumber: true, assignedOfficerId: true, applicant: { select: applicantSummary } } },
       paymentSchedules: { where: { isCurrent: true }, orderBy: { installment: "asc" } },
       payments: { orderBy: { paymentDate: "desc" } },
       collectionActions: { orderBy: { performedAt: "desc" } }
