@@ -25,7 +25,7 @@ export function calculateRestructuringBalance({
     [...paidBySchedule.values()].reduce((total, item) => total + item.principal, 0));
 
   const accruedInterestOutstanding = Math.max(0, schedules
-    .filter((row) => new Date(row.dueDate).getTime() <= Date.now())
+    .filter((row) => new Date(row.dueDate).getTime() <= new Date(asOf).getTime())
     .reduce((total, row) => {
       const paid = paidBySchedule.get(row.id)?.interest || 0;
       return total + Math.max(0, Number(row.interest || 0) - paid);
