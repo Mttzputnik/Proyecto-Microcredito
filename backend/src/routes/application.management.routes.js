@@ -52,7 +52,13 @@ router.get("/:id/history", authorize(...PERMISSIONS.readApplications), async (re
   const id = requireObjectId(req.params.id);
   const assigned = await prisma.loanApplication.findFirst({ where: { id, assignedOfficerId: req.user.id }, select: { id: true } });
   if (!assigned) throw httpError(404, "Solicitud no encontrada.");
-  const events = await prisma.auditLog.findMany({ where: { entityType: "LoanApplication", entityId: id }, orderBy: { occurredAt: "asc" } });
+  const events = await prisma.auditLog.findMany({
+    where: { entityType: "LoanApplication", entityId: id },
+    orderBy: [{ occurredAt: "asc" }, { id: "asc" }],
+    // El oficial necesita actor, acción y fecha; los metadatos internos se reservan
+    // para la consulta administrativa de auditoría.
+    select: { id: true, actorId: true, action: true, entityType: true, entityId: true, description: true, occurredAt: true }
+  });
   res.json({ success: true, data: events });
 });
 export default router;

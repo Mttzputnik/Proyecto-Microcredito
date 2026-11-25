@@ -27,7 +27,7 @@ router.post("/login", loginRateLimit, async (req, res) => {
     action: "USER_LOGIN",
     entityType: "User",
     entityId: user.id,
-    description: `Inicio de sesión de ${user.email}`
+    description: "Inicio de sesión exitoso"
   });
 
   res.json({

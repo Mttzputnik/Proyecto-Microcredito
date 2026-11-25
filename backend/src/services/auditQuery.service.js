@@ -9,7 +9,7 @@ export async function listAuditEvents(prisma, filters = {}) {
     prisma.auditLog.count({ where }),
     prisma.auditLog.findMany({
       where,
-      orderBy: { occurredAt: "desc" },
+      orderBy: [{ occurredAt: "desc" }, { id: "desc" }],
       skip: (page - 1) * limit,
       take: limit,
       select: { id: true, actorId: true, action: true, entityType: true, entityId: true, description: true, occurredAt: true }

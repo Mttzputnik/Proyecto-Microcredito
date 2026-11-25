@@ -174,7 +174,7 @@
 
 ### PO-08 — Registrar reestructuración y nuevo cronograma
 **Prioridad:** P1  
-**Estado:** pendiente según revisión.
+**Estado:** implementado y fusionado en PR #31; documentado en `docs/IMPLEMENTACION-PO-08.md`.
 
 **Trabajo:**
 - Permitir reestructurar préstamos en mora temprana o establecida debido a dificultades de pago.
@@ -200,7 +200,7 @@
 
 ### PO-09 — Reportes administrativos de cartera
 **Prioridad:** P2  
-**Estado:** implementado en rama `feat/po-09-10-reportes-supervision`; pendiente validación local y revisión de cifras.
+**Estado:** implementado y fusionado en PR #30; validar cifras con datos de desarrollo.
 
 **Trabajo:**
 - Sustituir datos simulados por consultas reales. (Implementado)
@@ -219,7 +219,7 @@
 
 ### PO-10 — Estadísticas y revisión del comité supervisor
 **Prioridad:** P2  
-**Estado:** implementado parcialmente en rama `feat/po-09-10-reportes-supervision`; agregaciones por municipio, zona de residencia y propósito con supresión de grupos pequeños. Dimensiones demográficas no modeladas no se inventan.
+**Estado:** implementado y fusionado en PR #30; agregaciones por municipio, zona de residencia y propósito con supresión de grupos pequeños. Dimensiones demográficas no modeladas no se inventan.
 
 **Trabajo:**
 - Proporcionar estadísticas agregadas por municipio, zona de residencia y propósito para analizar patrones de aprobación. (Implementado; umbral mínimo de cinco registros)
@@ -238,7 +238,7 @@
 
 ### PO-11 — Auditoría de operaciones críticas
 **Prioridad:** P1 transversal  
-**Estado:** consulta detallada e interfaz implementadas en rama `feat/po-09-10-reportes-supervision`; falta verificación transversal final de cobertura e inmutabilidad.
+**Estado:** implementación transversal completada en esta rama; validación local dirigida pendiente. Ver `docs/IMPLEMENTACION-PO-11-CIERRE.md`.
 
 **Trabajo:**
 - Verificar auditoría de decisiones, reconsideraciones, cambios de política, pagos y alertas; reestructuraciones se auditarán cuando se implementen.

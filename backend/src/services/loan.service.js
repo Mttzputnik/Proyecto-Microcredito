@@ -241,7 +241,21 @@ async function createAlertOnce(tx, data) {
     select: { id: true }
   });
   if (existing) return false;
-  await tx.alert.create({ data });
+  const alert = await tx.alert.create({ data });
+  await writeAudit(tx, {
+    actorId: null,
+    action: "ARREARS_ALERT_CREATED",
+    entityType: "Alert",
+    entityId: alert.id,
+    description: `Alerta automática ${data.type} creada para la cuota.`,
+    metadata: {
+      loanId: data.loanId,
+      scheduleId: data.scheduleId,
+      type: data.type,
+      referenceDate: data.referenceDate.toISOString(),
+      daysOffset: data.daysOffset
+    }
+  });
   return true;
 }
 

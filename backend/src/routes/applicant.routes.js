@@ -71,9 +71,8 @@ router.patch("/:id", authorize(...PERMISSIONS.editApplicants), async (req, res) 
       entityType: "Applicant",
       entityId: id,
       description: `Solicitante actualizado (${changedFields.join(", ") || "sin cambios"})`,
-      metadata: {
-        changes: Object.fromEntries(changedFields.map((key) => [key, { from: before[key] ?? null, to: after[key] ?? null }]))
-      }
+      // El historial registra qué atributos cambiaron, nunca sus valores personales o financieros.
+      metadata: { changedFields, changeCount: changedFields.length }
     });
     return after;
   });
