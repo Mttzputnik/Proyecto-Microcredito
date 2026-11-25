@@ -25,6 +25,14 @@ export const loanService = {
     const response = await client.get("/loans/arrears");
     return response.data.data;
   },
+  async listArrearsAlerts() {
+    const response = await client.get("/loans/alerts");
+    return response.data.data;
+  },
+  async markAlertRead(id) {
+    const response = await client.patch(`/loans/alerts/${id}/read`);
+    return response.data.data;
+  },
   async refreshArrears(id) {
     const response = await client.post(`/loans/${id}/refresh-arrears`);
     return response.data.data;
