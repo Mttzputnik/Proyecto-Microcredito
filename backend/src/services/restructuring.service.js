@@ -112,6 +112,9 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (actualGraceDays < 0 || actualGraceDays !== payload.gracePeriodDays) {
       throw httpError(400, "La fecha del primer vencimiento debe corresponder al primer vencimiento mensual más el período de gracia indicado.");
     }
+    if (policy.lateInterestTreatment !== "MANUAL_CAPITALIZE" && payload.lateInterestAmount > 0) {
+      throw httpError(400, "La política no permite ingresar intereses de mora manuales para este acuerdo.");
+    }
     if (policy.lateInterestTreatment === "MANUAL_CAPITALIZE" && payload.lateInterestAmount > 0 && !payload.lateInterestEvidence) {
       throw httpError(400, "El valor manual de intereses de mora requiere soporte o referencia contable.");
     }
