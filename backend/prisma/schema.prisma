@@ -312,6 +312,7 @@ model LoanRestructuring {
   accruedInterestOutstanding Float
   includedInterest Float
   lateInterestAmount Float
+  lateInterestEvidence String?
   waivedInterest Float
   newPrincipal Float
   previousAnnualRate Float
