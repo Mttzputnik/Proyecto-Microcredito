@@ -1,5 +1,3 @@
-import { outstanding } from "./payments.js";
-
 const sum = (rows, key) => rows.reduce((total, row) => total + Number(row[key] || 0), 0);
 
 export function calculateRestructuringBalance({
@@ -22,15 +20,23 @@ export function calculateRestructuringBalance({
     }
   }
 
+  const paidFor = (row) => {
+    const recorded = paidBySchedule.get(row.id);
+    if (recorded) return recorded;
+    const paidAmount = Number(row.paidAmount || 0);
+    const interest = Number(row.interest || 0);
+    return {
+      interest: Math.min(paidAmount, interest),
+      principal: Math.max(0, paidAmount - interest)
+    };
+  };
+
   const principalOutstanding = Math.max(0, sum(schedules, "principal") -
-    [...paidBySchedule.values()].reduce((total, item) => total + item.principal, 0));
+    schedules.reduce((total, row) => total + paidFor(row).principal, 0));
 
   const accruedInterestOutstanding = Math.max(0, schedules
     .filter((row) => new Date(row.dueDate).getTime() <= new Date(asOf).getTime())
-    .reduce((total, row) => {
-      const paid = paidBySchedule.get(row.id)?.interest || 0;
-      return total + Math.max(0, Number(row.interest || 0) - paid);
-    }, 0));
+    .reduce((total, row) => total + Math.max(0, Number(row.interest || 0) - paidFor(row).interest), 0));
 
   if (!Number.isInteger(lateInterestAmount) || lateInterestAmount < 0) {
     throw new RangeError("Los intereses de mora manuales deben ser un entero no negativo en COP.");
