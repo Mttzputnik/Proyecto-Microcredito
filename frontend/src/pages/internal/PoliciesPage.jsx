@@ -56,8 +56,12 @@ export default function PoliciesPage() {
   const columns = [
     { title: "Política", dataIndex: "name", key: "name" },
     { title: "Versión", dataIndex: "version", key: "version" },
+    { title: "Referencia aprobatoria", dataIndex: "approvalReference", key: "approvalReference", render: (value) => value || "No registrada" },
     { title: "Vigencia desde", dataIndex: "effectiveFrom", key: "effectiveFrom", render: (value) => value ? new Date(value).toLocaleDateString("es-CO") : "—" },
-    { title: "Estado", dataIndex: "active", key: "active", render: (value) => <Tag color={value ? "success" : "default"}>{value ? "Activa" : "Histórica"}</Tag> }
+    { title: "Estado", dataIndex: "active", key: "active", render: (value, row) => {
+      const ready = row.approvalReference && row.approvalDate && row.minimumAge != null && row.maximumAmount != null && row.maximumTermMonths != null && row.maxDebtRatio != null && row.annualInterestRate != null && row.maximumSimultaneousLoans != null && row.allowedPurposes?.length;
+      return <Tag color={value && ready ? "success" : value ? "warning" : "default"}>{value && ready ? "Activa y aprobada" : value ? "Bloqueada: falta aprobación/configuración" : "Histórica"}</Tag>;
+    } }
   ];
 
   return (
