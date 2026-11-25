@@ -1,4 +1,4 @@
-// Clasificación de mora con días calendario reales (convención UTC).
+// Clasificación de mora con días calendario reales (zona horaria de la cooperativa).
 // El día del vencimiento es día 0; el día siguiente inicia la mora.
 
 import { PAYABLE_STATUSES, outstanding } from "./payments.js";
