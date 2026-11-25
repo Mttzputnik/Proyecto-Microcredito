@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Card, Empty, Form, Input, Radio, Space, Tag, Typography, message } from "antd";
-import { ReloadOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { ReloadOutlined, CheckCircleOutlined, DownloadOutlined } from "@ant-design/icons";
 import { PageHeader } from "../../components/GeneralComponents";
 import { reconsiderationService } from "../../services/reconsiderationService";
 
@@ -13,7 +13,7 @@ function ReviewCard({ item, onResolved }) {
   const application = item.application || {};
   const originalDecision = application.decisions?.[0];
   const applicant = application.applicantSnapshot || {};
-  const submit = async (values) => {
+  const downloadDocument = async (document) => {\n    try {\n      const blob = await reconsiderationService.downloadDocument(item.id, document.id);\n      const url = window.URL.createObjectURL(blob);\n      const link = window.document.createElement("a");\n      link.href = url;\n      link.download = document.originalName;\n      window.document.body.appendChild(link);\n      link.click();\n      link.remove();\n      window.URL.revokeObjectURL(url);\n    } catch (error) {\n      message.error(error.response?.data?.message || "No fue posible descargar el documento.");\n    }\n  };\n  const submit = async (values) => {
     setSaving(true);
     try {
       await reconsiderationService.decide(item.id, values);
@@ -31,7 +31,7 @@ function ReviewCard({ item, onResolved }) {
       </div>
       <Typography.Paragraph><strong>Monto:</strong> {cop(application.requestedAmount)} · <strong>Plazo:</strong> {application.requestedTerm} meses</Typography.Paragraph>
       <Typography.Paragraph strong>Información nueva del solicitante</Typography.Paragraph>
-      <Typography.Paragraph>{item.applicantMessage}</Typography.Paragraph>
+      <Typography.Paragraph>{item.applicantMessage}</Typography.Paragraph>\n      <div style={{ marginBottom: 20 }}>\n        <Typography.Text strong>Documentos de soporte</Typography.Text>\n        {item.documents?.length ? (\n          <Space wrap style={{ display: "flex", marginTop: 8 }}>\n            {item.documents.map((document) => (\n              <Button key={document.id} icon={<DownloadOutlined />} onClick={() => downloadDocument(document)}>\n                {document.originalName} ({(document.size / 1024).toFixed(0)} KB)\n              </Button>\n            ))}\n          </Space>\n        ) : <Typography.Paragraph type="secondary">No se adjuntaron documentos.</Typography.Paragraph>}\n      </div>
       <div className="decision-history-item">
         <Typography.Text strong>Decisión original</Typography.Text>
         <Typography.Paragraph type="secondary">Responsable: {originalDecision?.officer ? `${originalDecision.officer.firstName} ${originalDecision.officer.lastName}` : "No disponible"} · {date(originalDecision?.decidedAt)}</Typography.Paragraph>
