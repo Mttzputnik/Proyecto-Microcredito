@@ -41,6 +41,13 @@ test("writeAudit rechaza eventos incompletos o metadatos no estructurados", asyn
   );
   assert.throws(
     () => writeAudit(db, {
+      action: "PAYMENT_REGISTERED", entityType: "Loan",
+      entityId: "loan-1", description: "Pago registrado"
+    }),
+    (error) => error.code === "AUDIT_INVALID_EVENT"
+  );
+  assert.throws(
+    () => writeAudit(db, {
       actorId: "user-1", action: "PAYMENT_REGISTERED", entityType: "Loan",
       entityId: "loan-1", description: "Pago registrado", metadata: ["no", "es", "objeto"]
     }),
