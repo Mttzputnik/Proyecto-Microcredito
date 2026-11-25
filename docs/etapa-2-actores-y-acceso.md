@@ -1,3 +1,5 @@
+**Nota de vigencia:** este archivo conserva el análisis inicial previo a las respuestas consolidadas del Product Owner y a la implementación de permisos. No utilizar su sección de estado como descripción actual. La fuente funcional vigente es [RESPUESTAS-PRODUCT-OWNER.md](RESPUESTAS-PRODUCT-OWNER.md); la matriz aplicada está en [IMPLEMENTACION-PO-01-MATRIZ-PERMISOS.md](IMPLEMENTACION-PO-01-MATRIZ-PERMISOS.md) y [SEGURIDAD-Y-PERMISOS.md](SEGURIDAD-Y-PERMISOS.md).
+
 # Etapa 2 — Actores y control de acceso
 
 ## Fuente funcional
