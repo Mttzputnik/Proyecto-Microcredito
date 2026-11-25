@@ -351,6 +351,36 @@ export async function listArrearsAlerts(prisma) {
   });
 }
 
+export async function registerCollectionAction(prisma, {
+  loanId, description, result, actor, performedAt = new Date()
+}) {
+  return prisma.$transaction(async (tx) => {
+    const loan = await tx.loan.findUnique({ where: { id: loanId } });
+    if (!loan) throw httpError(404, "Préstamo no encontrado.");
+    if (loan.status !== "ACTIVE") {
+      throw httpError(409, "Solo se registran gestiones de cobro en préstamos activos.");
+    }
+    const action = await tx.collectionAction.create({
+      data: {
+        loanId,
+        description,
+        ...(result ? { result } : {}),
+        performedAt,
+        recordedById: actor.id
+      }
+    });
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "COLLECTION_ACTION_REGISTERED",
+      entityType: "Loan",
+      entityId: loanId,
+      description: `Gestión de cobro registrada para ${loan.loanNumber}`,
+      metadata: { collectionActionId: action.id, performedAt, description, result: result ?? null }
+    });
+    return action;
+  });
+}
+
 export async function markAlertRead(prisma, { alertId, actor }) {
   return prisma.$transaction(async (tx) => {
     const updated = await tx.alert.updateMany({
