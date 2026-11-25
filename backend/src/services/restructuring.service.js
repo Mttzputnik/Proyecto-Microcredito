@@ -91,7 +91,16 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (payload.termMonths > policy.maximumTermMonths) throw httpError(400, "El plazo propuesto supera el máximo de la política.");
     if (payload.gracePeriodDays > policy.maximumGracePeriodDays) throw httpError(400, "El período de gracia supera el máximo de la política.");
 
-    if (new Date(payload.firstDueDate) <= now) throw httpError(400, "El primer vencimiento debe ser posterior a la fecha de solicitud.");
+    const firstDueDate = new Date(payload.firstDueDate);
+    if (firstDueDate <= now) throw httpError(400, "El primer vencimiento debe ser posterior a la fecha de solicitud.");
+    const standardFirstDueDate = addMonths(now, 1);
+    const actualGraceDays = Math.ceil((firstDueDate.getTime() - standardFirstDueDate.getTime()) / 86_400_000);
+    if (actualGraceDays < 0 || actualGraceDays !== payload.gracePeriodDays) {
+      throw httpError(400, "La fecha del primer vencimiento debe corresponder al primer vencimiento mensual más el período de gracia indicado.");
+    }
+    if (policy.lateInterestTreatment === "MANUAL_CAPITALIZE" && payload.lateInterestAmount > 0 && !payload.lateInterestEvidence) {
+      throw httpError(400, "El valor manual de intereses de mora requiere soporte o referencia contable.");
+    }
     const balance = calculateRestructuringBalance({
       schedules, payments,
       includeAccruedInterest: policy.includeAccruedInterest,
@@ -106,7 +115,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
         status: "PENDING_REVIEW", reason: payload.reason,
         requestedById: actor.id, principalOutstanding: balance.principalOutstanding,
         accruedInterestOutstanding: balance.accruedInterestOutstanding,
-        includedInterest: balance.includedInterest, lateInterestAmount: balance.lateInterestAmount,
+        includedInterest: balance.includedInterest, lateInterestAmount: balance.lateInterestAmount,\n        ...(payload.lateInterestEvidence ? { lateInterestEvidence: payload.lateInterestEvidence } : {}),
         waivedInterest: balance.waivedInterest, newPrincipal: balance.newPrincipal,
         previousAnnualRate: loan.annualRate, proposedAnnualRate: annualRate,
         previousTermMonths: loan.termMonths, proposedTermMonths: payload.termMonths,
