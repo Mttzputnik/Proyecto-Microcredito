@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { buildSchedule } from "../domain/finance.js";
 import { allocatePayment, totalOutstanding } from "../domain/payments.js";
-import { classifyArrears } from "../domain/arrears.js";
+import { classifyArrears, classifyArrearsDays, daysOverdue, startOfDayUTC } from "../domain/arrears.js";
 import { assertTransition, installmentTransitions, loanTransitions } from "../domain/states.js";
 import { httpError } from "../utils/httpError.js";
 import { writeAudit } from "./audit.service.js";
@@ -198,7 +198,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
 // Lista de mora de todos los préstamos activos (solo lectura).
 export async function listArrears(prisma, { today = new Date() } = {}) {
   const installments = await prisma.paymentSchedule.findMany({
-    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: today }, loan: { status: "ACTIVE" } },
+    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: new Date(startOfDayUTC(today) + DAY_MS) }, loan: { status: "ACTIVE" } },
     orderBy: [{ loanId: "asc" }, { installment: "asc" }],
     include: {
       loan: {
@@ -220,11 +220,135 @@ export async function listArrears(prisma, { today = new Date() } = {}) {
     }
     grouped.get(key).installments.push(item);
   }
-  return [...grouped.values()].map((entry) => ({
-    ...entry,
-    totalOutstanding: entry.installments.reduce((sum, i) => sum + i.outstanding, 0),
-    maxDaysOverdue: Math.max(...entry.installments.map((i) => i.daysOverdue))
-  }));
+  return [...grouped.values()].map((entry) => {
+    const maxDaysOverdue = Math.max(...entry.installments.map((i) => i.daysOverdue));
+    const category = classifyArrearsDays(maxDaysOverdue);
+    return {
+      ...entry,
+      category,
+      totalOutstanding: entry.installments.reduce((sum, i) => sum + i.outstanding, 0),
+      maxDaysOverdue
+    };
+  });
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const UPCOMING_PAYMENT_ALERT_DAYS = Number.parseInt(process.env.UPCOMING_PAYMENT_ALERT_DAYS ?? "3", 10);
+
+async function createAlertOnce(tx, data) {
+  const existing = await tx.alert.findFirst({
+    where: { scheduleId: data.scheduleId, type: data.type, referenceDate: data.referenceDate },
+    select: { id: true }
+  });
+  if (existing) return false;
+  await tx.alert.create({ data });
+  return true;
+}
+
+// Proceso diario idempotente: actualiza cuotas vencidas y genera alertas por vencimiento,
+// primer día de mora y escalamiento de categoría. No calcula intereses de mora.
+export async function monitorArrears(prisma, {
+  today = new Date(),
+  upcomingDays = UPCOMING_PAYMENT_ALERT_DAYS
+} = {}) {
+  if (!Number.isInteger(upcomingDays) || upcomingDays < 0 || upcomingDays > 90) {
+    throw new RangeError("UPCOMING_PAYMENT_ALERT_DAYS debe ser un entero entre 0 y 90.");
+  }
+  const todayStart = startOfDayUTC(today);
+  const horizonEnd = new Date(todayStart + (upcomingDays + 1) * DAY_MS - 1);
+
+  return prisma.$transaction(async (tx) => {
+    const schedules = await tx.paymentSchedule.findMany({
+      where: {
+        status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] },
+        dueDate: { lte: horizonEnd },
+        loan: { status: "ACTIVE" }
+      },
+      orderBy: [{ loanId: "asc" }, { installment: "asc" }]
+    });
+
+    let updatedCount = 0;
+    let alertsCreated = 0;
+    for (const schedule of schedules) {
+      const overdueDays = daysOverdue(schedule.dueDate, today);
+      if (overdueDays > 0 && schedule.status !== "OVERDUE") {
+        const updated = await tx.paymentSchedule.updateMany({
+          where: { id: schedule.id, status: schedule.status },
+          data: { status: "OVERDUE" }
+        });
+        updatedCount += updated.count;
+      }
+
+      const dueDay = startOfDayUTC(schedule.dueDate);
+      const referenceDate = new Date(dueDay);
+      const upcomingDaysLeft = -overdueDays;
+      if (upcomingDaysLeft >= 0 && upcomingDaysLeft <= upcomingDays) {
+        const created = await createAlertOnce(tx, {
+          loanId: schedule.loanId,
+          scheduleId: schedule.id,
+          type: "UPCOMING_PAYMENT",
+          referenceDate,
+          daysOffset: upcomingDaysLeft,
+          title: upcomingDaysLeft === 0 ? "Cuota vence hoy" : "Próximo vencimiento",
+          message: upcomingDaysLeft === 0
+            ? `La cuota ${schedule.installment} vence hoy.`
+            : `La cuota ${schedule.installment} vence en ${upcomingDaysLeft} día(s).`
+        });
+        if (created) alertsCreated += 1;
+      }
+
+      // Si el proceso estuvo detenido, recupera también los hitos de mora omitidos.
+      const thresholds = [
+        { days: 1, type: "ARREARS_LIGHT", title: "Inicio de retraso leve" },
+        { days: 31, type: "ARREARS_EARLY", title: "Escalamiento a mora temprana" },
+        { days: 61, type: "ARREARS_ESTABLISHED", title: "Escalamiento a mora establecida" }
+      ];
+      for (const threshold of thresholds) {
+        if (overdueDays < threshold.days) continue;
+        const milestoneDate = new Date(dueDay + threshold.days * DAY_MS);
+        const created = await createAlertOnce(tx, {
+          loanId: schedule.loanId,
+          scheduleId: schedule.id,
+          type: threshold.type,
+          referenceDate: milestoneDate,
+          daysOffset: threshold.days,
+          title: threshold.title,
+          message: `La cuota ${schedule.installment} alcanzó ${threshold.days} día(s) de mora.`
+        });
+        if (created) alertsCreated += 1;
+      }
+    }
+
+    if (updatedCount > 0) {
+      await writeAudit(tx, {
+        actorId: null,
+        action: "ARREARS_MONITORED",
+        entityType: "PaymentSchedule",
+        entityId: "daily-monitor",
+        description: `${updatedCount} cuota(s) vencida(s) clasificadas automáticamente`,
+        metadata: { updatedCount, alertsCreated, asOf: today.toISOString(), upcomingDays }
+      });
+    }
+    return { checked: schedules.length, updated: updatedCount, alertsCreated, upcomingDays };
+  });
+}
+
+export async function listArrearsAlerts(prisma) {
+  return prisma.alert.findMany({
+    where: { status: "UNREAD" },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: {
+      loan: {
+        select: {
+          id: true,
+          loanNumber: true,
+          application: { select: { applicant: { select: { firstName: true, lastName: true } } } }
+        }
+      },
+      schedule: { select: { installment: true, dueDate: true, totalDue: true, paidAmount: true } }
+    }
+  });
 }
 
 // Castigo: ACTIVE -> WRITTEN_OFF. Exige justificación.
