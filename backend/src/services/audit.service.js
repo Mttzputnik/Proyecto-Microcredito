@@ -18,7 +18,14 @@ export function writeAudit(db, event = {}) {
     });
   }
 
-  const actorId = event.actorId ?? null;
+  if (!Object.hasOwn(event, "actorId")) {
+    throw Object.assign(new TypeError("El actor de auditoría debe indicarse explícitamente (usuario o sistema)."), {
+      status: 500,
+      code: "AUDIT_INVALID_EVENT"
+    });
+  }
+
+  const actorId = event.actorId;
   if (actorId !== null && (typeof actorId !== "string" || !actorId.trim())) {
     throw Object.assign(new TypeError("El actor de auditoría no es válido."), {
       status: 500,
