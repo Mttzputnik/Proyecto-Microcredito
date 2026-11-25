@@ -128,6 +128,7 @@ model Loan {
   paymentSchedules PaymentSchedule[]
   payments Payment[]
   alerts Alert[]
+  collectionActions CollectionAction[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -249,4 +250,17 @@ model Alert {
   readAt DateTime?
   @@unique([scheduleId, type, referenceDate])
   @@index([status, createdAt])
+}
+
+
+model CollectionAction {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  loanId String @db.ObjectId
+  loan Loan @relation(fields: [loanId], references: [id])
+  description String
+  result String?
+  performedAt DateTime @default(now())
+  recordedById String @db.ObjectId
+  createdAt DateTime @default(now())
+  @@index([loanId, performedAt])
 }
