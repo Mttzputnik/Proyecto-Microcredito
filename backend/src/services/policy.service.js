@@ -29,6 +29,7 @@ export async function createPolicyVersion(prisma, { data, actor }) {
   const approvalDate = new Date(data.approvalDate);
   if (!data.approvalReference?.trim() || Number.isNaN(approvalDate.getTime())) throw httpError(400, "La política requiere referencia y fecha de aprobación institucional.");
   if (effectiveFrom < approvalDate) throw httpError(400, "La política no puede entrar en vigor antes de su aprobación institucional.");
+  if (!isCreditPolicyReady({ ...data, approvalDate })) throw httpError(400, "La política está incompleta: define todos los umbrales, propósitos, regla de residencia y referencia de aprobación.");
   try {
     return await prisma.$transaction(async (tx) => {
       const latest = await tx.creditPolicy.findFirst({
