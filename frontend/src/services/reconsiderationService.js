@@ -12,6 +12,12 @@ export const reconsiderationService = {
     const response = await client.get("/reconsiderations/assigned");
     return response.data.data;
   },
+  async downloadDocument(reconsiderationId, documentId) {
+    const response = await client.get(`/reconsiderations/assigned/${reconsiderationId}/documents/${documentId}`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
   async decide(id, payload) {
     const response = await client.patch(`/reconsiderations/${id}/decision`, payload);
     return response.data.data;

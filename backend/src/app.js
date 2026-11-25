@@ -44,7 +44,8 @@ const corsOptions = {
 app.use(helmet());
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
-app.use(express.json({ limit: "1mb" }));
+// Hasta 3 adjuntos de 4 MB codificados en base64.
+app.use(express.json({ limit: "18mb" }));
 app.use(morgan("dev"));
 
 app.get("/api/health", (_req, res) => res.status(200).json({

@@ -5,7 +5,7 @@ import { authorize } from "../middleware/authorize.js";
 import { PERMISSIONS } from "../domain/roles.js";
 import { requireObjectId, parseOrThrow } from "../utils/httpError.js";
 import { submitReconsiderationSchema, decideReconsiderationSchema } from "../validators/reconsideration.validator.js";
-import { submitReconsideration, listAssignedReconsiderations, decideReconsideration } from "../services/reconsideration.service.js";
+import { submitReconsideration, listAssignedReconsiderations, decideReconsideration, getAssignedReconsiderationDocument } from "../services/reconsideration.service.js";
 import { reconsiderationRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
@@ -26,6 +26,23 @@ router.use(authenticate);
 router.get("/assigned", authorize(...PERMISSIONS.readApplications), async (req, res) => {
   const data = await listAssignedReconsiderations(prisma, req.user);
   res.json({ success: true, data });
+});
+
+
+router.get("/assigned/:id/documents/:documentId", authorize(...PERMISSIONS.readApplications), async (req, res, next) => {
+  try {
+    const document = await getAssignedReconsiderationDocument(prisma, {
+      reconsiderationId: requireObjectId(req.params.id, "reconsiderationId"),
+      documentId: requireObjectId(req.params.documentId, "documentId"),
+      actorId: req.user.id
+    });
+    res.setHeader("Content-Type", document.mimeType);
+    res.attachment(document.originalName);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    return res.send(document.content);
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.patch("/:id/decision", authorize(...PERMISSIONS.changeApplicationStatus), async (req, res) => {

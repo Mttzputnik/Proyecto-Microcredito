@@ -229,6 +229,7 @@ model Reconsideration {
   assignedOfficerId String @db.ObjectId
   assignedOfficer User @relation("ReconsiderationOfficer", fields: [assignedOfficerId], references: [id])
   applicantMessage String
+  documents ReconsiderationDocument[]
   status String @default("PENDING_REVIEW")
   outcome String?
   justification String?
@@ -333,4 +334,17 @@ model LoanRestructuring {
   @@unique([loanId, version])
   @@index([loanId, status, createdAt])
   @@index([status, createdAt])
+}
+
+
+model ReconsiderationDocument {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  reconsiderationId String @db.ObjectId
+  reconsideration Reconsideration @relation(fields: [reconsiderationId], references: [id])
+  originalName String
+  storedName String @unique
+  mimeType String
+  size Int
+  uploadedAt DateTime @default(now())
+  @@index([reconsiderationId, uploadedAt])
 }
