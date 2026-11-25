@@ -75,8 +75,10 @@ export default function AppRoutes() {
             <Route path="loans" element={<LoansPage />} />
             <Route path="arrears" element={<ArrearsPage />} />
           </Route>
-          <Route element={<RoleRoute roles={["administrativo", "comite_supervisor"]} />}>
+          <Route element={<RoleRoute roles={["administrativo"]} />}>
             <Route path="audit" element={<AuditPage />} />
+          </Route>
+          <Route element={<RoleRoute roles={["administrativo", "comite_supervisor"]} />}>
             <Route path="reports" element={<ReportsPage />} />
           </Route>
         </Route>
