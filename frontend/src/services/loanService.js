@@ -37,7 +37,31 @@ export const loanService = {
     const response = await client.post(`/loans/${id}/collection-actions`, payload);
     return response.data.data;
   },
-  async listRestructuringPolicies() {\n    const response = await client.get("/loans/restructuring-policies");\n    return response.data.data;\n  },\n  async createRestructuringPolicy(payload) {\n    const response = await client.post("/loans/restructuring-policies", payload);\n    return response.data.data;\n  },\n  async listRestructurings() {\n    const response = await client.get("/loans/restructurings");\n    return response.data.data;\n  },\n  async createRestructuring(loanId, payload) {\n    const response = await client.post(`/loans/${loanId}/restructurings`, payload);\n    return response.data.data;\n  },\n  async decideRestructuring(id, payload) {\n    const response = await client.patch(`/loans/restructurings/${id}/decision`, payload);\n    return response.data.data;\n  },\n  async acceptRestructuring(id, payload) {\n    const response = await client.post(`/loans/restructurings/${id}/accept`, payload);\n    return response.data.data;\n  },\n  async refreshArrears(id) {
+  async listRestructuringPolicies() {
+    const response = await client.get("/loans/restructuring-policies");
+    return response.data.data;
+  },
+  async createRestructuringPolicy(payload) {
+    const response = await client.post("/loans/restructuring-policies", payload);
+    return response.data.data;
+  },
+  async listRestructurings() {
+    const response = await client.get("/loans/restructurings");
+    return response.data.data;
+  },
+  async createRestructuring(loanId, payload) {
+    const response = await client.post(`/loans/${loanId}/restructurings`, payload);
+    return response.data.data;
+  },
+  async decideRestructuring(id, payload) {
+    const response = await client.patch(`/loans/restructurings/${id}/decision`, payload);
+    return response.data.data;
+  },
+  async acceptRestructuring(id, payload) {
+    const response = await client.post(`/loans/restructurings/${id}/accept`, payload);
+    return response.data.data;
+  },
+  async refreshArrears(id) {
     const response = await client.post(`/loans/${id}/refresh-arrears`);
     return response.data.data;
   },
