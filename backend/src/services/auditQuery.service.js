@@ -1,5 +1,3 @@
-import { writeAudit } from "./audit.service.js";
-
 export async function listAuditEvents(prisma, filters = {}) {
   const { from, to, action, entityType, page = 1, limit = 50 } = filters;
   const where = {
