@@ -33,6 +33,10 @@ export const loanService = {
     const response = await client.patch(`/loans/alerts/${id}/read`);
     return response.data.data;
   },
+  async registerCollectionAction(id, payload) {
+    const response = await client.post(`/loans/${id}/collection-actions`, payload);
+    return response.data.data;
+  },
   async refreshArrears(id) {
     const response = await client.post(`/loans/${id}/refresh-arrears`);
     return response.data.data;
