@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { applicationSchema } from "../src/validators/application.validator.js";
+import { applicationSchema, trackingLookupSchema } from "../src/validators/application.validator.js";
 
 const validPayload = {
   applicant: {
@@ -43,4 +43,16 @@ test("rejects malformed applicant documents", () => {
     ...validPayload,
     applicant: { ...validPayload.applicant, documentNumber: "ABC" }
   }).success, false);
+});
+
+
+test("el seguimiento exige número de caso y token privado en el cuerpo", () => {
+  const valid = {
+    applicationNumber: "MC-2026-AB12CD34",
+    accessToken: "a".repeat(43)
+  };
+  assert.equal(trackingLookupSchema.safeParse(valid).success, true);
+  assert.equal(trackingLookupSchema.safeParse({ applicationNumber: valid.applicationNumber }).success, false);
+  assert.equal(trackingLookupSchema.safeParse({ ...valid, accessToken: "corto" }).success, false);
+  assert.equal(trackingLookupSchema.safeParse({ ...valid, applicantDocument: "123456789" }).success, false);
 });
