@@ -178,7 +178,7 @@ export default function RestructuringsPage() {
       </Form>
     </Modal>
     <Modal title="Publicar política de reestructuración" open={policyOpen} onCancel={() => setPolicyOpen(false)} onOk={() => policyForm.submit()} confirmLoading={saving} width={720}>
-      <Form form={policyForm} layout="vertical" onFinish={submitPolicy} initialValues={{ allowRateChange: false, allowRepeatedRestructuring: false, maximumRestructurings: 1, overdueInstallmentsTreatment: "CAPITALIZE", includeAccruedInterest: false, lateInterestTreatment: "NOT_APPLICABLE", effectiveFrom: dayjs() }}>
+      <Form form={policyForm} layout="vertical" onFinish={submitPolicy} initialValues={{ effectiveFrom: dayjs() }}>
         <Form.Item name="name" label="Nombre de política" rules={[{ required: true, min: 3 }]}><Input maxLength={100} /></Form.Item>
         <Space wrap>
           <Form.Item name="maximumTermMonths" label="Plazo máximo (meses)" rules={[{ required: true }]}><InputNumber min={1} max={600} /></Form.Item>
