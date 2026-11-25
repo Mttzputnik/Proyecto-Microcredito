@@ -20,7 +20,7 @@ export const internalNavigation = [
   { key: "/internal/reconsiderations", label: "Reconsideraciones", icon: <RetweetOutlined />, roles: CREDIT_OFFICERS },
   { key: "/internal/applicants", label: "Solicitantes", icon: <TeamOutlined />, roles: CREDIT_OFFICERS },
   { key: "/internal/policies", label: "Políticas", icon: <SafetyCertificateOutlined />, roles: ["analista_riesgo", ...CREDIT_OFFICERS] },
-  { key: "/internal/loans", label: "Préstamos y pagos", icon: <DollarOutlined />, roles: ADMINISTRATIVE },
+  { key: "/internal/loans", label: "Préstamos y pagos", icon: <DollarOutlined />, roles: ADMINISTRATIVE },\n  { key: "/internal/restructurings", label: "Reestructuraciones", icon: <DollarOutlined />, roles: [...ADMINISTRATIVE, ...CREDIT_OFFICERS, "analista_riesgo", "comite_supervisor"] },
   { key: "/internal/arrears", label: "Cartera en mora", icon: <AlertOutlined />, roles: ADMINISTRATIVE },
   { key: "/internal/audit", label: "Auditoría", icon: <ProfileOutlined />, roles: ADMINISTRATIVE },
   { key: "/internal/reports", label: "Reportes", icon: <BarChartOutlined />, roles: ["administrativo", "comite_supervisor"] },
