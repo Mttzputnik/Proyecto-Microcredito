@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, DatePicker, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, Typography, message } from "antd";
-import { ReloadOutlined, PlusOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { ReloadOutlined, PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { PageHeader } from "../../components/GeneralComponents";
@@ -170,7 +170,7 @@ export default function RestructuringsPage() {
           <Form.Item name="annualRate" label="Nueva tasa anual (%)"><InputNumber min={0} max={1000} /></Form.Item>
           <Form.Item name="gracePeriodDays" label="Gracia (días)" initialValue={0}><InputNumber min={0} max={365} /></Form.Item>
         </Space>
-        <Form.Item name="firstDueDate" label="Fecha del primer vencimiento" rules={[{ required: true }]}><DatePicker style={{ width: "100%" }} disabledDate={(date) => date.isBefore(dayjs(), "day")} /></Form.Item>
+        <Form.Item name="firstDueDate" label="Fecha del primer vencimiento" rules={[{ required: true }]}><DatePicker style={{ width: "100%" }} disabledDate={(date) => date.isBefore(dayjs().add(1, "day"), "day")} /></Form.Item>
         <Form.Item name="lateInterestAmount" label="Intereses de mora manuales (COP; solo si la política lo permite)" initialValue={0}><InputNumber min={0} precision={0} style={{ width: "100%" }} /></Form.Item>
         <Form.Item name="lateInterestEvidence" label="Soporte contable del interés de mora (si aplica)"><Input maxLength={1000} /></Form.Item>
         <Alert type="info" showIcon message="El motor actual genera cronogramas mensuales mediante el sistema francés. La periodicidad no mensual requiere una regla institucional y una extensión específica del motor financiero." />
