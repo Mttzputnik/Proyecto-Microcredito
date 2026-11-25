@@ -13,6 +13,9 @@ export async function changeApplicationStatus(prisma, { applicationId, toStatus,
       where: { id: applicationId }, select: { id: true, status: true, assignedOfficerId: true, loan: { select: { id: true } } }
     });
     if (!application || application.assignedOfficerId !== actor.id) throw httpError(404, "Solicitud no encontrada.");
+    if (application.status === "APPROVED_WITH_CONDITIONS" && toStatus === "APPROVED") {
+      throw httpError(409, "La aprobación condicionada solo puede habilitarse mediante la verificación de condiciones.");
+    }
     assertTransition(applicationTransitions, application.status, toStatus, "Solicitud");
     if (toStatus === "CANCELLED" && application.loan) throw httpError(409, "La solicitud ya tiene un préstamo formalizado y no se puede cancelar.");
     const updated = await tx.loanApplication.updateMany({
