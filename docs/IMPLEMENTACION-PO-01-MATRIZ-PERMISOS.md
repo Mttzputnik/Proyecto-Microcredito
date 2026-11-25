@@ -1,3 +1,5 @@
+**Estado vigente (25-11-2026):** la matriz de permisos y la asignación automática están integradas en `main`. El comité supervisor dispone actualmente de reportes agregados mediante PO-10; por tanto, la afirmación histórica de que no existe API de reportes está superada. La atribución de formalización/desembolso al área administrativa continúa siendo una decisión provisional del equipo y debe validarse institucionalmente.
+
 # Implementación PO-01 — Matriz de actores y permisos
 
 **Rama de origen:** feat/po-01-matriz-permisos-actores  

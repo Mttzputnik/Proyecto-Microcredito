@@ -1,3 +1,5 @@
+**Estado vigente (25-11-2026):** PO-09 y PO-10 están implementadas e integradas mediante PR #30. PO-11 está implementada e integrada mediante PR #36. La sección histórica de abajo que indica que la reestructuración aún no estaba implementada y que PO-11 estaba pendiente corresponde al momento de elaboración original y queda superada por el estado actual. Consultar [IMPLEMENTACION-PO-11-CIERRE.md](IMPLEMENTACION-PO-11-CIERRE.md) para el cierre de auditoría.
+
 # Implementación PO-09, PO-10 y avance PO-11: reportes y supervisión
 
 ## Alcance
