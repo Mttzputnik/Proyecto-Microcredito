@@ -181,7 +181,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
       updatedCount += result.count;
     }
 
-    if (updatedCount > 0 || alertsCreated > 0) {
+    if (updatedCount > 0) {
       await writeAudit(tx, {
         actorId: actor.id,
         action: "ARREARS_REFRESHED",
@@ -319,7 +319,7 @@ export async function monitorArrears(prisma, {
       }
     }
 
-    if (updatedCount > 0) {
+    if (updatedCount > 0 || alertsCreated > 0) {
       await writeAudit(tx, {
         actorId: null,
         action: "ARREARS_MONITORED",
