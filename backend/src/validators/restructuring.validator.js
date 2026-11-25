@@ -26,7 +26,7 @@ export const createRestructuringSchema = z.object({
   annualRate: rate.optional(),
   gracePeriodDays: z.number().int().min(0).max(365).default(0),
   firstDueDate: z.string().datetime(),
-  lateInterestAmount: z.number().int().min(0).max(10_000_000_000).default(0)
+  lateInterestAmount: z.number().int().min(0).max(10_000_000_000).default(0),\n  lateInterestEvidence: z.string().trim().min(10).max(1000).optional()
 }).strict();
 
 export const restructuringDecisionSchema = z.object({
