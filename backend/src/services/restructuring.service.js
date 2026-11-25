@@ -2,7 +2,6 @@ import { buildSchedule, addMonths } from "../domain/finance.js";
 import { outstanding } from "../domain/payments.js";
 import { daysOverdue } from "../domain/arrears.js";
 import { calculateRestructuringBalance } from "../domain/restructuring.js";
-import { loanTransitions, assertTransition } from "../domain/states.js";
 import { writeAudit } from "./audit.service.js";
 import { httpError } from "../utils/httpError.js";
 
@@ -67,6 +66,9 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (!POLICY_MODES.includes(policy.overdueInstallmentsTreatment)) throw httpError(409, "La política de cuotas vencidas no es válida.");
 
     const priorCount = await tx.loanRestructuring.count({ where: { loanId, status: "ACTIVE" } });
+    const openCount = await tx.loanRestructuring.count({ where: { loanId, status: { in: ["PENDING_REVIEW", "PENDING_COMMITTEE_REVIEW", "PENDING_ACCEPTANCE"] } } });
+    const historyCount = await tx.loanRestructuring.count({ where: { loanId } });
+    if (openCount > 0) throw httpError(409, "El préstamo ya tiene una reestructuración en trámite.");
     if (priorCount > 0 && (!policy.allowRepeatedRestructuring || priorCount >= policy.maximumRestructurings)) {
       throw httpError(409, "El préstamo alcanzó el límite de reestructuraciones permitido por la política.");
     }
@@ -112,7 +114,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
 
     const restructuring = await tx.loanRestructuring.create({
       data: {
-        loanId, policyId: policy.id, version: priorCount + 1,
+        loanId, policyId: policy.id, version: historyCount + 1,
         status: "PENDING_REVIEW", reason: payload.reason,
         requestedById: actor.id, principalOutstanding: balance.principalOutstanding,
         accruedInterestOutstanding: balance.accruedInterestOutstanding,
@@ -139,6 +141,7 @@ export async function decideRestructuring(prisma, { restructuringId, outcome, ju
   return prisma.$transaction(async (tx) => {
     const item = await tx.loanRestructuring.findUnique({ where: { id: restructuringId }, include: { policy: true, loan: true } });
     if (!item) throw httpError(404, "Reestructuración no encontrada.");
+    if (item.loan.status !== "ACTIVE") throw httpError(409, "El préstamo dejó de estar activo y no admite reestructuración.");
     if (item.status !== "PENDING_REVIEW" && item.status !== "PENDING_COMMITTEE_REVIEW") {
       throw httpError(409, "La reestructuración no está pendiente de decisión.");
     }
@@ -197,6 +200,7 @@ export async function acceptRestructuring(prisma, { restructuringId, acceptanceM
       where: { loanId: item.loanId, isCurrent: true },
       orderBy: { installment: "asc" }
     });
+    if (!currentSchedules.length) throw httpError(409, "No existe un cronograma vigente para reemplazar.");
     const nextVersion = Math.max(0, ...currentSchedules.map((row) => row.scheduleVersion || 1)) + 1;
     const schedule = buildSchedule({
       principal: item.newPrincipal,
@@ -211,6 +215,10 @@ export async function acceptRestructuring(prisma, { restructuringId, acceptanceM
     });
     if (changed.count !== 1) throw httpError(409, "El préstamo cambió durante la aceptación. Recarga e intenta nuevamente.");
 
+    await tx.alert.updateMany({
+      where: { loanId: item.loanId, status: "UNREAD", schedule: { isCurrent: true } },
+      data: { status: "CANCELLED", readAt: now }
+    });
     await tx.paymentSchedule.updateMany({
       where: { loanId: item.loanId, isCurrent: true },
       data: { isCurrent: false }
