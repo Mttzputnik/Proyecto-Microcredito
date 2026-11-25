@@ -296,7 +296,7 @@ test("una política sin effectiveUntil (campo ausente en MongoDB) cuenta como vi
 
 test("crear una política con el mismo nombre genera la versión siguiente y desactiva la anterior", async () => {
   const db = memoryDb();
-  const created = await createPolicyVersion(db, { data: { name: "Base", maximumAmount: 2_000_000, approvalReference: "ACTA-COOP-2026-02", approvalDate: "2026-01-01T00:00:00.000Z" }, actor });
+  const created = await createPolicyVersion(db, { data: { name: "Base", minimumAge: 18, maximumAmount: 2_000_000, maximumTermMonths: 24, maxDebtRatio: 0.4, annualInterestRate: 24, maximumSimultaneousLoans: 2, allowedPurposes: ["EDUCATION"], requireVerifiedResidence: true, approvalReference: "ACTA-COOP-2026-02", approvalDate: "2026-01-01T00:00:00.000Z" }, actor });
   assert.equal(created.version, 2);
   assert.equal(created.active, true);
   assert.equal(db.t.creditPolicy[0].active, false);
