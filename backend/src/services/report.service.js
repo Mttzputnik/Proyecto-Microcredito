@@ -65,7 +65,7 @@ export async function getPortfolioAndSupervisionReports(prisma, filters = {}) {
     }),
     prisma.payment.findMany({
       where: { status: "CONFIRMED", paymentDate: { gte: start, lte: end } },
-      select: { amount: true, paymentDate: true, loan: { select: { application: { select: { purpose: true } } } } }
+      select: { amount: true, paymentDate: true }
     })
   ]);
 
