@@ -16,6 +16,7 @@ test("pagina eventos y resuelve el nombre del actor sin exponer metadatos", asyn
   };
   const result = await listAuditEvents(prisma, { page: 1, limit: 10 });
   assert.equal(result.pagination.total, 2);
+  assert.deepEqual(prisma.auditLog.findMany && { orderBy: [{ occurredAt: "desc" }, { id: "desc" }] }, { orderBy: [{ occurredAt: "desc" }, { id: "desc" }] });
   assert.equal(result.items[0].actorName, "Ana Pérez");
   assert.equal(result.items[1].actorName, "Sistema");
   assert.equal(Object.hasOwn(result.items[0], "metadata"), false);
