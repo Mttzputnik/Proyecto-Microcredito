@@ -18,3 +18,15 @@ export function matchesTrackingToken(token, storedHash) {
   const expected = Buffer.from(storedHash, "hex");
   return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
+
+
+// Proyección pública deliberadamente mínima: nunca devuelve datos personales,
+// financieros, documentos, oficial asignado ni el resultado interno de reconsideración.
+export function toPublicTrackingStatus(application) {
+  return {
+    applicationNumber: application.applicationNumber,
+    status: application.status,
+    createdAt: application.createdAt,
+    updatedAt: application.updatedAt
+  };
+}
