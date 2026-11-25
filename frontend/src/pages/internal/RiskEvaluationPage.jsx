@@ -216,12 +216,12 @@ export default function RiskEvaluationPage() {
             <Button type="primary" htmlType="submit" size="large" block loading={saving} disabled={application.status !== "UNDER_REVIEW"} icon={<CheckCircleOutlined />}>Registrar decisión y justificación</Button>
           </Form>
         </Card>
-        {application.conditionalApproval && <Card className="detail-card">
+        {(application.conditionalApproval || application.status === "APPROVED_WITH_CONDITIONS") && <Card className="detail-card">
           <div className="card-heading"><h2>Seguimiento de aprobación condicionada</h2>
-            <Tag color={application.conditionalApproval.status === "VERIFIED" ? "success" : "warning"}>{application.conditionalApproval.status === "VERIFIED" ? "Condiciones verificadas" : "Pendiente de cumplimiento"}</Tag>
+            <Tag color={(application.conditionalApproval?.status === "VERIFIED") ? "success" : "warning"}>{application.conditionalApproval?.status === "VERIFIED" ? "Condiciones verificadas" : "Pendiente de cumplimiento"}</Tag>
           </div>
-          <JustificationBlock title="Condiciones que deben cumplirse">{application.conditionalApproval.conditions}</JustificationBlock>
-          {application.conditionalApproval.status === "PENDING" ? <>
+          <JustificationBlock title="Condiciones que deben cumplirse">{application.conditionalApproval?.conditions || application.decisions?.find((item) => item.outcome === "APPROVED_WITH_CONDITIONS")?.conditions || "Condiciones no disponibles en el expediente."}</JustificationBlock>
+          {application.conditionalApproval?.status !== "VERIFIED" ? <>
             <Alert type="warning" showIcon message="La formalización permanece bloqueada" description="El oficial asignado debe comprobar el cumplimiento de las condiciones y dejar evidencia antes de habilitar la formalización." />
             <Form form={conditionalForm} layout="vertical" onFinish={verifyConditions}>
               <Form.Item name="notes" label="Evidencia de cumplimiento" rules={[{ required: true, min: 10, message: "Registra evidencia verificable de al menos 10 caracteres." }]}>
