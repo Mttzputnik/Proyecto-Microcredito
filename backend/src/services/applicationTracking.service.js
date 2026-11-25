@@ -30,3 +30,32 @@ export function toPublicTrackingStatus(application) {
     updatedAt: application.updatedAt
   };
 }
+
+
+export async function lookupApplicationTracking(prisma, { applicationNumber, accessToken, now = () => new Date() }) {
+  const application = await prisma.loanApplication.findUnique({
+    where: { applicationNumber },
+    select: {
+      id: true,
+      applicationNumber: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      trackingCredential: { select: { tokenHash: true, revokedAt: true } }
+    }
+  });
+
+  // Respuesta indistinguible para caso inexistente, token incorrecto o credencial revocada.
+  if (!application?.trackingCredential ||
+      application.trackingCredential.revokedAt ||
+      !matchesTrackingToken(accessToken, application.trackingCredential.tokenHash)) {
+    throw Object.assign(new Error("No fue posible validar los datos de consulta."), { status: 404 });
+  }
+
+  await prisma.applicationTrackingCredential.update({
+    where: { applicationId: application.id },
+    data: { lastUsedAt: now() }
+  });
+
+  return toPublicTrackingStatus(application);
+}
