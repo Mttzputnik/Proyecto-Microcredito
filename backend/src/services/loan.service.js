@@ -254,7 +254,8 @@ export async function monitorArrears(prisma, {
   if (!Number.isInteger(upcomingDays) || upcomingDays < 0 || upcomingDays > 90) {
     throw new RangeError("UPCOMING_PAYMENT_ALERT_DAYS debe ser un entero entre 0 y 90.");
   }
-  startOfCalendarDay(today); // valida la fecha y usa el calendario configurado para el cálculo posterior.
+  today = new Date(today);
+  if (Number.isNaN(today.getTime())) throw new RangeError("La fecha de monitoreo no es válida.");
   const horizonEnd = new Date(today.getTime() + (upcomingDays + 2) * DAY_MS);
 
   return prisma.$transaction(async (tx) => {
