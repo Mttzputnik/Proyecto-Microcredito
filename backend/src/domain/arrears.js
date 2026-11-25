@@ -4,20 +4,28 @@
 import { PAYABLE_STATUSES, outstanding } from "./payments.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const BUSINESS_TIME_ZONE = process.env.BUSINESS_TIME_ZONE ?? "America/Bogota";
+const calendarFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: BUSINESS_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+});
 export const ARREARS_CATEGORIES = Object.freeze({
   LIGHT_DELAY: "LIGHT_DELAY",
   EARLY_ARREARS: "EARLY_ARREARS",
   ESTABLISHED_ARREARS: "ESTABLISHED_ARREARS"
 });
 
-export const startOfDayUTC = (value) => {
+export const startOfCalendarDay = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) throw new RangeError("La fecha proporcionada no es válida.");
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  const parts = Object.fromEntries(calendarFormatter.formatToParts(date).map(({ type, value: part }) => [type, part]));
+  return Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
 };
 
 export function calendarDayDifference(fromDate, toDate) {
-  return Math.floor((startOfDayUTC(toDate) - startOfDayUTC(fromDate)) / DAY_MS);
+  return Math.floor((startOfCalendarDay(toDate) - startOfCalendarDay(fromDate)) / DAY_MS);
 }
 
 export function daysOverdue(dueDate, today = new Date()) {
