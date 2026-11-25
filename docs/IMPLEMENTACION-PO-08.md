@@ -1,3 +1,5 @@
+**Estado vigente (25-11-2026):** PO-08 está implementada e integrada en `main` mediante PR #31. Los controles adicionales de política y condiciones financieras fueron integrados posteriormente en PR #37. Este documento describe el flujo técnico; para reglas vigentes y pendientes, consultar también [IMPLEMENTACION-POLITICAS-CONDICIONES-REESTRUCTURACION.md](IMPLEMENTACION-POLITICAS-CONDICIONES-REESTRUCTURACION.md) y [RESPUESTAS-PRODUCT-OWNER.md](RESPUESTAS-PRODUCT-OWNER.md).
+
 # PO-08 — Reestructuración de préstamos
 
 ## Alcance implementado
