@@ -299,3 +299,43 @@ Estas cuestiones no quedaron definidas en las respuestas recibidas y deben mante
 8. PO-12: regresión integral y verificación final.
 
 No iniciar tareas que dependan de una decisión abierta sin documentar primero el supuesto aprobado o solicitar aclaración al Product Owner.
+
+
+---
+
+## Estado actualizado de los pendientes funcionales (rama de estabilización)
+
+Esta sección prevalece sobre los estados históricos de las fases anteriores, que se conservan como registro de planificación.
+
+### PO-03 — Políticas de crédito configurables
+**Estado propuesto:** implementado en la rama `feat/politicas-aprobacion-condicionada-reglas-financieras`; pendiente de validación local y fusión.
+
+- La API exige todos los umbrales usados por evaluación.
+- Se exige referencia y fecha de aprobación institucional.
+- No se asignan valores numéricos por defecto.
+- Políticas antiguas incompletas o sin autorización registrada no pueden seleccionarse para evaluar.
+- Las versiones futuras no desactivan la política que sigue vigente.
+- La referencia documental se registra, pero su autenticidad debe comprobarse institucionalmente.
+
+### PO-04 — Aprobación condicionada
+**Estado propuesto:** flujo implementado en la rama; pendiente de validación local y fusión.
+
+- La decisión original permanece inmutable.
+- Se crea un registro separado de seguimiento de condiciones.
+- El oficial asignado registra evidencia de cumplimiento.
+- La solicitud pasa a `APPROVED` únicamente tras la verificación.
+- La formalización comprueba el estado `VERIFIED`; no basta con que la decisión original diga `APPROVED_WITH_CONDITIONS`.
+
+### PO-08 — Reglas financieras de reestructuración
+**Estado propuesto:** controles adicionales implementados en la rama; pendiente de validación local y fusión.
+
+- Las políticas nuevas requieren referencia y fecha de aprobación institucional.
+- Solo se admite periodicidad mensual.
+- No se calculan automáticamente intereses de mora.
+- La capitalización manual requiere autorización de política y soporte contable.
+- El tratamiento de cuotas vencidas y de intereses corrientes sigue siendo configurable según política.
+- No se inventan tasas, límites ni parámetros financieros.
+
+**Documento técnico:** `docs/IMPLEMENTACION-POLITICAS-CONDICIONES-REESTRUCTURACION.md`.
+
+**Validación pendiente:** ejecutar las pruebas dirigidas, Prisma Validate/Generate/DB Push y el build de frontend indicados en el documento. No ejecutar la suite global PO-12.
