@@ -5,14 +5,16 @@ const allowedPurpose = z.enum(["negocio", "herramientas", "estudio", "hogar", "o
 export const policySchema = z.object({
   name: z.string().trim().min(3).max(100),
   description: z.string().trim().max(500).optional(),
-  minimumAge: z.number().int().min(0).max(120).optional(),
-  maximumAmount: z.number().int().positive().optional(),
-  maximumTermMonths: z.number().int().min(1).max(600).optional(),
-  maxDebtRatio: z.number().gt(0).max(1, "Es una fracción: 0.4 significa 40 %.").optional(),
-  annualInterestRate: z.number().min(0).max(100, "Es un porcentaje anual: 24 significa 24 %.").optional(),
-  maximumSimultaneousLoans: z.number().int().min(0).max(100).optional(),
-  allowedPurposes: z.array(allowedPurpose).min(1).optional(),
+  minimumAge: z.number().int().min(0).max(120),
+  maximumAmount: z.number().finite().positive(),
+  maximumTermMonths: z.number().int().min(1).max(600),
+  maxDebtRatio: z.number().gt(0).max(1, "Es una fracción: 0.4 significa 40 %."),
+  annualInterestRate: z.number().min(0).max(100, "Es un porcentaje anual: 24 significa 24 %."),
+  maximumSimultaneousLoans: z.number().int().min(0).max(100),
+  allowedPurposes: z.array(allowedPurpose).min(1),
   requireVerifiedResidence: z.boolean().default(true),
+  approvalReference: z.string().trim().min(5).max(200),
+  approvalDate: z.string().datetime(),
   effectiveFrom: z.string().datetime().optional()
 }).strict();
 export const evaluationSchema = z.object({ policyId: objectId.optional() }).strict();
