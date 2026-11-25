@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { buildSchedule } from "../domain/finance.js";
-import { allocatePayment, totalOutstanding } from "../domain/payments.js";
+import { allocatePayment, outstanding, totalOutstanding } from "../domain/payments.js";
 import { classifyArrears, classifyArrearsDays, daysOverdue, startOfDayUTC } from "../domain/arrears.js";
 import { assertTransition, installmentTransitions, loanTransitions } from "../domain/states.js";
 import { httpError } from "../utils/httpError.js";
@@ -181,7 +181,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
       updatedCount += result.count;
     }
 
-    if (updatedCount > 0) {
+    if (updatedCount > 0 || alertsCreated > 0) {
       await writeAudit(tx, {
         actorId: actor.id,
         action: "ARREARS_REFRESHED",
@@ -271,7 +271,7 @@ export async function monitorArrears(prisma, {
     let alertsCreated = 0;
     for (const schedule of schedules) {
       const overdueDays = daysOverdue(schedule.dueDate, today);
-      if (overdueDays > 0 && schedule.status !== "OVERDUE") {
+      if (outstanding(schedule) > 0 && overdueDays > 0 && schedule.status !== "OVERDUE") {
         const updated = await tx.paymentSchedule.updateMany({
           where: { id: schedule.id, status: schedule.status },
           data: { status: "OVERDUE" }
@@ -282,7 +282,7 @@ export async function monitorArrears(prisma, {
       const dueDay = startOfDayUTC(schedule.dueDate);
       const referenceDate = new Date(dueDay);
       const upcomingDaysLeft = -overdueDays;
-      if (upcomingDaysLeft >= 0 && upcomingDaysLeft <= upcomingDays) {
+      if (outstanding(schedule) > 0 && upcomingDaysLeft >= 0 && upcomingDaysLeft <= upcomingDays) {
         const created = await createAlertOnce(tx, {
           loanId: schedule.loanId,
           scheduleId: schedule.id,
@@ -304,7 +304,7 @@ export async function monitorArrears(prisma, {
         { days: 61, type: "ARREARS_ESTABLISHED", title: "Escalamiento a mora establecida" }
       ];
       for (const threshold of thresholds) {
-        if (overdueDays < threshold.days) continue;
+        if (outstanding(schedule) <= 0 || overdueDays < threshold.days) continue;
         const milestoneDate = new Date(dueDay + threshold.days * DAY_MS);
         const created = await createAlertOnce(tx, {
           loanId: schedule.loanId,
