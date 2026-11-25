@@ -1,12 +1,15 @@
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { httpError } from "../utils/httpError.js";
 
 const MAX_FILE_SIZE = 4 * 1024 * 1024;
 const MAX_FILES = 3;
 const ALLOWED_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
-const STORAGE_DIRECTORY = path.resolve(process.env.DOCUMENT_STORAGE_PATH || "./storage/private-documents");
+const MODULE_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+const DEFAULT_STORAGE_DIRECTORY = path.resolve(MODULE_DIRECTORY, "../../storage/private-documents");
+const STORAGE_DIRECTORY = path.resolve(process.env.DOCUMENT_STORAGE_PATH || DEFAULT_STORAGE_DIRECTORY);
 
 function decodeAndValidate(document) {
   if (!document || typeof document !== "object") throw httpError(400, "Uno de los documentos no tiene un formato válido.");
