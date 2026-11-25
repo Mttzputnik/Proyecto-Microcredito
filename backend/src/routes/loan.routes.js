@@ -33,8 +33,8 @@ router.post("/restructuring-policies", authorize(...PERMISSIONS.managePolicies),
   const payload = parseOrThrow(restructuringPolicySchema, req.body);
   res.status(201).json({ success: true, data: await createRestructuringPolicy(prisma, { payload, actor: req.user }) });
 });
-router.get("/restructurings", authorize(...PERMISSIONS.readRestructurings), async (_req, res) => {
-  res.json({ success: true, data: await listRestructurings(prisma) });
+router.get("/restructurings", authorize(...PERMISSIONS.readRestructurings), async (req, res) => {
+  res.json({ success: true, data: await listRestructurings(prisma, { actor: req.user }) });
 });
 router.patch("/restructurings/:id/decision", authorize(...PERMISSIONS.decideRestructurings), async (req, res) => {
   const restructuringId = requireObjectId(req.params.id);
@@ -108,7 +108,11 @@ router.get("/:id", authorize(...PERMISSIONS.readLoans), async (req, res) => {
     }
   });
   if (!loan) throw httpError(404, "Préstamo no encontrado.");
-  res.json({ success: true, data: loan });
+  const scheduleHistory = await prisma.paymentSchedule.findMany({
+    where: { loanId: id, isCurrent: false },
+    orderBy: [{ scheduleVersion: "desc" }, { installment: "asc" }]
+  });
+  res.json({ success: true, data: { ...loan, scheduleHistory } });
 });
 
 // POST /api/loans  { applicationId }  -> formaliza una solicitud APPROVED
