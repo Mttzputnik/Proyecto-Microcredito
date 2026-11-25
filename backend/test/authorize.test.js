@@ -73,3 +73,16 @@ test("ningún rol puede editar datos originales del solicitante por esta ruta", 
 test("no se habilita castigo de préstamos sin atribución confirmada por el PO", () => {
   assert.deepEqual(PERMISSIONS.writeOffLoans, []);
 });
+
+
+test("el comité supervisor solo accede a reportes agregados, no a auditoría detallada", () => {
+  assert.equal(PERMISSIONS.readPortfolioReports.includes(ROLES.SUPERVISORY_COMMITTEE), true);
+  assert.equal(PERMISSIONS.readAuditEvents.includes(ROLES.SUPERVISORY_COMMITTEE), false);
+  assert.equal(PERMISSIONS.readPortfolioReports.includes(ROLES.ADMINISTRATIVE_AREA), true);
+});
+
+test("la consulta detallada de auditoría corresponde al área administrativa", () => {
+  assert.deepEqual(PERMISSIONS.readAuditEvents, [ROLES.ADMINISTRATIVE_AREA]);
+  assert.equal(PERMISSIONS.readAuditEvents.includes(ROLES.CREDIT_OFFICER), false);
+  assert.equal(PERMISSIONS.readAuditEvents.includes(ROLES.RISK_ANALYST), false);
+});
