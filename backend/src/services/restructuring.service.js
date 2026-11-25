@@ -50,10 +50,13 @@ export async function listRestructurings(prisma, { loanId, actor } = {}) {
   const where = loanId ? { loanId } : {};
   if (actor?.role === "comite_supervisor") where.status = "PENDING_COMMITTEE_REVIEW";
   if (actor?.role === "CREDIT_OFFICER") where.loan = { application: { assignedOfficerId: actor.id } };
+  const loanSelect = actor?.role === "comite_supervisor"
+    ? { loanNumber: true }
+    : { loanNumber: true, application: { select: { applicant: { select: { firstName: true, lastName: true } } } } };
   return prisma.loanRestructuring.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    include: { policy: true, loan: { select: { loanNumber: true, application: { select: { applicant: { select: { firstName: true, lastName: true } } } } } } }
+    include: { policy: true, loan: { select: loanSelect } }
   });
 }
 
