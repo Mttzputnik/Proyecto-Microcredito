@@ -4,10 +4,10 @@ import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { PERMISSIONS } from "../domain/roles.js";
 import {
-  disburseSchema, formalizeSchema, listLoansQuery, paymentSchema, writeOffSchema
+  collectionActionSchema, disburseSchema, formalizeSchema, listLoansQuery, paymentSchema, writeOffSchema
 } from "../validators/finance.validator.js";
 import {
-  disburseLoan, formalizeLoan, listArrears, listArrearsAlerts, markAlertRead, refreshArrears, registerPayment, writeOffLoan
+  disburseLoan, formalizeLoan, listArrears, listArrearsAlerts, markAlertRead, refreshArrears, registerCollectionAction, registerPayment, writeOffLoan
 } from "../services/loan.service.js";
 import { httpError, parseOrThrow, requireObjectId } from "../utils/httpError.js";
 
@@ -30,6 +30,13 @@ router.get("/alerts", authorize(...PERMISSIONS.readLoans), async (_req, res) => 
 router.patch("/alerts/:id/read", authorize(...PERMISSIONS.manageLoans), async (req, res) => {
   const alertId = requireObjectId(req.params.id);
   res.json({ success: true, data: await markAlertRead(prisma, { alertId, actor: req.user }) });
+});
+
+router.post("/:id/collection-actions", authorize(...PERMISSIONS.manageLoans), async (req, res) => {
+  const loanId = requireObjectId(req.params.id);
+  const payload = parseOrThrow(collectionActionSchema, req.body);
+  const action = await registerCollectionAction(prisma, { loanId, ...payload, actor: req.user });
+  res.status(201).json({ success: true, data: action });
 });
 
 // GET /api/loans?status=ACTIVE&page=1&limit=20
@@ -57,7 +64,8 @@ router.get("/:id", authorize(...PERMISSIONS.readLoans), async (req, res) => {
     include: {
       application: { select: { id: true, applicationNumber: true, applicant: { select: applicantSummary } } },
       paymentSchedules: { orderBy: { installment: "asc" } },
-      payments: { orderBy: { paymentDate: "desc" } }
+      payments: { orderBy: { paymentDate: "desc" } },
+      collectionActions: { orderBy: { performedAt: "desc" } }
     }
   });
   if (!loan) throw httpError(404, "Préstamo no encontrado.");
