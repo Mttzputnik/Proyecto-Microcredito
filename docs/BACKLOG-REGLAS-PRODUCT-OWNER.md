@@ -4,6 +4,27 @@
 **Base funcional:** `docs/RESPUESTAS-PRODUCT-OWNER.md`  
 **Estado:** propuesta de trabajo; las tareas no implican que estén implementadas.
 
+## Estado vigente de implementación (25 de noviembre de 2026)
+
+Esta tabla es el resumen vigente del estado observado en `main`. Los estados históricos que aparecen dentro de las descripciones originales de cada PO se conservan como registro de planificación y **no prevalecen sobre esta tabla**.
+
+| PO | Alcance | Estado en el repositorio |
+|---|---|---|
+| PO-01 | Actores, roles, permisos y asignación | Implementado en `main`; consultar matriz de permisos y pruebas de autorización |
+| PO-02 | Seguimiento seguro e integridad del expediente | Implementado en `main`; credencial de seguimiento separada del número de caso y snapshot original |
+| PO-03 | Elegibilidad, historial y políticas configurables | Implementado en `main`; políticas versionadas y controles de aprobación institucional |
+| PO-04 | Decisión humana y aprobación condicionada | Implementado en `main`; verificación previa a formalización y justificación |
+| PO-05 | Reconsideración única e imparcial | Implementado en `main`; oficial distinto y conservación de decisión original |
+| PO-06 | Clasificación de mora | Implementado en `main`; días calendario y categorías 1–30, 31–60 y 61+ |
+| PO-07 | Alertas y gestión administrativa | Implementado en `main`; alertas idempotentes, consulta y gestiones de cobro |
+| PO-08 | Reestructuración y cronograma versionado | Implementado en `main`; PR #31 y controles financieros complementarios integrados en PR #37 |
+| PO-09 | Reportes administrativos | Implementado en `main`; PR #30 |
+| PO-10 | Estadísticas de supervisión | Implementado en `main`; PR #30, con agregación y supresión de grupos pequeños |
+| PO-11 | Auditoría de operaciones críticas | Implementado en `main`; PR #36 |
+| PO-12 | Regresión y aceptación integral | Pruebas preparadas; ejecución integral contra MongoDB aislada `_test` pendiente de evidencia actual |
+
+**Importante:** implementado en el repositorio no significa validado en producción. La ejecución de pruebas y el build se registran por separado en [INFORME-DE-PRUEBAS.md](INFORME-DE-PRUEBAS.md). La última corrección de prueba PO-04 fue integrada en PR #38; no se dispone aquí de un nuevo conteo cuantitativo posterior a esa corrección.
+
 ## Convenciones
 
 - **P0:** bloqueo de seguridad o de integridad; resolver antes de exponer la funcionalidad.
