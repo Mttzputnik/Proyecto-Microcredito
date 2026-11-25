@@ -1,3 +1,4 @@
+import { httpError } from "../utils/httpError.js";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 // El token se entrega una sola vez. En la base de datos solo se conserva su hash SHA-256.
@@ -49,7 +50,7 @@ export async function lookupApplicationTracking(prisma, { applicationNumber, acc
   if (!application?.trackingCredential ||
       application.trackingCredential.revokedAt ||
       !matchesTrackingToken(accessToken, application.trackingCredential.tokenHash)) {
-    throw Object.assign(new Error("No fue posible validar los datos de consulta."), { status: 404 });
+    throw httpError(404, "No fue posible validar los datos de consulta.");
   }
 
   await prisma.applicationTrackingCredential.update({
