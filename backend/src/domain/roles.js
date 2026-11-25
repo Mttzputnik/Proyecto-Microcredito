@@ -38,5 +38,10 @@ export const PERMISSIONS = Object.freeze({
   registerPayments: [ROLES.ADMINISTRATIVE_AREA],
 
   // No se asigna la baja/castigo de préstamos a un actor: el PO no definió esa atribución.
-  writeOffLoans: []
+  writeOffLoans: [],
+
+  // Reportes agregados: administración y comité supervisor (sin datos identificables).
+  readPortfolioReports: [ROLES.ADMINISTRATIVE_AREA, ROLES.SUPERVISORY_COMMITTEE],
+  // Consulta detallada de eventos operativos: solo área administrativa.
+  readAuditEvents: [ROLES.ADMINISTRATIVE_AREA]
 });
