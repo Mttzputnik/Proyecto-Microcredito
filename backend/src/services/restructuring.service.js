@@ -40,9 +40,11 @@ export async function createRestructuringPolicy(prisma, { payload, actor }) {
   });
 }
 
-export async function listRestructurings(prisma, { loanId } = {}) {
+export async function listRestructurings(prisma, { loanId, actor } = {}) {
+  const where = loanId ? { loanId } : {};
+  if (actor?.role === "comite_supervisor") where.status = "PENDING_COMMITTEE_REVIEW";
   return prisma.loanRestructuring.findMany({
-    where: loanId ? { loanId } : {},
+    where,
     orderBy: { createdAt: "desc" },
     include: { policy: true }
   });
