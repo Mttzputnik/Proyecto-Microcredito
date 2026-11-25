@@ -12,13 +12,16 @@ export async function listRestructuringPolicies(prisma) {
     where: { active: true, effectiveFrom: { lte: new Date() }, OR: [{ effectiveUntil: null }, { effectiveUntil: { gt: new Date() } }] },
     orderBy: [{ name: "asc" }, { version: "desc" }]
   });
-  return policies.filter((policy) => typeof policy.approvalReference === "string" && policy.approvalReference.trim().length >= 5);
+  return policies.filter((policy) => typeof policy.approvalReference === "string" && policy.approvalReference.trim().length >= 5 && policy.approvalDate && !Number.isNaN(new Date(policy.approvalDate).getTime()));
 }
 
 export async function createRestructuringPolicy(prisma, { payload, actor }) {
-  if (!payload.approvalReference?.trim() || payload.approvalReference.trim().length < 5) {
-    throw httpError(400, "La política requiere referencia verificable de aprobación institucional.");
+  const approvalDate = new Date(payload.approvalDate);
+  const effectiveFrom = new Date(payload.effectiveFrom);
+  if (!payload.approvalReference?.trim() || payload.approvalReference.trim().length < 5 || Number.isNaN(approvalDate.getTime()) || Number.isNaN(effectiveFrom.getTime())) {
+    throw httpError(400, "La política requiere referencia y fecha verificables de aprobación institucional.");
   }
+  if (effectiveFrom < approvalDate) throw httpError(400, "La política no puede entrar en vigor antes de su aprobación institucional.");
   if (payload.allowRepeatedRestructuring && payload.maximumRestructurings < 2) {
     throw httpError(400, "Una política que permite reestructuraciones sucesivas debe permitir al menos dos.");
   }
@@ -37,13 +40,13 @@ export async function createRestructuringPolicy(prisma, { payload, actor }) {
       });
     }
     const policy = await tx.restructuringPolicy.create({
-      data: { ...payload, approvalReference: payload.approvalReference.trim(), effectiveFrom: new Date(payload.effectiveFrom), version: (previous?.version || 0) + 1, active: true }
+      data: { ...payload, approvalReference: payload.approvalReference.trim(), approvalDate, effectiveFrom, version: (previous?.version || 0) + 1, active: true }
     });
     await writeAudit(tx, {
       actorId: actor.id, action: "RESTRUCTURING_POLICY_CREATED",
       entityType: "RestructuringPolicy", entityId: policy.id,
       description: `Política de reestructuración ${policy.name} v${policy.version} creada`,
-      metadata: { version: policy.version, approvalReference: policy.approvalReference, overdueInstallmentsTreatment: policy.overdueInstallmentsTreatment,
+      metadata: { version: policy.version, approvalReference: policy.approvalReference, approvalDate: policy.approvalDate.toISOString(), overdueInstallmentsTreatment: policy.overdueInstallmentsTreatment,
         includeAccruedInterest: policy.includeAccruedInterest, lateInterestTreatment: policy.lateInterestTreatment }
     });
     return policy;
@@ -73,7 +76,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
     if (actor.role === "CREDIT_OFFICER" && loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Préstamo no encontrado.");
     if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
-    if (!policy || !policy.active || typeof policy.approvalReference !== "string" || policy.approvalReference.trim().length < 5 || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
+    if (!policy || !policy.active || typeof policy.approvalReference !== "string" || policy.approvalReference.trim().length < 5 || !policy.approvalDate || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
       throw httpError(409, "No existe una política de reestructuración vigente.");
     }
     if (!POLICY_MODES.includes(policy.overdueInstallmentsTreatment)) throw httpError(409, "La política de cuotas vencidas no es válida.");
