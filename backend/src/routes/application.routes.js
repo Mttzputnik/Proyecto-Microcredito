@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
-import { createTrackingCredential, matchesTrackingToken } from "../services/applicationTracking.service.js";
+import { createTrackingCredential, lookupApplicationTracking } from "../services/applicationTracking.service.js";
 import { getOrCreateApplicantForSubmission } from "../services/applicantSubmission.service.js";
 import { trackingLookupSchema } from "../validators/application.validator.js";
 import { writeAudit } from "../services/audit.service.js";
@@ -14,48 +14,16 @@ const router = Router();
 // POST /api/applications/track — consulta pública protegida por número de caso + token secreto.
 // La respuesta contiene únicamente datos mínimos de seguimiento.
 router.post("/track", trackingRateLimit, async (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, private");
+  res.setHeader("Pragma", "no-cache");
   const parsed = trackingLookupSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ success: false, message: "Los datos de consulta no son válidos." });
   }
 
   try {
-    const { applicationNumber, accessToken } = parsed.data;
-    const application = await prisma.loanApplication.findUnique({
-      where: { applicationNumber },
-      select: {
-        id: true,
-        applicationNumber: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        trackingCredential: { select: { tokenHash: true, revokedAt: true } },
-        reconsideration: { select: { status: true, outcome: true, submittedAt: true, decidedAt: true } }
-      }
-    });
-
-    // Misma respuesta para caso inexistente, token incorrecto o credencial revocada.
-    if (!application?.trackingCredential ||
-        application.trackingCredential.revokedAt ||
-        !matchesTrackingToken(accessToken, application.trackingCredential.tokenHash)) {
-      return res.status(404).json({ success: false, message: "No fue posible validar los datos de consulta." });
-    }
-
-    await prisma.applicationTrackingCredential.update({
-      where: { applicationId: application.id },
-      data: { lastUsedAt: new Date() }
-    });
-
-    return res.json({
-      success: true,
-      data: {
-        applicationNumber: application.applicationNumber,
-        status: application.status,
-        createdAt: application.createdAt,
-        updatedAt: application.updatedAt,
-        reconsideration: application.reconsideration
-      }
-    });
+    const data = await lookupApplicationTracking(prisma, parsed.data);
+    return res.json({ success: true, data });
   } catch (error) {
     return next(error);
   }

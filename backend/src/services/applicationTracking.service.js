@@ -1,3 +1,4 @@
+import { httpError } from "../utils/httpError.js";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 // El token se entrega una sola vez. En la base de datos solo se conserva su hash SHA-256.
@@ -17,4 +18,45 @@ export function matchesTrackingToken(token, storedHash) {
   const supplied = Buffer.from(hashTrackingToken(token), "hex");
   const expected = Buffer.from(storedHash, "hex");
   return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
+
+
+// Proyección pública deliberadamente mínima: nunca devuelve datos personales,
+// financieros, documentos, oficial asignado ni el resultado interno de reconsideración.
+export function toPublicTrackingStatus(application) {
+  return {
+    applicationNumber: application.applicationNumber,
+    status: application.status,
+    createdAt: application.createdAt,
+    updatedAt: application.updatedAt
+  };
+}
+
+
+export async function lookupApplicationTracking(prisma, { applicationNumber, accessToken, now = () => new Date() }) {
+  const application = await prisma.loanApplication.findUnique({
+    where: { applicationNumber },
+    select: {
+      id: true,
+      applicationNumber: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      trackingCredential: { select: { tokenHash: true, revokedAt: true } }
+    }
+  });
+
+  // Respuesta indistinguible para caso inexistente, token incorrecto o credencial revocada.
+  if (!application?.trackingCredential ||
+      application.trackingCredential.revokedAt ||
+      !matchesTrackingToken(accessToken, application.trackingCredential.tokenHash)) {
+    throw httpError(404, "No fue posible validar los datos de consulta.");
+  }
+
+  await prisma.applicationTrackingCredential.update({
+    where: { applicationId: application.id },
+    data: { lastUsedAt: now() }
+  });
+
+  return toPublicTrackingStatus(application);
 }
