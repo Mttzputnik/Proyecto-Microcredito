@@ -200,12 +200,12 @@
 
 ### PO-09 — Reportes administrativos de cartera
 **Prioridad:** P2  
-**Estado:** mock en frontend según revisión.
+**Estado:** implementado en rama `feat/po-09-10-reportes-supervision`; pendiente validación local y revisión de cifras.
 
 **Trabajo:**
-- Sustituir datos simulados por consultas reales.
-- Reportar cartera, pagos, cuotas vencidas y clasificación de mora.
-- Exponer filtros y agregaciones necesarios para el área administrativa.
+- Sustituir datos simulados por consultas reales. (Implementado)
+- Reportar cartera, pagos, cuotas vencidas y clasificación de mora. (Implementado)
+- Exponer filtros y agregaciones necesarios para el área administrativa. (Implementado con rango de fechas y exportación CSV)
 - Mantener los datos consistentes con pagos y cronogramas reales.
 
 **Puntos de entrada:** `frontend/src/pages/internal/ReportsPage.jsx`, `frontend/src/mocks/reportData.js`, servicios y rutas backend de reportes (crear solo si hacen falta para los reportes requeridos).
@@ -219,12 +219,12 @@
 
 ### PO-10 — Estadísticas y revisión del comité supervisor
 **Prioridad:** P2  
-**Estado:** pendiente de datos reales y definición de dimensiones.
+**Estado:** implementado parcialmente en rama `feat/po-09-10-reportes-supervision`; agregaciones por municipio, zona de residencia y propósito con supresión de grupos pequeños. Dimensiones demográficas no modeladas no se inventan.
 
 **Trabajo:**
-- Proporcionar estadísticas agregadas y desagregadas por perfil para analizar patrones de aprobación.
-- Facilitar revisión de sesgos, inconsistencias, excepciones justificadas y correlación entre características del préstamo y comportamiento de pago.
-- No incluir operaciones de gestión individual, configuración ni pagos en el perfil del comité.
+- Proporcionar estadísticas agregadas por municipio, zona de residencia y propósito para analizar patrones de aprobación. (Implementado; umbral mínimo de cinco registros)
+- Facilitar revisión agregada de decisiones justificadas, aprobaciones condicionadas y relación descriptiva entre propósito y comportamiento de pago. (Implementado parcialmente)
+- No incluir operaciones de gestión individual, configuración ni pagos en el perfil del comité. (Restringido en API y navegación)
 
 **Puntos de entrada:** servicios/rutas de reportes, `frontend/src/pages/internal/ReportsPage.jsx`, pantallas de auditoría y permisos.
 
@@ -238,13 +238,13 @@
 
 ### PO-11 — Auditoría de operaciones críticas
 **Prioridad:** P1 transversal  
-**Estado:** parcial; revisar cobertura de eventos y consulta.
+**Estado:** consulta detallada e interfaz implementadas en rama `feat/po-09-10-reportes-supervision`; falta verificación transversal final de cobertura e inmutabilidad.
 
 **Trabajo:**
-- Verificar auditoría de decisiones, reconsideraciones, cambios de política, pagos, alertas y reestructuraciones.
+- Verificar auditoría de decisiones, reconsideraciones, cambios de política, pagos y alertas; reestructuraciones se auditarán cuando se implementen.
 - Registrar actor, operación, fecha, entidad afectada y referencia al motivo/justificación cuando corresponda.
 - Preservar la inmutabilidad de decisiones y pagos confirmados.
-- Proveer consultas acordes con los permisos de cada actor.
+- Proveer consultas acordes con los permisos de cada actor. (Consulta detallada implementada para área administrativa; comité solo recibe agregados)
 
 **Puntos de entrada:** `backend/src/services/audit.service.js`, modelos de auditoría, servicios de aplicaciones y préstamos, rutas de historial; `frontend/src/pages/internal/AuditPage.jsx`.
 
