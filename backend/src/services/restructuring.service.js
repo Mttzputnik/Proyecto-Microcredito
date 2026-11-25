@@ -55,7 +55,7 @@ export async function listRestructurings(prisma, { loanId, actor } = {}) {
 export async function requestRestructuring(prisma, { loanId, payload, actor, now = new Date() }) {
   return prisma.$transaction(async (tx) => {
     const [loan, policy] = await Promise.all([
-      tx.loan.findUnique({ where: { id: loanId } }),
+      tx.loan.findUnique({ where: { id: loanId }, include: { application: { select: { assignedOfficerId: true } } } }),
       tx.restructuringPolicy.findUnique({ where: { id: payload.policyId } })
     ]);
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
