@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { buildSchedule } from "../domain/finance.js";
-import { allocatePayment, totalOutstanding } from "../domain/payments.js";
-import { classifyArrears } from "../domain/arrears.js";
+import { allocatePayment, outstanding, totalOutstanding } from "../domain/payments.js";
+import { classifyArrears, classifyArrearsDays, daysOverdue, startOfCalendarDay } from "../domain/arrears.js";
 import { assertTransition, installmentTransitions, loanTransitions } from "../domain/states.js";
 import { httpError } from "../utils/httpError.js";
 import { writeAudit } from "./audit.service.js";
@@ -220,11 +220,184 @@ export async function listArrears(prisma, { today = new Date() } = {}) {
     }
     grouped.get(key).installments.push(item);
   }
-  return [...grouped.values()].map((entry) => ({
-    ...entry,
-    totalOutstanding: entry.installments.reduce((sum, i) => sum + i.outstanding, 0),
-    maxDaysOverdue: Math.max(...entry.installments.map((i) => i.daysOverdue))
-  }));
+  return [...grouped.values()].map((entry) => {
+    const maxDaysOverdue = Math.max(...entry.installments.map((i) => i.daysOverdue));
+    const category = classifyArrearsDays(maxDaysOverdue);
+    return {
+      ...entry,
+      category,
+      totalOutstanding: entry.installments.reduce((sum, i) => sum + i.outstanding, 0),
+      maxDaysOverdue
+    };
+  });
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const UPCOMING_PAYMENT_ALERT_DAYS = Number.parseInt(process.env.UPCOMING_PAYMENT_ALERT_DAYS ?? "3", 10);
+
+async function createAlertOnce(tx, data) {
+  const existing = await tx.alert.findFirst({
+    where: { scheduleId: data.scheduleId, type: data.type, referenceDate: data.referenceDate },
+    select: { id: true }
+  });
+  if (existing) return false;
+  await tx.alert.create({ data });
+  return true;
+}
+
+// Proceso diario idempotente: actualiza cuotas vencidas y genera alertas por vencimiento,
+// primer día de mora y escalamiento de categoría. No calcula intereses de mora.
+export async function monitorArrears(prisma, {
+  today = new Date(),
+  upcomingDays = UPCOMING_PAYMENT_ALERT_DAYS
+} = {}) {
+  if (!Number.isInteger(upcomingDays) || upcomingDays < 0 || upcomingDays > 90) {
+    throw new RangeError("UPCOMING_PAYMENT_ALERT_DAYS debe ser un entero entre 0 y 90.");
+  }
+  today = new Date(today);
+  if (Number.isNaN(today.getTime())) throw new RangeError("La fecha de monitoreo no es válida.");
+  const horizonEnd = new Date(today.getTime() + (upcomingDays + 2) * DAY_MS);
+
+  return prisma.$transaction(async (tx) => {
+    const schedules = await tx.paymentSchedule.findMany({
+      where: {
+        status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] },
+        dueDate: { lte: horizonEnd },
+        loan: { status: "ACTIVE" }
+      },
+      orderBy: [{ loanId: "asc" }, { installment: "asc" }]
+    });
+
+    let updatedCount = 0;
+    let alertsCreated = 0;
+    for (const schedule of schedules) {
+      const overdueDays = daysOverdue(schedule.dueDate, today);
+      if (outstanding(schedule) > 0 && overdueDays > 0 && schedule.status !== "OVERDUE") {
+        const updated = await tx.paymentSchedule.updateMany({
+          where: { id: schedule.id, status: schedule.status },
+          data: { status: "OVERDUE" }
+        });
+        updatedCount += updated.count;
+      }
+
+      const dueDay = startOfCalendarDay(schedule.dueDate);
+      const referenceDate = new Date(dueDay);
+      const upcomingDaysLeft = -overdueDays;
+      if (outstanding(schedule) > 0 && upcomingDaysLeft >= 0 && upcomingDaysLeft <= upcomingDays) {
+        const created = await createAlertOnce(tx, {
+          loanId: schedule.loanId,
+          scheduleId: schedule.id,
+          type: "UPCOMING_PAYMENT",
+          referenceDate,
+          daysOffset: upcomingDaysLeft,
+          title: upcomingDaysLeft === 0 ? "Cuota vence hoy" : "Próximo vencimiento",
+          message: upcomingDaysLeft === 0
+            ? `La cuota ${schedule.installment} vence hoy.`
+            : `La cuota ${schedule.installment} vence en ${upcomingDaysLeft} día(s).`
+        });
+        if (created) alertsCreated += 1;
+      }
+
+      // Si el proceso estuvo detenido, recupera también los hitos de mora omitidos.
+      const thresholds = [
+        { days: 1, type: "ARREARS_LIGHT", title: "Inicio de retraso leve" },
+        { days: 31, type: "ARREARS_EARLY", title: "Escalamiento a mora temprana" },
+        { days: 61, type: "ARREARS_ESTABLISHED", title: "Escalamiento a mora establecida" }
+      ];
+      for (const threshold of thresholds) {
+        if (outstanding(schedule) <= 0 || overdueDays < threshold.days) continue;
+        const milestoneDate = new Date(dueDay + threshold.days * DAY_MS);
+        const created = await createAlertOnce(tx, {
+          loanId: schedule.loanId,
+          scheduleId: schedule.id,
+          type: threshold.type,
+          referenceDate: milestoneDate,
+          daysOffset: threshold.days,
+          title: threshold.title,
+          message: `La cuota ${schedule.installment} alcanzó ${threshold.days} día(s) de mora.`
+        });
+        if (created) alertsCreated += 1;
+      }
+    }
+
+    if (updatedCount > 0 || alertsCreated > 0) {
+      await writeAudit(tx, {
+        actorId: null,
+        action: "ARREARS_MONITORED",
+        entityType: "PaymentSchedule",
+        entityId: "daily-monitor",
+        description: `${updatedCount} cuota(s) vencida(s) clasificadas automáticamente`,
+        metadata: { updatedCount, alertsCreated, asOf: today.toISOString(), upcomingDays }
+      });
+    }
+    return { checked: schedules.length, updated: updatedCount, alertsCreated, upcomingDays };
+  });
+}
+
+export async function listArrearsAlerts(prisma) {
+  return prisma.alert.findMany({
+    where: { status: "UNREAD" },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: {
+      loan: {
+        select: {
+          id: true,
+          loanNumber: true,
+          application: { select: { applicant: { select: { firstName: true, lastName: true } } } }
+        }
+      },
+      schedule: { select: { installment: true, dueDate: true, totalDue: true, paidAmount: true } }
+    }
+  });
+}
+
+export async function registerCollectionAction(prisma, {
+  loanId, description, result, actor, performedAt = new Date()
+}) {
+  return prisma.$transaction(async (tx) => {
+    const loan = await tx.loan.findUnique({ where: { id: loanId } });
+    if (!loan) throw httpError(404, "Préstamo no encontrado.");
+    if (loan.status !== "ACTIVE") {
+      throw httpError(409, "Solo se registran gestiones de cobro en préstamos activos.");
+    }
+    const action = await tx.collectionAction.create({
+      data: {
+        loanId,
+        description,
+        ...(result ? { result } : {}),
+        performedAt,
+        recordedById: actor.id
+      }
+    });
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "COLLECTION_ACTION_REGISTERED",
+      entityType: "Loan",
+      entityId: loanId,
+      description: `Gestión de cobro registrada para ${loan.loanNumber}`,
+      metadata: { collectionActionId: action.id, performedAt, description, result: result ?? null }
+    });
+    return action;
+  });
+}
+
+export async function markAlertRead(prisma, { alertId, actor }) {
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.alert.updateMany({
+      where: { id: alertId, status: "UNREAD" },
+      data: { status: "READ", readAt: new Date() }
+    });
+    if (updated.count !== 1) throw httpError(404, "La alerta no existe o ya fue atendida.");
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "ARREARS_ALERT_READ",
+      entityType: "Alert",
+      entityId: alertId,
+      description: "Alerta administrativa marcada como leída"
+    });
+    return { id: alertId, status: "READ" };
+  });
 }
 
 // Castigo: ACTIVE -> WRITTEN_OFF. Exige justificación.

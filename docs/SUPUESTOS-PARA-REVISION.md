@@ -23,8 +23,8 @@ vive en la tabla `CreditPolicy` y lo configura el analista de riesgo con `POST /
 | P1 | Un pago se aplica a la cuota pendiente más antigua; lo que sobra pasa a la siguiente (cubre pagos parciales y anticipados) | `src/domain/payments.js` | Cambiar `allocatePayment` |
 | P2 | Dentro de una cuota se paga primero interés y luego capital | `src/domain/payments.js` | Idem |
 | P3 | Se rechaza un pago mayor al saldo total | `src/services/loan.service.js` | Idem |
-| M1 | Cuota en mora = vence antes de hoy y tiene saldo (días en UTC) | `src/domain/arrears.js` | Cambiar `classifyArrears` |
-| M2 | Mora es estado de la **cuota** (OVERDUE); el préstamo sigue ACTIVE | `src/domain/states.js` | Agregar estado de préstamo |
+| M1 | Cuota en mora = tiene saldo y han transcurrido días calendario completos desde el vencimiento; el día de vencimiento es día 0 (zona `America/Bogota`) | `src/domain/arrears.js` | Cambiar `classifyArrears` |
+| M2 | Mora es estado de la **cuota** (OVERDUE); la categoría se deriva de los días y el préstamo sigue ACTIVE | `src/domain/states.js` | Agregar estado de préstamo solo si el PO lo solicita |
 | M3 | **No** hay interés de mora ni penalidades | — | Pedir la regla y agregarla |
 
 ## 2. Supuestos de proceso
@@ -73,5 +73,5 @@ La pantalla de evaluación consume los endpoints reales de expediente, evaluacio
 
 - Reversión de pagos y reestructuración de préstamos (ADR-005 las deja abiertas).
 - Reconsideración de solicitudes rechazadas.
-- Alertas (no existe un modelo `Alert` en el esquema).
+- Reestructuración y reversión de pagos siguen pendientes de reglas de negocio y diseño. Las alertas automáticas y el registro de gestiones de cobro se implementan en `docs/IMPLEMENTACION-PO-06-CLASIFICACION-ALERTAS-MORA.md`.
 - Valores reales de la política de crédito: debe configurarlos el analista de riesgo con los datos confirmados por el PO.

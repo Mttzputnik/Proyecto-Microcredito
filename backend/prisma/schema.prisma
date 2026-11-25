@@ -127,6 +127,8 @@ model Loan {
   disbursementDate DateTime?
   paymentSchedules PaymentSchedule[]
   payments Payment[]
+  alerts Alert[]
+  collectionActions CollectionAction[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -143,6 +145,7 @@ model PaymentSchedule {
   paidAmount Float @default(0)
   paidAt DateTime?
   status String @default("PENDING")
+  alerts Alert[]
   createdAt DateTime @default(now())
   @@unique([loanId, installment])
 }
@@ -228,4 +231,36 @@ model Reconsideration {
   submittedAt DateTime @default(now())
   decidedAt DateTime?
   @@index([assignedOfficerId, status, submittedAt])
+}
+
+
+model Alert {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  loanId String @db.ObjectId
+  loan Loan @relation(fields: [loanId], references: [id])
+  scheduleId String @db.ObjectId
+  schedule PaymentSchedule @relation(fields: [scheduleId], references: [id])
+  type String
+  referenceDate DateTime
+  daysOffset Int
+  title String
+  message String
+  status String @default("UNREAD")
+  createdAt DateTime @default(now())
+  readAt DateTime?
+  @@unique([scheduleId, type, referenceDate])
+  @@index([status, createdAt])
+}
+
+
+model CollectionAction {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  loanId String @db.ObjectId
+  loan Loan @relation(fields: [loanId], references: [id])
+  description String
+  result String?
+  performedAt DateTime @default(now())
+  recordedById String @db.ObjectId
+  createdAt DateTime @default(now())
+  @@index([loanId, performedAt])
 }

@@ -91,9 +91,20 @@ Si existe un antecedente previo —por ejemplo, rechazo por mora pasada que ya f
 - Debe registrar las gestiones de cobro realizadas.
 - La clasificación debe escalar automáticamente conforme aumentan los días de incumplimiento.
 
-### Aspectos operativos por precisar antes de cerrar el diseño
+### Decisiones de diseño adoptadas por el equipo
 
-La respuesta no especifica si el conteo se realiza en días calendario o hábiles, la zona horaria de referencia, el horario de ejecución del proceso automático, la frecuencia de notificación ni las reglas para evitar alertas duplicadas. Estos detalles deben resolverse como decisiones técnicas o consultarse al Product Owner si afectan la regla de negocio.
+El Product Owner indicó que el equipo puede escoger la convención de conteo más conveniente. Se adopta:
+
+- **Días calendario**, no hábiles.
+- El día de vencimiento es el día 0; el primer día de retraso es el día calendario siguiente.
+- Los límites se interpretan de forma inclusiva: 1–30, 31–60 y 61 o más días.
+- El cálculo de días usa el calendario de `America/Bogota`, correspondiente a la operación en Colombia, para que el cambio de día ocurra a la medianoche local.
+- Se genera una alerta al iniciar la mora (día 1) y al alcanzar los umbrales de 31 y 61 días.
+- Las alertas previas al vencimiento se configuran con `UPCOMING_PAYMENT_ALERT_DAYS` (por defecto 3 días; rango permitido 0–90).
+- El monitor se ejecuta al iniciar el backend y después cada `ARREARS_MONITOR_INTERVAL_MS` (por defecto 24 horas).
+- Las alertas se persisten y se identifican por cuota, tipo y fecha de referencia para evitar duplicados en ejecuciones sucesivas.
+
+La zona `America/Bogota` y la periodicidad relativa al inicio del proceso son decisiones técnicas del equipo, no definiciones expresas del Product Owner. En un despliegue con varias instancias debe ejecutarse un único worker de monitoreo o incorporarse un mecanismo distribuido de exclusión mutua.
 
 ## 6. Reestructuración
 
