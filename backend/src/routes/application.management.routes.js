@@ -4,8 +4,8 @@ import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { PERMISSIONS } from "../domain/roles.js";
 import { applicationTransitions } from "../domain/states.js";
-import { changeApplicationStatus } from "../services/applicationStatus.service.js";
-import { changeStatusSchema, listApplicationsQuery } from "../validators/management.validator.js";
+import { changeApplicationStatus, verifyConditionalApproval } from "../services/applicationStatus.service.js";
+import { changeStatusSchema, listApplicationsQuery, verifyConditionalApprovalSchema } from "../validators/management.validator.js";
 import { parseOrThrow, requireObjectId, httpError } from "../utils/httpError.js";
 const router = Router();
 router.use(authenticate);
@@ -35,6 +35,7 @@ router.get("/:id", authorize(...PERMISSIONS.readApplications), async (req, res) 
       loan: { select: { id: true, loanNumber: true, status: true } },
       evaluations: { orderBy: { evaluatedAt: "desc" }, take: 5 },
       decisions: { orderBy: { decidedAt: "desc" }, include: { officer: { select: { id: true, firstName: true, lastName: true } } } },
+      conditionalApproval: true,
       reconsideration: { include: { assignedOfficer: { select: { id: true, firstName: true, lastName: true } } } }
     }
   });
@@ -47,6 +48,12 @@ router.patch("/:id/status", authorize(...PERMISSIONS.changeApplicationStatus), a
   const { status, justification, conditions, note } = parseOrThrow(changeStatusSchema, req.body);
   const result = await changeApplicationStatus(prisma, { applicationId, toStatus: status, actor: req.user, justification, conditions, note });
   res.json({ success: true, message: "Estado actualizado.", data: result });
+});
+router.patch("/:id/conditional-approval/verify", authorize(...PERMISSIONS.changeApplicationStatus), async (req, res) => {
+  const applicationId = requireObjectId(req.params.id);
+  const { notes } = parseOrThrow(verifyConditionalApprovalSchema, req.body);
+  const result = await verifyConditionalApproval(prisma, { applicationId, actor: req.user, notes });
+  res.json({ success: true, message: "Condiciones verificadas; solicitud habilitada para formalización.", data: result });
 });
 router.get("/:id/history", authorize(...PERMISSIONS.readApplications), async (req, res) => {
   const id = requireObjectId(req.params.id);

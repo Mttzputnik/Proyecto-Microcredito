@@ -30,6 +30,8 @@ export default function RiskEvaluationPage() {
   const [error, setError] = useState("");
   const [decisionForm] = Form.useForm();
   const [verificationForm] = Form.useForm();
+  const [conditionalForm] = Form.useForm();
+  const [verifyingConditions, setVerifyingConditions] = useState(false);
 
   const load = useCallback(async () => {
     setError("");
@@ -66,6 +68,18 @@ export default function RiskEvaluationPage() {
     } catch (err) {
       setError(err.response?.data?.message || "No fue posible registrar la verificación.");
     } finally { setVerifying(false); }
+  };
+
+  const verifyConditions = async (values) => {
+    setVerifyingConditions(true); setError("");
+    try {
+      await riskService.verifyConditionalApproval(id, values);
+      message.success("Condiciones verificadas. La solicitud ya puede formalizarse.");
+      conditionalForm.resetFields();
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "No fue posible verificar las condiciones.");
+    } finally { setVerifyingConditions(false); }
   };
 
   const saveDecision = async (values) => {
@@ -202,6 +216,21 @@ export default function RiskEvaluationPage() {
             <Button type="primary" htmlType="submit" size="large" block loading={saving} disabled={application.status !== "UNDER_REVIEW"} icon={<CheckCircleOutlined />}>Registrar decisión y justificación</Button>
           </Form>
         </Card>
+        {(application.conditionalApproval || application.status === "APPROVED_WITH_CONDITIONS") && <Card className="detail-card">
+          <div className="card-heading"><h2>Seguimiento de aprobación condicionada</h2>
+            <Tag color={(application.conditionalApproval?.status === "VERIFIED") ? "success" : "warning"}>{application.conditionalApproval?.status === "VERIFIED" ? "Condiciones verificadas" : "Pendiente de cumplimiento"}</Tag>
+          </div>
+          <JustificationBlock title="Condiciones que deben cumplirse">{application.conditionalApproval?.conditions || application.decisions?.find((item) => item.outcome === "APPROVED_WITH_CONDITIONS")?.conditions || "Condiciones no disponibles en el expediente."}</JustificationBlock>
+          {application.conditionalApproval?.status !== "VERIFIED" ? <>
+            <Alert type="warning" showIcon message="La formalización permanece bloqueada" description="El oficial asignado debe comprobar el cumplimiento de las condiciones y dejar evidencia antes de habilitar la formalización." />
+            <Form form={conditionalForm} layout="vertical" onFinish={verifyConditions}>
+              <Form.Item name="notes" label="Evidencia de cumplimiento" rules={[{ required: true, min: 10, message: "Registra evidencia verificable de al menos 10 caracteres." }]}>
+                <Input.TextArea rows={3} maxLength={2000} showCount placeholder="Describe los soportes revisados y cómo se comprobó cada condición." />
+              </Form.Item>
+              <Button type="primary" htmlType="submit" loading={verifyingConditions}>Confirmar cumplimiento de condiciones</Button>
+            </Form>
+          </> : <Typography.Paragraph>Verificado por el oficial asignado · {formatDate(application.conditionalApproval.verifiedAt)}<br />{application.conditionalApproval.verificationNotes}</Typography.Paragraph>}
+        </Card>}
         <Card className="detail-card">
           <div className="card-heading"><h2>Historial de decisiones</h2><Tag color="blue">{application.decisions?.length ?? 0} registradas</Tag></div>
           {application.decisions?.length ? application.decisions.map((decision) => (

@@ -7,14 +7,30 @@ import { httpError } from "../utils/httpError.js";
 
 const POLICY_MODES = ["CAPITALIZE", "REQUIRE_PAYMENT"];
 
-export async function listRestructuringPolicies(prisma) {
-  return prisma.restructuringPolicy.findMany({
-    where: { active: true, effectiveFrom: { lte: new Date() }, OR: [{ effectiveUntil: null }, { effectiveUntil: { gt: new Date() } }] },
+export async function listRestructuringPolicies(prisma, now = new Date()) {
+  // Filtrar effectiveUntil en memoria evita el caso de MongoDB donde null no coincide
+  // con documentos antiguos en los que el campo opcional no existe.
+  const policies = await prisma.restructuringPolicy.findMany({
+    where: { active: true, effectiveFrom: { lte: now } },
     orderBy: [{ name: "asc" }, { version: "desc" }]
   });
+  return policies.filter((policy) =>
+    (!policy.effectiveUntil || new Date(policy.effectiveUntil) > now) &&
+    typeof policy.approvalReference === "string" &&
+    policy.approvalReference.trim().length >= 5 &&
+    policy.approvalDate &&
+    !Number.isNaN(new Date(policy.approvalDate).getTime()) &&
+    new Date(policy.approvalDate) <= now
+  );
 }
 
 export async function createRestructuringPolicy(prisma, { payload, actor }) {
+  const approvalDate = new Date(payload.approvalDate);
+  const effectiveFrom = new Date(payload.effectiveFrom);
+  if (!payload.approvalReference?.trim() || payload.approvalReference.trim().length < 5 || Number.isNaN(approvalDate.getTime()) || Number.isNaN(effectiveFrom.getTime())) {
+    throw httpError(400, "La política requiere referencia y fecha verificables de aprobación institucional.");
+  }
+  if (effectiveFrom < approvalDate) throw httpError(400, "La política no puede entrar en vigor antes de su aprobación institucional.");
   if (payload.allowRepeatedRestructuring && payload.maximumRestructurings < 2) {
     throw httpError(400, "Una política que permite reestructuraciones sucesivas debe permitir al menos dos.");
   }
@@ -33,13 +49,13 @@ export async function createRestructuringPolicy(prisma, { payload, actor }) {
       });
     }
     const policy = await tx.restructuringPolicy.create({
-      data: { ...payload, effectiveFrom: new Date(payload.effectiveFrom), version: (previous?.version || 0) + 1, active: true }
+      data: { ...payload, approvalReference: payload.approvalReference.trim(), approvalDate, effectiveFrom, version: (previous?.version || 0) + 1, active: true }
     });
     await writeAudit(tx, {
       actorId: actor.id, action: "RESTRUCTURING_POLICY_CREATED",
       entityType: "RestructuringPolicy", entityId: policy.id,
       description: `Política de reestructuración ${policy.name} v${policy.version} creada`,
-      metadata: { version: policy.version, overdueInstallmentsTreatment: policy.overdueInstallmentsTreatment,
+      metadata: { version: policy.version, approvalReference: policy.approvalReference, approvalDate: policy.approvalDate.toISOString(), overdueInstallmentsTreatment: policy.overdueInstallmentsTreatment,
         includeAccruedInterest: policy.includeAccruedInterest, lateInterestTreatment: policy.lateInterestTreatment }
     });
     return policy;
@@ -69,10 +85,11 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
     if (actor.role === "CREDIT_OFFICER" && loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Préstamo no encontrado.");
     if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
-    if (!policy || !policy.active || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
+    if (!policy || !policy.active || typeof policy.approvalReference !== "string" || policy.approvalReference.trim().length < 5 || !policy.approvalDate || Number.isNaN(new Date(policy.approvalDate).getTime()) || new Date(policy.approvalDate) > now || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
       throw httpError(409, "No existe una política de reestructuración vigente.");
     }
     if (!POLICY_MODES.includes(policy.overdueInstallmentsTreatment)) throw httpError(409, "La política de cuotas vencidas no es válida.");
+    if ((payload.scheduleFrequency ?? "MONTHLY") !== "MONTHLY") throw httpError(400, "El motor financiero solo admite cronogramas mensuales.");
 
     const priorCount = await tx.loanRestructuring.count({ where: { loanId, status: "ACTIVE" } });
     const openCount = await tx.loanRestructuring.count({ where: { loanId, status: { in: ["PENDING_REVIEW", "PENDING_COMMITTEE_REVIEW", "PENDING_ACCEPTANCE"] } } });
@@ -106,6 +123,9 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     const actualGraceDays = daysOverdue(standardFirstDueDate, firstDueDate);
     if (actualGraceDays < 0 || actualGraceDays !== payload.gracePeriodDays) {
       throw httpError(400, "La fecha del primer vencimiento debe corresponder al primer vencimiento mensual más el período de gracia indicado.");
+    }
+    if (policy.lateInterestTreatment !== "MANUAL_CAPITALIZE" && payload.lateInterestAmount > 0) {
+      throw httpError(400, "La política no permite ingresar intereses de mora manuales para este acuerdo.");
     }
     if (policy.lateInterestTreatment === "MANUAL_CAPITALIZE" && payload.lateInterestAmount > 0 && !payload.lateInterestEvidence) {
       throw httpError(400, "El valor manual de intereses de mora requiere soporte o referencia contable.");

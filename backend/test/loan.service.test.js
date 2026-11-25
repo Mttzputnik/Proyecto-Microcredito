@@ -5,17 +5,18 @@ import { evaluateApplication } from "../src/services/evaluation.service.js";
 import { createPolicyVersion, findActivePolicy } from "../src/services/policy.service.js";
 
 // Base de datos falsa en memoria: solo implementa lo que usan los servicios.
-function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", version: 1, annualInterestRate: 24 }, withEvaluation = true } = {}) {
+function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", version: 1, annualInterestRate: 24 }, withEvaluation = true, decisionOutcome = "APPROVED" } = {}) {
   let counter = 0;
   const nextId = () => String(++counter).padStart(24, "0");
   const match = (row, where = {}) =>
     Object.entries(where).every(([key, value]) => (value !== null && typeof value === "object" && !(value instanceof Date)) || row[key] === value);
   const applicant = { id: "ap1", birthDate: "1990-01-01T00:00:00Z", monthlyIncome: 3_000_000, monthlyExpenses: 1_000_000, monthlyDebtPayments: 0 };
-  const effectivePolicy = { minimumAge: 18, maximumAmount: 5_000_000, maximumTermMonths: 24, maxDebtRatio: 0.4, requireVerifiedResidence: true, allowedPurposes: ["EDUCATION"], maximumSimultaneousLoans: 2, ...policy };
+  const effectivePolicy = { minimumAge: 18, maximumAmount: 5_000_000, maximumTermMonths: 24, maxDebtRatio: 0.4, annualInterestRate: 24, requireVerifiedResidence: true, allowedPurposes: ["EDUCATION"], maximumSimultaneousLoans: 2, approvalReference: "ACTA-COOP-2026-01", approvalDate: new Date("2026-01-01"), ...policy };
 
   const t = {
     loanApplication: [{ id: "app1", applicantId: "ap1", status, assignedOfficerId: "u1", requestedAmount: 1_200_000, requestedTerm: 6, purpose: "EDUCATION", applicant, verification: { verified: true, notes: "Verificada", verifiedAt: new Date() } }],
-    loanDecision: [{ id: "dec1", applicationId: "app1", outcome: "APPROVED", decidedAt: new Date() }],
+    loanDecision: [{ id: "dec1", applicationId: "app1", outcome: decisionOutcome, decidedAt: new Date() }],
+    conditionalApproval: [],
     riskEvaluation: withEvaluation ? [{ id: "ev1", applicationId: "app1", policyId: effectivePolicy.id, policy: effectivePolicy }] : [],
     creditPolicy: [{ ...effectivePolicy, active: true, effectiveFrom: new Date("2026-01-01") }],
     loan: [], paymentSchedule: [], payment: [], collectionAction: [], auditLog: []
@@ -40,6 +41,11 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
         .map((r) => ({ ...r, loan: t.loan.find((l) => l.applicationId === r.id) ?? null }))
     },
     loanDecision: { findFirst: async ({ where }) => t.loanDecision.filter((r) => match(r, where)).at(-1) ?? null },
+    conditionalApproval: {
+      findUnique: async ({ where }) => t.conditionalApproval.find((r) => Object.entries(where).every(([key, value]) => r[key] === value)) ?? null,
+      create: async ({ data }) => { const row = { id: nextId(), ...data }; t.conditionalApproval.push(row); return row; },
+      updateMany: async ({ where, data }) => { const rows = t.conditionalApproval.filter((r) => Object.entries(where).every(([key, value]) => r[key] === value)); rows.forEach((r) => Object.assign(r, data)); return { count: rows.length }; }
+    },
     riskEvaluation: {
       ...collection("riskEvaluation"),
       findFirst: async ({ where }) => t.riskEvaluation.filter((r) => match(r, where)).at(-1) ?? null
@@ -92,6 +98,14 @@ test("no se formaliza dos veces, ni sin aprobación, ni sin una política con ta
     (e) => e.status === 409
   );
   await assert.rejects(() => formalizeLoan(memoryDb(), { applicationId: "no-existe", actor }), (e) => e.status === 404);
+});
+
+test("una aprobación condicionada no se formaliza hasta verificar las condiciones", async () => {
+  const db = memoryDb({ decisionOutcome: "APPROVED_WITH_CONDITIONS" });
+  await assert.rejects(() => formalizeLoan(db, { applicationId: "app1", actor }), (e) => e.status === 409 && /condiciones/.test(e.message));
+  db.t.conditionalApproval.push({ id: "ca1", applicationId: "app1", decisionId: "dec1", status: "VERIFIED" });
+  const loan = await formalizeLoan(db, { applicationId: "app1", actor });
+  assert.equal(loan.status, "PENDING_DISBURSEMENT");
 });
 
 test("desembolsar activa el préstamo y genera el cronograma completo", async () => {
@@ -282,7 +296,7 @@ test("una política sin effectiveUntil (campo ausente en MongoDB) cuenta como vi
 
 test("crear una política con el mismo nombre genera la versión siguiente y desactiva la anterior", async () => {
   const db = memoryDb();
-  const created = await createPolicyVersion(db, { data: { name: "Base", maximumAmount: 2_000_000 }, actor });
+  const created = await createPolicyVersion(db, { data: { name: "Base", minimumAge: 18, maximumAmount: 2_000_000, maximumTermMonths: 24, maxDebtRatio: 0.4, annualInterestRate: 24, maximumSimultaneousLoans: 2, allowedPurposes: ["EDUCATION"], requireVerifiedResidence: true, approvalReference: "ACTA-COOP-2026-02", approvalDate: "2026-01-01T00:00:00.000Z" }, actor });
   assert.equal(created.version, 2);
   assert.equal(created.active, true);
   assert.equal(db.t.creditPolicy[0].active, false);

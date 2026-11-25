@@ -15,6 +15,9 @@ export const changeStatusSchema = z.object({
   conditions: z.string().trim().min(10).max(2000).optional(),
   note: z.string().trim().min(1).max(1000).optional()
 }).strict();
+export const verifyConditionalApprovalSchema = z.object({
+  notes: z.string().trim().min(10, "La evidencia debe tener al menos 10 caracteres.").max(2000)
+}).strict();
 export const updateApplicantSchema = z.object({
   email: z.string().trim().toLowerCase().email().optional(),
   phone: z.string().trim().min(7).max(20).optional(), address: z.string().trim().min(3).max(200).optional(),
