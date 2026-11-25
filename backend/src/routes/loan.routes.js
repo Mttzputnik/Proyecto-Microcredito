@@ -10,12 +10,51 @@ import {
   disburseLoan, formalizeLoan, listArrears, listArrearsAlerts, markAlertRead, refreshArrears, registerCollectionAction, registerPayment, writeOffLoan
 } from "../services/loan.service.js";
 import { httpError, parseOrThrow, requireObjectId } from "../utils/httpError.js";
+import {
+  restructuringPolicySchema, createRestructuringSchema,
+  restructuringDecisionSchema, restructuringAcceptanceSchema
+} from "../validators/restructuring.validator.js";
+import {
+  listRestructuringPolicies, createRestructuringPolicy, listRestructurings,
+  requestRestructuring, decideRestructuring, acceptRestructuring
+} from "../services/restructuring.service.js";
 
 // Préstamos, cronograma, pagos y mora. Todo exige sesión.
 const router = Router();
 router.use(authenticate);
 
 const applicantSummary = { id: true, firstName: true, lastName: true, documentType: true, documentNumber: true };
+
+// PO-08: políticas configurables, solicitudes, decisiones, aceptación e historial.
+router.get("/restructuring-policies", authorize(...PERMISSIONS.readPolicies), async (_req, res) => {
+  res.json({ success: true, data: await listRestructuringPolicies(prisma) });
+});
+router.post("/restructuring-policies", authorize(...PERMISSIONS.managePolicies), async (req, res) => {
+  const payload = parseOrThrow(restructuringPolicySchema, req.body);
+  res.status(201).json({ success: true, data: await createRestructuringPolicy(prisma, { payload, actor: req.user }) });
+});
+router.get("/restructurings", authorize(...PERMISSIONS.readRestructurings), async (_req, res) => {
+  res.json({ success: true, data: await listRestructurings(prisma) });
+});
+router.patch("/restructurings/:id/decision", authorize(...PERMISSIONS.decideRestructurings), async (req, res) => {
+  const restructuringId = requireObjectId(req.params.id);
+  const payload = parseOrThrow(restructuringDecisionSchema, req.body);
+  res.json({ success: true, data: await decideRestructuring(prisma, { restructuringId, ...payload, actor: req.user }) });
+});
+router.post("/restructurings/:id/accept", authorize(...PERMISSIONS.acceptRestructurings), async (req, res) => {
+  const restructuringId = requireObjectId(req.params.id);
+  const payload = parseOrThrow(restructuringAcceptanceSchema, req.body);
+  res.json({ success: true, data: await acceptRestructuring(prisma, { restructuringId, ...payload, actor: req.user }) });
+});
+router.get("/:id/restructurings", authorize(...PERMISSIONS.readRestructurings), async (req, res) => {
+  const loanId = requireObjectId(req.params.id);
+  res.json({ success: true, data: await listRestructurings(prisma, { loanId }) });
+});
+router.post("/:id/restructurings", authorize(...PERMISSIONS.createRestructurings), async (req, res) => {
+  const loanId = requireObjectId(req.params.id);
+  const payload = parseOrThrow(createRestructuringSchema, req.body);
+  res.status(201).json({ success: true, data: await requestRestructuring(prisma, { loanId, payload, actor: req.user }) });
+});
 
 // GET /api/loans/arrears  -> cuotas vencidas de préstamos activos, agrupadas por préstamo (definida ANTES de /:id)
 router.get("/arrears", authorize(...PERMISSIONS.readLoans), async (_req, res) => {
