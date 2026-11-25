@@ -61,6 +61,7 @@ model LoanApplication {
   evaluations RiskEvaluation[]
   decisions LoanDecision[]
   reconsideration Reconsideration?
+  conditionalApproval ConditionalApproval?
   loan Loan?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -80,6 +81,8 @@ model CreditPolicy {
   maximumSimultaneousLoans Int?
   allowedPurposes String[] @default([])
   requireVerifiedResidence Boolean @default(true)
+  approvalReference String?
+  approvalDate DateTime?
   effectiveFrom DateTime
   effectiveUntil DateTime?
   active Boolean @default(true)
@@ -113,7 +116,22 @@ model LoanDecision {
   outcome String
   justification String
   conditions String?
+  conditionalApproval ConditionalApproval?
   decidedAt DateTime @default(now())
+}
+
+model ConditionalApproval {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  applicationId String @unique @db.ObjectId
+  application LoanApplication @relation(fields: [applicationId], references: [id])
+  decisionId String @unique @db.ObjectId
+  conditions String
+  status String @default("PENDING")
+  verificationNotes String?
+  verifiedById String?
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 model Loan {
   id String @id @default(auto()) @map("_id") @db.ObjectId
@@ -285,6 +303,7 @@ model RestructuringPolicy {
   overdueInstallmentsTreatment String
   includeAccruedInterest Boolean
   lateInterestTreatment String
+  approvalReference String?
   effectiveFrom DateTime
   effectiveUntil DateTime?
   active Boolean @default(true)
