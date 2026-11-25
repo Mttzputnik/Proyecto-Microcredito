@@ -39,7 +39,7 @@ function memoryDb(schedules) {
 }
 
 const today = new Date("2026-11-25T12:00:00.000Z");
-const due = (daysFromToday) => new Date(Date.UTC(2026, 10, 25 - daysFromToday));
+const due = (daysFromToday) => new Date(Date.UTC(2026, 10, 25 - daysFromToday, 5));
 
 test("monitoreo actualiza cuotas vencidas y genera alertas de mora y vencimiento", async () => {
   const db = memoryDb([
