@@ -73,7 +73,7 @@ export default function ArrearsPage() {
       key: "category",
       render: (value) => <Tag color={categoryColors[value]}>{categoryLabels[value] || value}</Tag>,
     },
-    { title: "Días de mora", dataIndex: "maxDaysOverdue", key: "maxDaysOverdue", render: (value) => <Tag color={categoryColors[visibleItems.find((item) => item.maxDaysOverdue === value)?.category] || "red"}>{value} días</Tag> },
+    { title: "Días de mora", key: "maxDaysOverdue", render: (_, row) => <Tag color={categoryColors[row.category] || "red"}>{row.maxDaysOverdue} días</Tag> },
   ];
 
   return <div className="portal-page">
