@@ -178,7 +178,7 @@ export async function getPortfolioAndSupervisionReports(prisma, filters = {}) {
       minimumGroupSize: MINIMUM_GROUP_SIZE,
       byMunicipality: finishGroups(municipalityGroups, "municipality"),
       byPurpose: finishGroups(purposeGroups, "purpose"),
-      portfolioByPurpose: [...performanceByPurpose.values()].map((item) => ({
+      portfolioByPurpose: [...performanceByPurpose.values()].filter((item) => item.activeLoans >= MINIMUM_GROUP_SIZE).map((item) => ({
         ...item,
         outstanding: Math.round(item.outstanding),
         overdueOutstanding: Math.round(item.overdueOutstanding),
