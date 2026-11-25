@@ -51,6 +51,7 @@ test("calcula cartera, pagos, aprobación y supervisión con datos persistidos",
   assert.equal(report.portfolio.delinquencyRate, 100);
   assert.equal(report.supervision.byMunicipality[0].municipality, "Manizales");
   assert.equal(report.supervision.byPurpose[0].purpose, "negocio");
+  assert.equal(report.supervision.byResidenceZone[0].residenceZone, "urbana");
   assert.equal(report.supervision.justifiedDecisions, 4);
   assert.equal(report.supervision.averageDecisionDays, 3);
   assert.equal(Object.hasOwn(report.supervision.byMunicipality[0], "documentNumber"), false);
