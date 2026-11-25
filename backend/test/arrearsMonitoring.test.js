@@ -58,6 +58,9 @@ test("monitoreo actualiza cuotas vencidas y genera alertas de mora y vencimiento
   assert.equal(db.state.alerts.filter((row) => row.type === "ARREARS_EARLY").length, 2);
   assert.equal(db.state.alerts.filter((row) => row.type === "ARREARS_ESTABLISHED").length, 1);
   assert.equal(db.state.alerts.filter((row) => row.type === "UPCOMING_PAYMENT").length, 1);
+  const alertEvents = db.state.audits.filter((event) => event.action === "ARREARS_ALERT_CREATED");
+  assert.equal(alertEvents.length, result.alertsCreated);
+  assert.ok(alertEvents.every((event) => event.entityType === "Alert" && event.entityId.startsWith("alert-")));
 });
 
 test("monitoreo es idempotente: no duplica alertas ni vuelve a actualizar cuotas", async () => {
@@ -71,6 +74,7 @@ test("monitoreo es idempotente: no duplica alertas ni vuelve a actualizar cuotas
   assert.equal(second.alertsCreated, 0);
   assert.equal(second.updated, 0);
   assert.equal(db.state.alerts.length, 2);
+  assert.equal(db.state.audits.filter((event) => event.action === "ARREARS_ALERT_CREATED").length, 2);
 });
 
 test("rechaza una ventana de alertas previa fuera del rango permitido", async () => {
