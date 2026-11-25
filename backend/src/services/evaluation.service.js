@@ -42,6 +42,7 @@ export async function evaluateApplication(prisma, { applicationId, actor, policy
       policy = await tx.creditPolicy.findUnique({ where: { id: policyId } });
       if (!policy || !policy.active) throw httpError(404, "La política indicada no existe o no está activa.");
       if (!isCreditPolicyReady(policy)) throw httpError(409, "La política indicada está incompleta o no tiene referencia de aprobación institucional.");
+      if (policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) throw httpError(409, "La política indicada no está dentro de su período de vigencia.");
     } else {
       policy = await findActivePolicy(tx, now);
       if (!policy) throw httpError(409, "No hay una política de crédito activa.");
