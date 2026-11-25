@@ -87,9 +87,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     const payments = await tx.payment.findMany({ where: { loanId, status: "CONFIRMED" } });
     const overdue = schedules.filter((row) => daysOverdue(row.dueDate, now) > 0 && outstanding(row) > 0);
     const overdueBalance = overdue.reduce((total, row) => total + outstanding(row), 0);
-    if (policy.overdueInstallmentsTreatment === "REQUIRE_PAYMENT" && overdueBalance > 0) {
-      throw httpError(409, "La política exige pagar las cuotas vencidas antes de reestructurar.");
-    }
+    if (overdue.length === 0) throw httpError(409, "La reestructuración solo está disponible para préstamos con mora activa.");
 
     const annualRate = payload.annualRate ?? loan.annualRate;
     if (!policy.allowRateChange && annualRate !== loan.annualRate) {
@@ -208,9 +206,58 @@ export async function acceptRestructuring(prisma, { restructuringId, acceptanceM
       orderBy: { installment: "asc" }
     });
     if (!currentSchedules.length) throw httpError(409, "No existe un cronograma vigente para reemplazar.");
+    const payments = await tx.payment.findMany({ where: { loanId: item.loanId, status: "CONFIRMED" } });
+    const overdueNow = currentSchedules.filter((row) => daysOverdue(row.dueDate, now) > 0 && outstanding(row) > 0);
+    const overdueBalance = overdueNow.reduce((total, row) => total + outstanding(row), 0);
+    if (item.policy.overdueInstallmentsTreatment === "REQUIRE_PAYMENT" && overdueBalance > 0) {
+      throw httpError(409, "La política exige pagar todas las cuotas vencidas antes de activar el acuerdo.");
+    }
+    const balance = calculateRestructuringBalance({
+      schedules: currentSchedules,
+      payments,
+      includeAccruedInterest: item.policy.includeAccruedInterest,
+      lateInterestTreatment: item.policy.lateInterestTreatment,
+      lateInterestAmount: item.lateInterestAmount,
+      asOf: now
+    });
+    if (balance.newPrincipal <= 0) throw httpError(409, "El saldo actualizado no permite generar una reestructuración.");
+    if (balance.newPrincipal !== item.newPrincipal ||
+        balance.principalOutstanding !== item.principalOutstanding ||
+        balance.accruedInterestOutstanding !== item.accruedInterestOutstanding ||
+        overdueBalance !== item.overdueBalance) {
+      const refreshed = await tx.loanRestructuring.update({
+        where: { id: restructuringId },
+        data: {
+          status: "PENDING_REVIEW",
+          principalOutstanding: balance.principalOutstanding,
+          accruedInterestOutstanding: balance.accruedInterestOutstanding,
+          includedInterest: balance.includedInterest,
+          waivedInterest: balance.waivedInterest,
+          newPrincipal: balance.newPrincipal,
+          overdueBalance,
+          decision: null,
+          justification: null,
+          reviewedById: null,
+          decidedAt: null,
+          acceptanceMethod: null,
+          acceptanceEvidence: null,
+          acceptedById: null,
+          acceptedAt: null
+        }
+      });
+      await writeAudit(tx, {
+        actorId: actor.id,
+        action: "RESTRUCTURING_REVIEW_REQUIRED",
+        entityType: "LoanRestructuring",
+        entityId: restructuringId,
+        description: "El saldo cambió antes de la activación; se requiere nueva revisión y aceptación",
+        metadata: { previousPrincipal: item.newPrincipal, recalculatedPrincipal: balance.newPrincipal, overdueBalance }
+      });
+      return { restructuring: refreshed, recalculated: true, schedule: null };
+    }
     const nextVersion = Math.max(0, ...currentSchedules.map((row) => row.scheduleVersion || 1)) + 1;
     const schedule = buildSchedule({
-      principal: item.newPrincipal,
+      principal: balance.newPrincipal,
       annualRatePercent: item.proposedAnnualRate,
       termMonths: item.proposedTermMonths,
       disbursementDate: addMonths(item.firstDueDate, -1)
