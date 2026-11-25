@@ -351,6 +351,24 @@ export async function listArrearsAlerts(prisma) {
   });
 }
 
+export async function markAlertRead(prisma, { alertId, actor }) {
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.alert.updateMany({
+      where: { id: alertId, status: "UNREAD" },
+      data: { status: "READ", readAt: new Date() }
+    });
+    if (updated.count !== 1) throw httpError(404, "La alerta no existe o ya fue atendida.");
+    await writeAudit(tx, {
+      actorId: actor.id,
+      action: "ARREARS_ALERT_READ",
+      entityType: "Alert",
+      entityId: alertId,
+      description: "Alerta administrativa marcada como leída"
+    });
+    return { id: alertId, status: "READ" };
+  });
+}
+
 // Castigo: ACTIVE -> WRITTEN_OFF. Exige justificación.
 export async function writeOffLoan(prisma, { loanId, actor, justification }) {
   return prisma.$transaction(async (tx) => {
