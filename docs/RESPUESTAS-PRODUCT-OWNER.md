@@ -98,13 +98,13 @@ El Product Owner indicó que el equipo puede escoger la convención de conteo m�
 - **Días calendario**, no hábiles.
 - El día de vencimiento es el día 0; el primer día de retraso es el día calendario siguiente.
 - Los límites se interpretan de forma inclusiva: 1–30, 31–60 y 61 o más días.
-- El cálculo de días usa límites de día UTC para mantener un resultado determinista en backend.
+- El cálculo de días usa el calendario de `America/Bogota`, correspondiente a la operación en Colombia, para que el cambio de día ocurra a la medianoche local.
 - Se genera una alerta al iniciar la mora (día 1) y al alcanzar los umbrales de 31 y 61 días.
 - Las alertas previas al vencimiento se configuran con `UPCOMING_PAYMENT_ALERT_DAYS` (por defecto 3 días; rango permitido 0–90).
 - El monitor se ejecuta al iniciar el backend y después cada `ARREARS_MONITOR_INTERVAL_MS` (por defecto 24 horas).
 - Las alertas se persisten y se identifican por cuota, tipo y fecha de referencia para evitar duplicados en ejecuciones sucesivas.
 
-La zona UTC y la periodicidad relativa al inicio del proceso son decisiones técnicas del equipo, no definiciones expresas del Product Owner. En un despliegue con varias instancias debe ejecutarse un único worker de monitoreo o incorporarse un mecanismo distribuido de exclusión mutua.
+La zona `America/Bogota` y la periodicidad relativa al inicio del proceso son decisiones técnicas del equipo, no definiciones expresas del Product Owner. En un despliegue con varias instancias debe ejecutarse un único worker de monitoreo o incorporarse un mecanismo distribuido de exclusión mutua.
 
 ## 6. Reestructuración
 
