@@ -22,7 +22,7 @@ export const internalNavigation = [
   { key: "/internal/policies", label: "Políticas", icon: <SafetyCertificateOutlined />, roles: ["analista_riesgo", ...CREDIT_OFFICERS] },
   { key: "/internal/loans", label: "Préstamos y pagos", icon: <DollarOutlined />, roles: ADMINISTRATIVE },
   { key: "/internal/arrears", label: "Cartera en mora", icon: <AlertOutlined />, roles: ADMINISTRATIVE },
-  { key: "/internal/audit", label: "Auditoría", icon: <ProfileOutlined />, roles: ["administrativo", "comite_supervisor"] },
+  { key: "/internal/audit", label: "Auditoría", icon: <ProfileOutlined />, roles: ADMINISTRATIVE },
   { key: "/internal/reports", label: "Reportes", icon: <BarChartOutlined />, roles: ["administrativo", "comite_supervisor"] },
 ];
 
