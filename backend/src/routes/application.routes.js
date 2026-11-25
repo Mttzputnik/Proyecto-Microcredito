@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
-import { createTrackingCredential, matchesTrackingToken, toPublicTrackingStatus } from "../services/applicationTracking.service.js";
+import { createTrackingCredential, lookupApplicationTracking } from "../services/applicationTracking.service.js";
 import { getOrCreateApplicantForSubmission } from "../services/applicantSubmission.service.js";
 import { trackingLookupSchema } from "../validators/application.validator.js";
 import { writeAudit } from "../services/audit.service.js";
@@ -20,34 +20,10 @@ router.post("/track", trackingRateLimit, async (req, res, next) => {
   }
 
   try {
-    const { applicationNumber, accessToken } = parsed.data;
-    const application = await prisma.loanApplication.findUnique({
-      where: { applicationNumber },
-      select: {
-        id: true,
-        applicationNumber: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        trackingCredential: { select: { tokenHash: true, revokedAt: true } }
-      }
-    });
-
-    // Misma respuesta para caso inexistente, token incorrecto o credencial revocada.
-    if (!application?.trackingCredential ||
-        application.trackingCredential.revokedAt ||
-        !matchesTrackingToken(accessToken, application.trackingCredential.tokenHash)) {
-      return res.status(404).json({ success: false, message: "No fue posible validar los datos de consulta." });
-    }
-
-    await prisma.applicationTrackingCredential.update({
-      where: { applicationId: application.id },
-      data: { lastUsedAt: new Date() }
-    });
-
+    const data = await lookupApplicationTracking(prisma, parsed.data);
     res.setHeader("Cache-Control", "no-store, private");
     res.setHeader("Pragma", "no-cache");
-    return res.json({ success: true, data: toPublicTrackingStatus(application) });
+    return res.json({ success: true, data });
   } catch (error) {
     return next(error);
   }
