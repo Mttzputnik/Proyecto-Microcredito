@@ -76,7 +76,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
     if (actor.role === "CREDIT_OFFICER" && loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Préstamo no encontrado.");
     if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
-    if (!policy || !policy.active || typeof policy.approvalReference !== "string" || policy.approvalReference.trim().length < 5 || !policy.approvalDate || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
+    if (!policy || !policy.active || typeof policy.approvalReference !== "string" || policy.approvalReference.trim().length < 5 || !policy.approvalDate || Number.isNaN(new Date(policy.approvalDate).getTime()) || new Date(policy.approvalDate) > now || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
       throw httpError(409, "No existe una política de reestructuración vigente.");
     }
     if (!POLICY_MODES.includes(policy.overdueInstallmentsTreatment)) throw httpError(409, "La política de cuotas vencidas no es válida.");
