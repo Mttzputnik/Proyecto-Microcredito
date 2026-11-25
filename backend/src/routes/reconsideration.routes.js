@@ -37,7 +37,7 @@ router.get("/assigned/:id/documents/:documentId", authorize(...PERMISSIONS.readA
       actorId: req.user.id
     });
     res.setHeader("Content-Type", document.mimeType);
-    res.setHeader("Content-Disposition", "attachment; filename=" + encodeURIComponent(document.originalName));
+    res.attachment(document.originalName);
     res.setHeader("X-Content-Type-Options", "nosniff");
     return res.send(document.content);
   } catch (error) {
