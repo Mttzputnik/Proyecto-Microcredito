@@ -37,6 +37,7 @@ function decodeAndValidate(document) {
 
 export async function storeReconsiderationDocuments(documents = []) {
   if (!Array.isArray(documents) || documents.length > MAX_FILES) throw httpError(400, "Puedes adjuntar máximo 3 documentos.");
+  if (documents.length === 0) return [];
   const stored = [];
   try {
     await mkdir(STORAGE_DIRECTORY, { recursive: true, mode: 0o700 });
