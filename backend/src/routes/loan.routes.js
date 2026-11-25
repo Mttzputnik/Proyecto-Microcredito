@@ -102,7 +102,7 @@ router.get("/:id", authorize(...PERMISSIONS.readLoans), async (req, res) => {
     where: { id },
     include: {
       application: { select: { id: true, applicationNumber: true, applicant: { select: applicantSummary } } },
-      paymentSchedules: { orderBy: { installment: "asc" } },
+      paymentSchedules: { where: { isCurrent: true }, orderBy: { installment: "asc" } },
       payments: { orderBy: { paymentDate: "desc" } },
       collectionActions: { orderBy: { performedAt: "desc" } }
     }
