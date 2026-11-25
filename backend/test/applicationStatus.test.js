@@ -102,7 +102,10 @@ test("permite verificar expedientes condicionados históricos creando su seguimi
 test("no permite aprobar directamente sin pasar por la verificación de condiciones", async () => {
   const db = fakePrisma("APPROVED_WITH_CONDITIONS");
   await assert.rejects(
-    () => changeApplicationStatus(db, { applicationId, toStatus: "APPROVED", actor }),
+    () => changeApplicationStatus(db, {
+      applicationId, toStatus: "APPROVED", actor,
+      justification: "Se verificó la documentación presentada."
+    }),
     (e) => e.status === 409 && /verificación/.test(e.message)
   );
   assert.equal(db.calls.updates.length, 0);
