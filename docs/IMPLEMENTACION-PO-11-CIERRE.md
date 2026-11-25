@@ -2,7 +2,7 @@
 
 ## Estado
 
-<badge>Implementado e integrado</badge>
+**Estado: implementado e integrado en main mediante PR #36.**
 
 La implementación de PO-11 fue integrada en `main` mediante la PR #36. Este documento describe el alcance técnico integrado; no representa una nueva validación local ni reemplaza los resultados del informe general de pruebas.
 
