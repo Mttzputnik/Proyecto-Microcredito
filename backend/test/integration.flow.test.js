@@ -80,6 +80,11 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     assert.equal((await api("GET", "/api/loans", { token: tokens.officer })).status, 403);
     assert.equal((await api("GET", "/api/loans", { token: tokens.administrative })).status, 200);
     assert.equal((await api("GET", "/api/policies", { token: tokens.risk })).status, 200);
+    assert.equal((await api("GET", "/api/reports", { token: tokens.administrative })).status, 200);
+    assert.equal((await api("GET", "/api/reports", { token: tokens.committee })).status, 200);
+    assert.equal((await api("GET", "/api/reports", { token: tokens.officer })).status, 403);
+    assert.equal((await api("GET", "/api/audit", { token: tokens.administrative })).status, 200);
+    assert.equal((await api("GET", "/api/audit", { token: tokens.committee })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.admin, body: { name: "Prueba" } })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.officer, body: { name: "Prueba" } })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.auditor, body: { name: "Prueba" } })).status, 403);
@@ -89,11 +94,17 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     const created = await api("POST", "/api/applications", { body: applicationPayload() });
     assert.equal(created.status, 201);
     assert.equal(created.body.data.status, "SUBMITTED");
-    assert.ok(created.body.data.assignedOfficerId);
-    assert.ok(created.body.data.assignedAt);
-    state.applicationId = created.body.data.id;
+    // La API pública no expone IDs internos ni del oficial asignado.
+    // La prueba consulta esos datos directamente en la base aislada.
+    const persistedApplication = await prisma.loanApplication.findUnique({
+      where: { applicationNumber: created.body.data.applicationNumber },
+      select: { id: true, assignedOfficerId: true, assignedAt: true }
+    });
+    assert.ok(persistedApplication?.assignedOfficerId);
+    assert.ok(persistedApplication?.assignedAt);
+    state.applicationId = persistedApplication.id;
     const assignedOfficer = await prisma.user.findUnique({
-      where: { id: created.body.data.assignedOfficerId },
+      where: { id: persistedApplication.assignedOfficerId },
       select: { id: true, email: true }
     });
     state.assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
@@ -238,12 +249,164 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     await assert.rejects(() => prisma.payment.updateMany({ data: { amount: 1 } }), (e) => e.code === "IMMUTABLE_RECORD");
   });
 
+  test("la reconsideración se asigna a otro oficial y conserva la decisión original", async () => {
+    const created = await api("POST", "/api/applications", { body: applicationPayload() });
+    assert.equal(created.status, 201);
+    const application = await prisma.loanApplication.findUnique({
+      where: { applicationNumber: created.body.data.applicationNumber },
+      select: { id: true, assignedOfficerId: true, status: true }
+    });
+    assert.ok(application?.assignedOfficerId);
+
+    const originalOfficer = await prisma.user.findUnique({
+      where: { id: application.assignedOfficerId },
+      select: { id: true, email: true }
+    });
+    const originalToken = originalOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
+    const otherToken = originalOfficer.email === "officer2@prueba.test" ? tokens.officer : tokens.officer2;
+
+    assert.equal((await api("PATCH", `/api/applications/${application.id}/status`, {
+      token: originalToken, body: { status: "UNDER_REVIEW" }
+    })).status, 200);
+    assert.equal((await api("PATCH", `/api/applications/${application.id}/status`, {
+      token: originalToken,
+      body: { status: "REJECTED", justification: "La capacidad de pago declarada no alcanza el umbral de la política vigente." }
+    })).status, 200);
+
+    const submitted = await api("POST", "/api/reconsiderations", {
+      body: {
+        applicationNumber: created.body.data.applicationNumber,
+        accessToken: created.body.data.trackingToken,
+        applicantMessage: "Adjunto información complementaria sobre mis ingresos actuales y solicito una nueva revisión."
+      }
+    });
+    assert.equal(submitted.status, 201);
+
+    const reconsideration = await prisma.reconsideration.findUnique({
+      where: { applicationId: application.id }
+    });
+    assert.ok(reconsideration);
+    assert.notEqual(reconsideration.assignedOfficerId, reconsideration.originalOfficerId);
+    assert.equal((await api("PATCH", `/api/reconsiderations/${reconsideration.id}/decision`, {
+      token: originalToken,
+      body: { outcome: "ACCEPTED", justification: "Intento de decisión por el oficial original." }
+    })).status, 404);
+
+    const assignedOfficer = await prisma.user.findUnique({
+      where: { id: reconsideration.assignedOfficerId },
+      select: { email: true }
+    });
+    const assignedToken = assignedOfficer.email === "officer2@prueba.test" ? tokens.officer2 : tokens.officer;
+    assert.equal((await api("GET", "/api/reconsiderations/assigned", { token: assignedToken })).status, 200);
+
+    const decision = await api("PATCH", `/api/reconsiderations/${reconsideration.id}/decision`, {
+      token: assignedToken,
+      body: { outcome: "ACCEPTED", justification: "La información complementaria permite continuar el análisis del caso." }
+    });
+    assert.equal(decision.status, 200);
+    assert.equal(decision.body.data.status, "ACCEPTED");
+
+    const unchangedApplication = await prisma.loanApplication.findUnique({
+      where: { id: application.id },
+      include: { decisions: true, reconsideration: true }
+    });
+    assert.equal(unchangedApplication.status, "REJECTED");
+    assert.equal(unchangedApplication.decisions.length, 1);
+    assert.equal(unchangedApplication.reconsideration.outcome, "ACCEPTED");
+
+    assert.equal((await api("POST", "/api/reconsiderations", {
+      body: {
+        applicationNumber: created.body.data.applicationNumber,
+        accessToken: created.body.data.trackingToken,
+        applicantMessage: "Segundo intento de reconsideración que debe ser rechazado por el sistema."
+      }
+    })).status, 409);
+    assert.equal((await api("PATCH", `/api/reconsiderations/${reconsideration.id}/decision`, {
+      token: assignedToken,
+      body: { outcome: "UPHELD", justification: "Intento de resolver dos veces la misma reconsideración." }
+    })).status, 409);
+  });
+
+  test("la reestructuración aprobada conserva el cronograma anterior y activa una nueva versión", async () => {
+    const policy = await api("POST", "/api/loans/restructuring-policies", {
+      token: tokens.risk,
+      body: {
+        name: "Política de prueba de reestructuración",
+        maximumTermMonths: 24,
+        maximumGracePeriodDays: 30,
+        maximumUsuryRate: 100,
+        maximumOfficerApprovalAmount: 100_000_000,
+        allowRateChange: false,
+        allowRepeatedRestructuring: false,
+        maximumRestructurings: 1,
+        overdueInstallmentsTreatment: "CAPITALIZE",
+        includeAccruedInterest: false,
+        lateInterestTreatment: "NOT_APPLICABLE",
+        effectiveFrom: new Date(Date.now() - DAY).toISOString()
+      }
+    });
+    assert.equal(policy.status, 201);
+
+    const now = new Date();
+    const firstDueDate = addCalendarMonth(now).toISOString();
+    const requested = await api("POST", `/api/loans/${state.loanId}/restructurings`, {
+      token: state.assignedToken,
+      body: {
+        policyId: policy.body.data.id,
+        reason: "Dificultades temporales de pago y solicitud de ajuste del plazo.",
+        termMonths: 6,
+        gracePeriodDays: 0,
+        firstDueDate
+      }
+    });
+    assert.equal(requested.status, 201);
+    assert.equal(requested.body.data.status, "PENDING_REVIEW");
+    const restructuringId = requested.body.data.id;
+
+    const approved = await api("PATCH", `/api/loans/restructurings/${restructuringId}/decision`, {
+      token: state.assignedToken,
+      body: { outcome: "APPROVED", justification: "La propuesta está dentro del límite de autorización del oficial." }
+    });
+    assert.equal(approved.status, 200);
+    assert.equal(approved.body.data.status, "PENDING_ACCEPTANCE");
+
+    const accepted = await api("POST", `/api/loans/restructurings/${restructuringId}/accept`, {
+      token: tokens.administrative,
+      body: {
+        accepted: true,
+        acceptanceMethod: "SIGNED_DOCUMENT",
+        acceptanceEvidence: "Acta de aceptación de prueba firmada y archivada en el expediente."
+      }
+    });
+    assert.equal(accepted.status, 200);
+    assert.equal(accepted.body.data.restructuring.status, "ACTIVE");
+    assert.equal(accepted.body.data.restructuring.scheduleVersion, 2);
+
+    const loan = await api("GET", `/api/loans/${state.loanId}`, { token: tokens.administrative });
+    assert.equal(loan.status, 200);
+    assert.equal(loan.body.data.paymentSchedules.length, 6);
+    assert.ok(loan.body.data.paymentSchedules.every((row) => row.isCurrent && row.scheduleVersion === 2));
+    assert.equal(loan.body.data.scheduleHistory.length, 6);
+    assert.ok(loan.body.data.scheduleHistory.every((row) => !row.isCurrent && row.scheduleVersion === 1));
+    assert.equal(loan.body.data.payments.length, 2);
+  });
+
   test("el castigo de préstamos permanece bloqueado mientras no tenga actor autorizado", async () => {
     const body = { justification: "Cartera irrecuperable tras agotar la gestión de cobro." };
     assert.equal((await api("POST", `/api/loans/${state.loanId}/write-off`, { token: tokens.admin, body })).status, 403);
     assert.equal((await api("POST", `/api/loans/${state.loanId}/write-off`, { token: tokens.administrative, body })).status, 403);
   });
 });
+
+function addCalendarMonth(date) {
+  const result = new Date(date.getTime());
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(day, lastDay));
+  return result;
+}
 
 function applicationPayload() {
   return {
