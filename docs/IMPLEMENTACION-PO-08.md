@@ -6,7 +6,7 @@
 - Registro de solicitudes sobre préstamos activos.
 - Cálculo del capital pendiente con base en cuotas vigentes y asignaciones de pagos confirmados.
 - Inclusión opcional de intereses corrientes vencidos según política.
-- Tratamiento de cuotas vencidas mediante capitalización o exigencia de pago previo.
+- Tratamiento de cuotas vencidas mediante capitalización o exigencia de pago previo. En el segundo caso, las cuotas vencidas deben estar saldadas antes de activar el acuerdo.
 - Intereses de mora sin cálculo automático: se pueden registrar manualmente solo cuando la política lo permite y se aporta una referencia/soporte contable.
 - Decisión humana con justificación obligatoria.
 - Escalamiento al comité cuando el nuevo saldo supera el límite de aprobación del oficial.
@@ -45,7 +45,7 @@ La política debe publicarse con valores aprobados por la cooperativa. El sistem
 - Los intereses corrientes considerados son únicamente los de cuotas cuyo vencimiento ya ocurrió, menos los intereses imputados en pagos confirmados.
 - Si la política permite incluir intereses corrientes vencidos, se agregan al nuevo saldo.
 - Los intereses de mora no se calculan automáticamente porque el dominio actual no define fórmula ni causación. Si la política habilita capitalización manual, el usuario debe ingresar el importe respaldado por una referencia contable.
-- Si la política exige pagar cuotas vencidas, no se crea la solicitud mientras exista saldo pendiente en cuotas vencidas.
+- La solicitud solo se admite cuando existe mora activa. Si la política exige pagar cuotas vencidas, el acuerdo queda pendiente de activación hasta que se salden; si los pagos modifican el saldo aprobado, el sistema recalcula y exige una nueva revisión y aceptación.
 - La tasa propuesta no puede superar el máximo configurado en la política.
 
 ## Cronogramas versionados
