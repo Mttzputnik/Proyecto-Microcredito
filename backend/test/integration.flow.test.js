@@ -80,6 +80,11 @@ describe("flujo completo de la API y permisos por actor", { skip }, () => {
     assert.equal((await api("GET", "/api/loans", { token: tokens.officer })).status, 403);
     assert.equal((await api("GET", "/api/loans", { token: tokens.administrative })).status, 200);
     assert.equal((await api("GET", "/api/policies", { token: tokens.risk })).status, 200);
+    assert.equal((await api("GET", "/api/reports", { token: tokens.administrative })).status, 200);
+    assert.equal((await api("GET", "/api/reports", { token: tokens.committee })).status, 200);
+    assert.equal((await api("GET", "/api/reports", { token: tokens.officer })).status, 403);
+    assert.equal((await api("GET", "/api/audit", { token: tokens.administrative })).status, 200);
+    assert.equal((await api("GET", "/api/audit", { token: tokens.committee })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.admin, body: { name: "Prueba" } })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.officer, body: { name: "Prueba" } })).status, 403);
     assert.equal((await api("POST", "/api/policies", { token: tokens.auditor, body: { name: "Prueba" } })).status, 403);
