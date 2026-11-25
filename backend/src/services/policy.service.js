@@ -28,6 +28,7 @@ export async function createPolicyVersion(prisma, { data, actor }) {
   const effectiveFrom = data.effectiveFrom ? new Date(data.effectiveFrom) : new Date();
   const approvalDate = new Date(data.approvalDate);
   if (!data.approvalReference?.trim() || Number.isNaN(approvalDate.getTime())) throw httpError(400, "La política requiere referencia y fecha de aprobación institucional.");
+  if (effectiveFrom < approvalDate) throw httpError(400, "La política no puede entrar en vigor antes de su aprobación institucional.");
   try {
     return await prisma.$transaction(async (tx) => {
       const latest = await tx.creditPolicy.findFirst({
@@ -39,7 +40,7 @@ export async function createPolicyVersion(prisma, { data, actor }) {
 
       await tx.creditPolicy.updateMany({
         where: { name: data.name, active: true },
-        data: { active: false, effectiveUntil: effectiveFrom }
+        data: { ...(effectiveFrom <= new Date() ? { active: false } : {}), effectiveUntil: effectiveFrom }
       });
 
       const policy = await tx.creditPolicy.create({
