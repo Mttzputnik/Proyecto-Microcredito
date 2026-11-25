@@ -145,8 +145,9 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
 
 export async function decideRestructuring(prisma, { restructuringId, outcome, justification, actor }) {
   return prisma.$transaction(async (tx) => {
-    const item = await tx.loanRestructuring.findUnique({ where: { id: restructuringId }, include: { policy: true, loan: true } });
+    const item = await tx.loanRestructuring.findUnique({ where: { id: restructuringId }, include: { policy: true, loan: { include: { application: { select: { assignedOfficerId: true } } } } } });
     if (!item) throw httpError(404, "Reestructuración no encontrada.");
+    if (actor.role === "CREDIT_OFFICER" && item.loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Reestructuración no encontrada.");
     if (item.loan.status !== "ACTIVE") throw httpError(409, "El préstamo dejó de estar activo y no admite reestructuración.");
     if (item.status !== "PENDING_REVIEW" && item.status !== "PENDING_COMMITTEE_REVIEW") {
       throw httpError(409, "La reestructuración no está pendiente de decisión.");
