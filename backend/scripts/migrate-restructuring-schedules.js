@@ -8,7 +8,7 @@ try {
   const result = await prisma.$runCommandRaw({
     update: "PaymentSchedule",
     updates: [{
-      q: { isCurrent: { $exists: false } },
+      q: { $or: [{ isCurrent: { $exists: false } }, { scheduleVersion: { $exists: false } }] },
       u: { $set: { isCurrent: true, scheduleVersion: 1 } },
       multi: true
     }]
