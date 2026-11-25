@@ -4,188 +4,102 @@ Sistema académico para gestionar el ciclo de vida de solicitudes y préstamos d
 
 ## Objetivo
 
-Estructurar la recepción de solicitudes, verificación de elegibilidad, evaluación de riesgo como apoyo a la decisión humana, registro justificado de decisiones, seguimiento de pagos y análisis del portafolio.
+Apoyar la recepción y seguimiento de solicitudes, la verificación de elegibilidad, la evaluación de riesgo, las decisiones humanas justificadas, la formalización de préstamos, los pagos, la mora, la reestructuración, los reportes y la auditoría.
+
+El sistema **no toma decisiones crediticias autónomas**. La evaluación genera indicadores para apoyar al funcionario autorizado; las decisiones deben ser humanas, justificadas y trazables.
 
 ## Stack tecnológico
 
-- **Frontend:** React, Vite, React Router, Redux Toolkit, Ant Design y Axios.
-- **Backend:** Node.js y Express.
-- **Persistencia:** MongoDB mediante Prisma ORM.
-- **Autenticación:** correo y contraseña con bcrypt, JWT, sesión `/me` y autorización por rol.
+- **Frontend:** React 19, Vite, React Router, Redux Toolkit, Ant Design y Axios.
+- **Backend:** Node.js, Express 5 y JavaScript ES modules.
+- **Persistencia:** MongoDB mediante Prisma ORM 6.
+- **Autenticación:** JWT, contraseñas con bcryptjs y endpoint de sesión `/api/auth/me`.
+- **Validación HTTP:** Zod.
+- **Seguridad HTTP:** Helmet, CORS configurado y límites de frecuencia en flujos sensibles.
 
-## Alcance funcional
+## Alcance funcional implementado
 
-1. Usuarios, roles y solicitantes.
-2. Solicitudes y documentos.
-3. Políticas de crédito configurables y versionadas.
-4. Evaluación de riesgo e indicadores de capacidad de pago.
-5. Decisiones justificadas y reconsideraciones.
-6. Préstamos y cronogramas de pago.
-7. Registro de pagos, alertas y mora.
-8. Reestructuración.
-9. Reportes y auditoría.
+- Registro público de solicitudes y credencial de seguimiento.
+- Asignación de solicitudes y acceso restringido a expedientes.
+- Gestión de usuarios internos y autenticación.
+- Políticas de crédito versionadas y evaluación configurable.
+- Verificación de residencia y antecedentes internos.
+- Decisiones justificadas y aprobación condicionada con verificación.
+- Reconsideración única, asignada a un oficial distinto y sin sobrescribir la decisión original.
+- Formalización y desembolso administrativo de préstamos.
+- Generación y consulta de cronogramas de pago.
+- Registro de pagos, actualización de mora, alertas y gestiones de cobro.
+- Reestructuración con políticas versionadas, aprobación, aceptación documentada y cronogramas versionados.
+- Reportes de cartera y estadísticas agregadas para supervisión.
+- Auditoría de operaciones críticas e inmutabilidad de registros históricos protegidos mediante el cliente Prisma.
 
-El sistema apoya el juicio del funcionario: no toma decisiones crediticias autónomas. Los desembolsos, consultas automáticas a fuentes externas, contabilidad general y cobro jurídico están fuera del alcance académico inicial.
+El alcance y las reglas funcionales se deben interpretar junto con [las respuestas del Product Owner](docs/RESPUESTAS-PRODUCT-OWNER.md). No se deben inferir reglas financieras que no estén definidas allí o en decisiones técnicas expresas.
 
 ## Estructura del repositorio
 
 ```text
 Proyecto-Microcredito/
 ├── backend/
-│   ├── prisma/
-│   │   └── schema.prisma
+│   ├── prisma/schema.prisma
+│   ├── scripts/
 │   ├── src/
 │   │   ├── config/
-│   │   │   └── prisma.js
+│   │   ├── domain/
+│   │   ├── middlewares/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── validators/
 │   │   ├── app.js
 │   │   └── server.js
-│   ├── .env.example
+│   ├── test/
 │   └── package.json
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx
-│   │   ├── main.jsx
-│   │   ├── store.js
-│   │   └── styles.css
-│   ├── index.html
-│   └── package.json
-└── docs/
-    ├── DECISIONES-ARQUITECTURA.md
-    └── FLUJO-DE-TRABAJO.md
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── layouts/
+│   │   ├── mocks/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── store/
+│   │   └── theme/
+│   ├── package.json
+│   └── vite.config.js
+├── docs/
+└── plan.md
 ```
 
-## Estructura de carpetas backend
+## Documentación del proyecto
 
-```text
-backend/
-├── prisma/
-│   └── schema.prisma
-│
-├── src/
-│   ├── config/
-│   │   └── database.js
-│   │
-│   ├── controllers/
-│   │   ├── AuthController.js
-│   │   ├── UserController.js
-│   │   ├── ApplicantController.js
-│   │   ├── LoanApplicationController.js
-│   │   ├── RiskEvaluationController.js
-│   │   ├── LoanDecisionController.js
-│   │   ├── LoanController.js
-│   │   ├── PaymentController.js
-│   │   ├── PolicyController.js
-│   │   ├── ReportController.js
-│   │   └── AuditController.js
-│   │
-│   ├── services/
-│   │   ├── LoanService.js
-│   │   ├── RiskEvaluationService.js
-│   │   ├── PolicyService.js
-│   │   ├── PaymentScheduleService.js
-│   │   ├── DelinquencyService.js
-│   │   └── AuditService.js
-│   │
-│   ├── routes/
-│   ├── middlewares/
-│   ├── utils/
-│   └── index.js
-│
-├── .env
-├── package.json
-└── server.js
-```
-
-
-## Estructura de carpetas frontend
-
-```text
-frontend/
-└── src/
-    ├── api/
-    │   ├── applicant.js
-    │   ├── application.js
-    │   ├── loan.js
-    │   ├── payment.js
-    │   ├── policy.js
-    │   └── user.js
-    │
-    ├── components/
-    │   ├── general/
-    │   ├── applicants/
-    │   ├── applications/
-    │   ├── loans/
-    │   └── reports/
-    │
-    ├── layouts/
-    │   └── AdminLayout/
-    │
-    ├── pages/
-    │   ├── Dashboard/
-    │   ├── Applicants/
-    │   ├── Applications/
-    │   ├── Evaluations/
-    │   ├── Decisions/
-    │   ├── Loans/
-    │   ├── Payments/
-    │   ├── Policies/
-    │   ├── Reports/
-    │   └── Audit/
-    │
-    ├── routes/
-    ├── slices/
-    ├── utils/
-    └── App.js
-```
-
-## Desarrollo por incrementos
-
-| Incremento | Objetivo |
+| Documento | Contenido |
 |---|---|
-| 1 | Base del proyecto, autenticación, roles y solicitantes |
-| 2 | Solicitudes y documentación |
-| 3 | Políticas configurables y evaluación de riesgo |
-| 4 | Decisiones y reconsideraciones |
-| 5 | Préstamos y cronogramas |
-| 6 | Pagos, mora y reestructuración |
-| 7 | Reportes, auditoría y pruebas integrales |
+| [Reglas del Product Owner](docs/RESPUESTAS-PRODUCT-OWNER.md) | Fuente funcional prioritaria |
+| [Backlog y estado PO](docs/BACKLOG-REGLAS-PRODUCT-OWNER.md) | Estado de PO-01 a PO-12 |
+| [Matriz de trazabilidad](docs/MATRIZ-TRAZABILIDAD-PO.md) | Requisito, implementación y pruebas |
+| [Arquitectura](docs/ARQUITECTURA-SISTEMA.md) | Capas, módulos y flujos |
+| [Modelo de datos](docs/MODELO-DATOS.md) | Entidades y relaciones Prisma |
+| [API](docs/API.md) | Rutas HTTP identificadas en el backend |
+| [Seguridad y permisos](docs/SEGURIDAD-Y-PERMISOS.md) | Roles, permisos y límites |
+| [Informe de pruebas](docs/INFORME-DE-PRUEBAS.md) | Evidencia disponible y validaciones pendientes |
+| [Decisiones de arquitectura](docs/DECISIONES-ARQUITECTURA.md) | ADR y límites técnicos |
+| [Flujo de trabajo](docs/FLUJO-DE-TRABAJO.md) | Ramas, PR y revisión |
 
-## Trabajo colaborativo
+También se conservan documentos de implementación por PO como evidencia histórica y técnica.
 
-- `main`: versión estable.
-- `feature/nombre`: funcionalidades nuevas.
-- `fix/nombre`: correcciones.
-- `docs/nombre`: documentación.
+## Requisitos previos
 
-Crea ramas por funcionalidad y abre Pull Requests para revisar e integrar los cambios. Consulta [docs/FLUJO-DE-TRABAJO.md](docs/FLUJO-DE-TRABAJO.md) para conocer las pautas del equipo.
+- Node.js compatible con las dependencias del proyecto.
+- MongoDB accesible mediante una URI.
+- MongoDB configurado como replica set para las operaciones que usan transacciones.
+- Variables de entorno configuradas localmente a partir de los archivos de ejemplo disponibles. No compartir secretos ni subir archivos `.env`.
 
-## Consideraciones de arquitectura
+## Ejecución local
 
-- Las reglas crediticias deben ser configurables y versionadas.
-- Cada evaluación debe conservar la política utilizada y sus indicadores.
-- La evaluación de riesgo es apoyo a la decisión; la decisión final corresponde a un funcionario autorizado y debe quedar justificada.
-- Las decisiones y pagos confirmados deben conservar trazabilidad.
-- Antes de implementar cálculos financieros se deben definir con el Product Owner las fórmulas, la precisión monetaria y las reglas de redondeo. El esquema inicial es una base de trabajo y requiere revisión antes de producción.
+### Backend
 
-Consulta [docs/DECISIONES-ARQUITECTURA.md](docs/DECISIONES-ARQUITECTURA.md) para ver las decisiones y pendientes técnicos.
-
-## Estado del proyecto
-
-El repositorio contiene la estructura inicial del frontend y backend, el esquema inicial de Prisma y la documentación de arquitectura y colaboración. Los módulos funcionales se desarrollarán y validarán progresivamente; por tanto, no todas las funcionalidades descritas en el alcance están implementadas todavía.
-
-> Proyecto académico de Ingeniería de Software II. Las reglas financieras concretas deben validarse con el Product Owner antes de implementarse.
-
-
-## Primer flujo funcional: recepción de solicitudes
-
-El formulario público del frontend consume `POST /api/applications`. El endpoint valida el payload con Zod, crea o actualiza el solicitante por número de documento y registra una solicitud con estado `SUBMITTED`. La respuesta incluye el número generado por el backend; la interfaz solo muestra la confirmación cuando la API responde correctamente.
-
-### Ejecutar localmente
-
-Backend:
 ```bash
 cd backend
-cp .env.example .env
 npm install
 npx prisma format
 npx prisma validate
@@ -194,27 +108,50 @@ npx prisma db push
 npm run dev
 ```
 
-Frontend (en otra terminal):
+El backend usa por defecto el puerto `3001`. Comprueba su disponibilidad en `GET /api/health`.
+
+### Frontend
+
+En otra terminal:
+
 ```bash
 cd frontend
-cp .env.example .env
-npm ci
+npm install
 npm run dev
 ```
 
-Configura `DATABASE_URL` en `backend/.env` con una base de desarrollo de MongoDB. Prisma ORM 6 con MongoDB requiere un replica set para operaciones transaccionales; MongoDB Atlas lo proporciona por defecto. En `frontend/.env`, configura `VITE_API_URL=http://localhost:3001/api` si el backend usa el puerto predeterminado.
+Vite inicia el frontend, normalmente en el puerto `5173`. Configura la URL de la API mediante la variable de entorno frontend definida por el proyecto.
 
-### API disponible
+### Pruebas backend
 
-- `GET /api/health`: comprobación básica del servidor.
-- `POST /api/applications`: recibe la solicitud del formulario. Valida identidad, datos socioeconómicos, monto, plazo y propósito. Devuelve `201` y `data.applicationNumber` cuando se guarda correctamente.
+```bash
+cd backend
+npm test
+```
 
-El endpoint de recepción es público para permitir el formulario inicial. Los endpoints administrativos y las consultas de datos personales requieren JWT y autorización por rol; todavía deben ampliarse los controles antiabuso y las políticas de protección de datos.
+La prueba de integración `test/integration.flow.test.js` solo se ejecuta cuando `TEST_DATABASE_URL` apunta a una base MongoDB cuyo nombre termina en `_test`. La prueba elimina esa base al finalizar. **Nunca configures esa variable con una base de desarrollo o producción.**
 
-### Límites conocidos del incremento
+### Build frontend
 
-- La elegibilidad del frontend es informativa y no constituye evaluación ni aprobación.
-- Las políticas, umbrales y fórmulas crediticias deben confirmarse con el Product Owner.
-- Los importes se reciben como pesos enteros COP; el uso de `Float` en el esquema es provisional y no debe considerarse contabilidad definitiva.
-- La creación/actualización del solicitante y el registro de la solicitud se ejecutan dentro de una transacción Prisma. MongoDB debe operar como replica set para soportar esta operación.
-- La autenticación base y los módulos administrativos ya tienen una primera implementación; la recuperación de contraseña y el endurecimiento de seguridad siguen pendientes.
+```bash
+cd frontend
+npm run build
+```
+
+## Consideraciones operativas y límites conocidos
+
+- La credencial de seguimiento del solicitante es independiente del número de caso; no debe exponerse el token privado.
+- Los permisos del comité supervisor están limitados a reportes agregados y a las decisiones de reestructuración que llegan escaladas; no obtiene gestión rutinaria de expedientes, configuración de políticas ni registro de pagos.
+- Los roles técnicos y actores del negocio se documentan por separado.
+- La protección append-only de ciertos modelos se aplica en el cliente Prisma compartido; no constituye una protección contra acceso directo o privilegios administrativos de MongoDB.
+- Los importes financieros del esquema usan `Float` por la limitación de Prisma ORM 6 con MongoDB. Esta representación requiere una decisión de precisión monetaria antes de un uso productivo.
+- El monitor de mora se ejecuta al iniciar el backend y periódicamente. En despliegues con varias instancias debe evitarse ejecutar workers duplicados.
+- La periodicidad de pagos distinta de la mensual no está soportada por el motor de reestructuración documentado.
+- No se calcula automáticamente interés de mora.
+- No se afirma que el proyecto esté listo para producción: la seguridad de infraestructura, operación, protección de datos y reglas institucionales requiere revisión adicional.
+
+## Estado de validación
+
+La documentación describe el código y los documentos disponibles en la rama base. Los resultados de ejecución deben consultarse en [el informe de pruebas](docs/INFORME-DE-PRUEBAS.md); este README no sustituye una ejecución local reciente de la suite ni del build.
+
+Proyecto académico de Ingeniería de Software II.
