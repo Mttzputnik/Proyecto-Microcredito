@@ -6,7 +6,7 @@ Esta entrega implementa clasificación automática de cuotas vencidas, alertas a
 
 ## Convención de días
 
-- Se utilizan días calendario completos con corte UTC.
+- Se utilizan días calendario completos según la zona horaria `America/Bogota` (configurable mediante `BUSINESS_TIME_ZONE`).
 - La fecha de vencimiento es el día 0.
 - El día siguiente al vencimiento es el día 1 de retraso.
 - 1–30 días: `LIGHT_DELAY` (retraso leve).
@@ -34,7 +34,7 @@ Variables opcionales del backend:
 
 | Variable | Valor predeterminado | Descripción |
 |---|---:|---|
-| `UPCOMING_PAYMENT_ALERT_DAYS` | `3` | Anticipación de alertas de vencimiento. Entero entre 0 y 90. |
+| `BUSINESS_TIME_ZONE` | `America/Bogota` | Zona horaria usada para determinar el día calendario de vencimiento y mora. |\n| `UPCOMING_PAYMENT_ALERT_DAYS` | `3` | Anticipación de alertas de vencimiento. Entero entre 0 y 90. |
 | `ARREARS_MONITOR_INTERVAL_MS` | `86400000` | Intervalo del monitor en milisegundos (24 horas). Mínimo aceptado: 60000. |
 
 El monitor se ejecuta al iniciar el backend y luego cada intervalo configurado. En despliegues con varias instancias debe ejecutarse un solo worker o agregarse un mecanismo distribuido de exclusión mutua. El índice único de Alert reduce duplicados, pero no sustituye un coordinador distribuido.
