@@ -24,7 +24,7 @@ import ReconsiderationsPage from "../pages/internal/ReconsiderationsPage";
 import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
 import ReportsPage from "../pages/internal/ReportsPage";
-import LoansPage from "../pages/internal/LoansPage";
+import LoansPage from "../pages/internal/LoansPage";\nimport RestructuringsPage from "../pages/internal/RestructuringsPage";
 import ArrearsPage from "../pages/internal/ArrearsPage";
 import UnauthorizedPage from "../pages/shared/UnauthorizedPage";
 
