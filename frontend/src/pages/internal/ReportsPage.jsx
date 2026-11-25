@@ -32,6 +32,7 @@ export default function ReportsPage() {
     try {
       setReport(await reportService.getSummary(filters));
     } catch (error) {
+      setReport(null);
       message.error(error.response?.data?.message || "No fue posible cargar los reportes.");
     } finally {
       setLoading(false);
