@@ -73,5 +73,5 @@ La pantalla de evaluación consume los endpoints reales de expediente, evaluacio
 
 - Reversión de pagos y reestructuración de préstamos (ADR-005 las deja abiertas).
 - Reconsideración de solicitudes rechazadas.
-- Alertas (no existe un modelo `Alert` en el esquema).
+- Reestructuración y reversión de pagos siguen pendientes de reglas de negocio y diseño. Las alertas automáticas y el registro de gestiones de cobro se implementan en `docs/IMPLEMENTACION-PO-06-CLASIFICACION-ALERTAS-MORA.md`.
 - Valores reales de la política de crédito: debe configurarlos el analista de riesgo con los datos confirmados por el PO.
