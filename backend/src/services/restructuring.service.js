@@ -1,5 +1,5 @@
 import { buildSchedule, addMonths } from "../domain/finance.js";
-import { outstanding } from "../domain/payments.js";
+import { outstanding } from "../domain/payments.js";\nimport { daysOverdue } from "../domain/arrears.js";
 import { calculateRestructuringBalance } from "../domain/restructuring.js";
 import { loanTransitions, assertTransition } from "../domain/states.js";
 import { writeAudit } from "./audit.service.js";
@@ -72,7 +72,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
     });
     if (!schedules.length) throw httpError(409, "El préstamo no tiene un cronograma vigente.");
     const payments = await tx.payment.findMany({ where: { loanId, status: "CONFIRMED" } });
-    const overdue = schedules.filter((row) => new Date(row.dueDate) < now && outstanding(row) > 0);
+    const overdue = schedules.filter((row) => daysOverdue(row.dueDate, now) > 0 && outstanding(row) > 0);
     const overdueBalance = overdue.reduce((total, row) => total + outstanding(row), 0);
     if (policy.overdueInstallmentsTreatment === "REQUIRE_PAYMENT" && overdueBalance > 0) {
       throw httpError(409, "La política exige pagar las cuotas vencidas antes de reestructurar.");
