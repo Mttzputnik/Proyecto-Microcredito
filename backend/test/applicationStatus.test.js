@@ -3,17 +3,20 @@ import assert from "node:assert/strict";
 import { changeApplicationStatus, verifyConditionalApproval } from "../src/services/applicationStatus.service.js";
 
 // Prisma falso en memoria: registra lo que el servicio escribe.
-function fakePrisma(initialStatus, { updateCount = 1 } = {}) {
+function fakePrisma(initialStatus, { updateCount = 1, withConditionalApproval = true } = {}) {
   const calls = { decisions: [], conditionalApprovals: [], audits: [], updates: [] };
   const tx = {
     loanApplication: {
       findUnique: async () => (initialStatus ? { id: "a".repeat(24), status: initialStatus, assignedOfficerId: "b".repeat(24) } : null),
       updateMany: async (args) => { calls.updates.push(args); return { count: updateCount }; }
     },
-    loanDecision: { create: async ({ data }) => { calls.decisions.push(data); return { id: "d".repeat(24) }; } },
+    loanDecision: {
+      create: async ({ data }) => { calls.decisions.push(data); return { id: "d".repeat(24) }; },
+      findFirst: async () => ({ id: "d".repeat(24), conditions: "Presentar certificación laboral actualizada." })
+    },
     conditionalApproval: {
       create: async ({ data }) => { calls.conditionalApprovals.push(data); return { id: "e".repeat(24), ...data }; },
-      findUnique: async () => ({ id: "e".repeat(24), applicationId, decisionId: "d".repeat(24), status: "PENDING", conditions: "Presentar certificación laboral actualizada." }),
+      findUnique: async () => withConditionalApproval ? ({ id: "e".repeat(24), applicationId, decisionId: "d".repeat(24), status: "PENDING", conditions: "Presentar certificación laboral actualizada." }) : null,
       updateMany: async ({ data }) => { calls.conditionalApprovals.push(data); return { count: 1 }; }
     },
     auditLog: { create: async ({ data }) => { calls.audits.push(data); return data; } }
@@ -87,6 +90,13 @@ test("verificar condiciones habilita formalización y deja auditoría", async ()
   assert.equal(result.conditionalApprovalStatus, "VERIFIED");
   assert.equal(db.calls.conditionalApprovals.at(-1).status, "VERIFIED");
   assert.ok(db.calls.audits.some((event) => event.action === "CONDITIONAL_APPROVAL_VERIFIED"));
+});
+
+test("permite verificar expedientes condicionados históricos creando su seguimiento pendiente", async () => {
+  const db = fakePrisma("APPROVED_WITH_CONDITIONS", { withConditionalApproval: false });
+  const result = await verifyConditionalApproval(db, { applicationId, actor, notes: "Se revisaron los soportes históricos y se comprobó el cumplimiento." });
+  assert.equal(result.status, "APPROVED");
+  assert.equal(db.calls.conditionalApprovals[0].conditions, "Presentar certificación laboral actualizada.");
 });
 
 test("no permite aprobar directamente sin pasar por la verificación de condiciones", async () => {
