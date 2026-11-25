@@ -142,6 +142,7 @@ export default function RestructuringsPage() {
         { title: "Plazo máximo", dataIndex: "maximumTermMonths", render: (v) => `${v} meses` },
         { title: "Gracia máxima", dataIndex: "maximumGracePeriodDays", render: (v) => `${v} días` },
         { title: "Tasa máxima", dataIndex: "maximumUsuryRate", render: (v) => `${v}%` },
+        { title: "Aprobación institucional", dataIndex: "approvalReference", render: (v) => v || "Sin referencia" },
         { title: "Estado", dataIndex: "active", render: (v) => <Tag color={v ? "green" : "default"}>{v ? "Vigente" : "Inactiva"}</Tag> },
       ]} />
     </Card>}
@@ -194,8 +195,9 @@ export default function RestructuringsPage() {
           <Form.Item name="allowRepeatedRestructuring" label="¿Permite reestructuraciones sucesivas?" rules={[{ required: true }]}><Select options={[{ value: true, label: "Sí" }, { value: false, label: "No" }]} /></Form.Item>
           <Form.Item name="includeAccruedInterest" label="¿Capitalizar intereses corrientes vencidos?" rules={[{ required: true }]}><Select options={[{ value: true, label: "Sí" }, { value: false, label: "No" }]} /></Form.Item>
         </Space>
+        <Form.Item name="approvalReference" label="Referencia del acta o resolución aprobatoria" rules={[{ required: true, min: 5, max: 200 }]}><Input maxLength={200} /></Form.Item>
         <Form.Item name="effectiveFrom" label="Vigente desde" rules={[{ required: true }]}><DatePicker showTime style={{ width: "100%" }} /></Form.Item>
-        <Alert type="warning" showIcon message="Publicar únicamente parámetros aprobados por el cuerpo directivo y el comité financiero. La tasa máxima debe provenir de la validación legal vigente." />
+        <Alert type="warning" showIcon message="Publica únicamente parámetros aprobados por la cooperativa. Registra la referencia institucional. El motor solo genera cuotas mensuales; no calcula intereses de mora automáticamente y exige soporte contable para cualquier importe manual capitalizado." />
       </Form>
     </Modal>
     <Modal title={decision?.outcome === "APPROVED" ? "Aprobar reestructuración" : "Rechazar reestructuración"} open={!!decision} onCancel={() => setDecision(null)} onOk={() => decisionForm.submit()} confirmLoading={saving}>
