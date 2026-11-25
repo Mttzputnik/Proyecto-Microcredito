@@ -35,18 +35,18 @@ test("writeAudit admite eventos automáticos sin actor humano", async () => {
 
 test("writeAudit rechaza eventos incompletos o metadatos no estructurados", async () => {
   const db = { auditLog: { create: async () => { throw new Error("No debe persistir"); } } };
-  await assert.rejects(
+  assert.throws(
     () => writeAudit(db, { action: "PAYMENT_REGISTERED", entityType: "Loan", entityId: "loan-1" }),
     (error) => error.code === "AUDIT_INVALID_EVENT"
   );
-  await assert.rejects(
+  assert.throws(
     () => writeAudit(db, {
       actorId: "user-1", action: "PAYMENT_REGISTERED", entityType: "Loan",
       entityId: "loan-1", description: "Pago registrado", metadata: ["no", "es", "objeto"]
     }),
     (error) => error.code === "AUDIT_INVALID_EVENT"
   );
-  await assert.rejects(
+  assert.throws(
     () => writeAudit({}, {
       actorId: "user-1", action: "PAYMENT_REGISTERED", entityType: "Loan",
       entityId: "loan-1", description: "Pago registrado"
