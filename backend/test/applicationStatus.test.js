@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { changeApplicationStatus } from "../src/services/applicationStatus.service.js";
+import { changeApplicationStatus, verifyConditionalApproval } from "../src/services/applicationStatus.service.js";
 
 // Prisma falso en memoria: registra lo que el servicio escribe.
 function fakePrisma(initialStatus, { updateCount = 1 } = {}) {
@@ -78,6 +78,24 @@ test("aprobar con condiciones exige y conserva condiciones justificadas", async 
   assert.equal(db.calls.conditionalApprovals[0].applicationId, applicationId);
   assert.equal(db.calls.conditionalApprovals[0].decisionId, "d".repeat(24));
   assert.equal(db.calls.audits[0].metadata.to, "APPROVED_WITH_CONDITIONS");
+});
+
+test("verificar condiciones habilita formalización y deja auditoría", async () => {
+  const db = fakePrisma("APPROVED_WITH_CONDITIONS");
+  const result = await verifyConditionalApproval(db, { applicationId, actor, notes: "Se revisó el soporte laboral y se confirmó el ingreso requerido." });
+  assert.equal(result.status, "APPROVED");
+  assert.equal(result.conditionalApprovalStatus, "VERIFIED");
+  assert.equal(db.calls.conditionalApprovals.at(-1).status, "VERIFIED");
+  assert.ok(db.calls.audits.some((event) => event.action === "CONDITIONAL_APPROVAL_VERIFIED"));
+});
+
+test("no permite aprobar directamente sin pasar por la verificación de condiciones", async () => {
+  const db = fakePrisma("APPROVED_WITH_CONDITIONS");
+  await assert.rejects(
+    () => changeApplicationStatus(db, { applicationId, toStatus: "APPROVED", actor }),
+    (e) => e.status === 409 && /verificación/.test(e.message)
+  );
+  assert.equal(db.calls.updates.length, 0);
 });
 
 test("una transición no permitida responde 409 y no escribe nada", async () => {
