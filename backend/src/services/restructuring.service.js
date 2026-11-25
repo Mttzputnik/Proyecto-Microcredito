@@ -9,7 +9,7 @@ const POLICY_MODES = ["CAPITALIZE", "REQUIRE_PAYMENT"];
 
 export async function listRestructuringPolicies(prisma) {
   return prisma.restructuringPolicy.findMany({
-    where: { active: true, effectiveFrom: { lte: new Date() } },
+    where: { active: true, effectiveFrom: { lte: new Date() }, OR: [{ effectiveUntil: null }, { effectiveUntil: { gt: new Date() } }] },
     orderBy: [{ name: "asc" }, { version: "desc" }]
   });
 }
@@ -42,7 +42,7 @@ export async function createRestructuringPolicy(prisma, { payload, actor }) {
 
 export async function listRestructurings(prisma, { loanId, actor } = {}) {
   const where = loanId ? { loanId } : {};
-  if (actor?.role === "comite_supervisor") where.status = "PENDING_COMMITTEE_REVIEW";
+  if (actor?.role === "comite_supervisor") where.status = "PENDING_COMMITTEE_REVIEW";\n  if (actor?.role === "CREDIT_OFFICER") where.loan = { application: { assignedOfficerId: actor.id } };
   return prisma.loanRestructuring.findMany({
     where,
     orderBy: { createdAt: "desc" },
@@ -57,7 +57,7 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
       tx.restructuringPolicy.findUnique({ where: { id: payload.policyId } })
     ]);
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
-    if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
+    if (actor.role === "CREDIT_OFFICER" && loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Préstamo no encontrado.");\n    if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
     if (!policy || !policy.active || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
       throw httpError(409, "No existe una política de reestructuración vigente.");
     }
@@ -134,7 +134,7 @@ export async function decideRestructuring(prisma, { restructuringId, outcome, ju
       throw httpError(403, "El comité solo interviene en propuestas escaladas.");
     }
     if (outcome === "APPROVED" && escalated && !isCommittee) {
-      await tx.loanRestructuring.update({ where: { id: restructuringId }, data: { status: "PENDING_COMMITTEE_REVIEW" } });
+      await tx.loanRestructuring.update({ where: { id: restructuringId }, data: { status: "PENDING_COMMITTEE_REVIEW", decision: "ESCALATED", justification, reviewedById: actor.id, decidedAt: new Date() } });
       await writeAudit(tx, {
         actorId: actor.id, action: "RESTRUCTURING_ESCALATED",
         entityType: "LoanRestructuring", entityId: restructuringId,
