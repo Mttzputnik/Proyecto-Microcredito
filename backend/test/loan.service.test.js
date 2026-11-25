@@ -112,7 +112,7 @@ test("desembolsar activa el préstamo y genera el cronograma completo", async ()
 async function activeLoan() {
   const db = memoryDb();
   const loan = await formalizeLoan(db, { applicationId: "app1", actor });
-  await disburseLoan(db, { loanId: loan.id, actor, disbursementDate: new Date("2026-01-15T00:00:00Z") });
+  await disburseLoan(db, { loanId: loan.id, actor, disbursementDate: new Date("2026-01-15T05:00:00Z") });
   return { db, loanId: loan.id };
 }
 const now = new Date("2026-02-01T12:00:00Z");
