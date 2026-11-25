@@ -116,7 +116,6 @@ model LoanDecision {
   outcome String
   justification String
   conditions String?
-  conditionalApproval ConditionalApproval?
   decidedAt DateTime @default(now())
 }
 
