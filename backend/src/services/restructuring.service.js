@@ -1,5 +1,6 @@
 import { buildSchedule, addMonths } from "../domain/finance.js";
-import { outstanding } from "../domain/payments.js";\nimport { daysOverdue } from "../domain/arrears.js";
+import { outstanding } from "../domain/payments.js";
+import { daysOverdue } from "../domain/arrears.js";
 import { calculateRestructuringBalance } from "../domain/restructuring.js";
 import { loanTransitions, assertTransition } from "../domain/states.js";
 import { writeAudit } from "./audit.service.js";
@@ -42,7 +43,8 @@ export async function createRestructuringPolicy(prisma, { payload, actor }) {
 
 export async function listRestructurings(prisma, { loanId, actor } = {}) {
   const where = loanId ? { loanId } : {};
-  if (actor?.role === "comite_supervisor") where.status = "PENDING_COMMITTEE_REVIEW";\n  if (actor?.role === "CREDIT_OFFICER") where.loan = { application: { assignedOfficerId: actor.id } };
+  if (actor?.role === "comite_supervisor") where.status = "PENDING_COMMITTEE_REVIEW";
+  if (actor?.role === "CREDIT_OFFICER") where.loan = { application: { assignedOfficerId: actor.id } };
   return prisma.loanRestructuring.findMany({
     where,
     orderBy: { createdAt: "desc" },
@@ -57,7 +59,8 @@ export async function requestRestructuring(prisma, { loanId, payload, actor, now
       tx.restructuringPolicy.findUnique({ where: { id: payload.policyId } })
     ]);
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
-    if (actor.role === "CREDIT_OFFICER" && loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Préstamo no encontrado.");\n    if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
+    if (actor.role === "CREDIT_OFFICER" && loan.application?.assignedOfficerId !== actor.id) throw httpError(404, "Préstamo no encontrado.");
+    if (loan.status !== "ACTIVE") throw httpError(409, "Solo se puede reestructurar un préstamo activo.");
     if (!policy || !policy.active || policy.effectiveFrom > now || (policy.effectiveUntil && policy.effectiveUntil <= now)) {
       throw httpError(409, "No existe una política de reestructuración vigente.");
     }
