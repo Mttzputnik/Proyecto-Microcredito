@@ -16,6 +16,7 @@ export const restructuringPolicySchema = z.object({
   overdueInstallmentsTreatment: z.enum(["CAPITALIZE", "REQUIRE_PAYMENT"]),
   includeAccruedInterest: z.boolean(),
   lateInterestTreatment: z.enum(["MANUAL_CAPITALIZE", "WAIVE", "NOT_APPLICABLE"]),
+  approvalReference: z.string().trim().min(5).max(200),
   effectiveFrom: z.string().datetime()
 }).strict();
 
@@ -27,7 +28,8 @@ export const createRestructuringSchema = z.object({
   gracePeriodDays: z.number().int().min(0).max(365).default(0),
   firstDueDate: z.string().datetime(),
   lateInterestAmount: z.number().int().min(0).max(10_000_000_000).default(0),
-  lateInterestEvidence: z.string().trim().min(10).max(1000).optional()
+  lateInterestEvidence: z.string().trim().min(10).max(1000).optional(),
+  scheduleFrequency: z.literal("MONTHLY").default("MONTHLY")
 }).strict();
 
 export const restructuringDecisionSchema = z.object({
