@@ -2,6 +2,7 @@ import { httpError } from "../utils/httpError.js";
 import { matchesTrackingToken } from "./applicationTracking.service.js";
 import { selectOfficerByWorkload } from "./applicationAssignment.service.js";
 import { writeAudit } from "./audit.service.js";
+import { storeReconsiderationDocuments, removeStoredDocuments, readStoredDocument } from "./documentStorage.service.js";
 
 async function selectReconsiderationOfficer(tx, originalOfficerId) {
   const officers = await tx.user.findMany({
@@ -21,7 +22,8 @@ async function selectReconsiderationOfficer(tx, originalOfficerId) {
   return selected.officer.id;
 }
 
-export async function submitReconsideration(prisma, { applicationNumber, accessToken, applicantMessage }) {
+export async function submitReconsideration(prisma, { applicationNumber, accessToken, applicantMessage, documents = [] }) {
+  const storedFiles = [];
   try {
     return await prisma.$transaction(async (tx) => {
       const application = await tx.loanApplication.findUnique({
@@ -51,6 +53,8 @@ export async function submitReconsideration(prisma, { applicationNumber, accessT
 
       const originalDecision = application.decisions[0];
       const assignedOfficerId = await selectReconsiderationOfficer(tx, originalDecision.officerId);
+      const stored = await storeReconsiderationDocuments(documents);
+      storedFiles.push(...stored);
       const reconsideration = await tx.reconsideration.create({
         data: {
           applicationId: application.id,
@@ -63,17 +67,26 @@ export async function submitReconsideration(prisma, { applicationNumber, accessT
         select: { id: true, status: true, submittedAt: true, assignedOfficerId: true }
       });
 
+      if (stored.length) {
+        await tx.reconsiderationDocument.createMany({
+          data: stored.map(({ originalName, storedName, mimeType, size }) => ({
+            reconsiderationId: reconsideration.id, originalName, storedName, mimeType, size
+          }))
+        });
+      }
+
       await writeAudit(tx, {
         actorId: null,
         action: "APPLICATION_RECONSIDERATION_SUBMITTED",
         entityType: "LoanApplication",
         entityId: application.id,
         description: "El solicitante presentó la única reconsideración permitida.",
-        metadata: { reconsiderationId: reconsideration.id, assignedOfficerId }
+        metadata: { reconsiderationId: reconsideration.id, assignedOfficerId, documentCount: stored.length }
       });
-      return { id: reconsideration.id, status: reconsideration.status, submittedAt: reconsideration.submittedAt };
+      return { id: reconsideration.id, status: reconsideration.status, submittedAt: reconsideration.submittedAt, documentCount: stored.length };
     });
   } catch (error) {
+    await removeStoredDocuments(storedFiles);
     if (error.code === "P2002") throw httpError(409, "Esta solicitud ya utilizó su única reconsideración.");
     throw error;
   }
@@ -84,6 +97,7 @@ export async function listAssignedReconsiderations(prisma, actor) {
     where: { assignedOfficerId: actor.id, status: "PENDING_REVIEW" },
     orderBy: { submittedAt: "asc" },
     include: {
+      documents: { select: { id: true, originalName: true, mimeType: true, size: true, uploadedAt: true } },
       application: {
         select: {
           id: true, applicationNumber: true, status: true, requestedAmount: true, requestedTerm: true, purpose: true,
@@ -136,4 +150,17 @@ export async function decideReconsideration(prisma, { reconsiderationId, actor, 
     });
     return { id: reconsiderationId, applicationId: reconsideration.applicationId, status: outcome, decidedAt };
   });
+}
+
+
+export async function getAssignedReconsiderationDocument(prisma, { reconsiderationId, documentId, actorId }) {
+  const document = await prisma.reconsiderationDocument.findUnique({
+    where: { id: documentId },
+    include: { reconsideration: { select: { id: true, assignedOfficerId: true } } }
+  });
+  if (!document || document.reconsiderationId !== reconsiderationId || document.reconsideration.assignedOfficerId !== actorId) {
+    throw httpError(404, "Documento no encontrado.");
+  }
+  const content = await readStoredDocument(document.storedName);
+  return { originalName: document.originalName, mimeType: document.mimeType, content };
 }
