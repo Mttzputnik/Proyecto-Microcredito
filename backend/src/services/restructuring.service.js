@@ -15,6 +15,12 @@ export async function listRestructuringPolicies(prisma) {
 }
 
 export async function createRestructuringPolicy(prisma, { payload, actor }) {
+  if (payload.allowRepeatedRestructuring && payload.maximumRestructurings < 2) {
+    throw httpError(400, "Una política que permite reestructuraciones sucesivas debe permitir al menos dos.");
+  }
+  if (!payload.allowRepeatedRestructuring && payload.maximumRestructurings !== 1) {
+    throw httpError(400, "Si no se permiten reestructuraciones sucesivas, el máximo debe ser uno.");
+  }
   return prisma.$transaction(async (tx) => {
     const previous = await tx.restructuringPolicy.findFirst({
       where: { name: payload.name },
@@ -23,7 +29,7 @@ export async function createRestructuringPolicy(prisma, { payload, actor }) {
     if (previous) {
       await tx.restructuringPolicy.updateMany({
         where: { name: payload.name, active: true },
-        data: { active: false, effectiveUntil: new Date(payload.effectiveFrom) }
+        data: { active: new Date(payload.effectiveFrom) > new Date(), effectiveUntil: new Date(payload.effectiveFrom) }
       });
     }
     const policy = await tx.restructuringPolicy.create({
