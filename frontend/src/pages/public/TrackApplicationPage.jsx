@@ -9,6 +9,7 @@ const statusLabels = {
   UNDER_REVIEW: "En revisión",
   NEEDS_INFORMATION: "Requiere información",
   APPROVED: "Aprobada",
+  APPROVED_WITH_CONDITIONS: "Aprobada con condiciones",
   REJECTED: "No aprobada",
   CANCELLED: "Cancelada"
 };
@@ -69,8 +70,7 @@ export default function TrackApplicationPage() {
             extra={
               <div>
                 <Tag color="blue">{statusLabels[result.status] || result.status}</Tag>
-                {result.status === "REJECTED" && !result.reconsideration && <p><Link to="/reconsiderar">Solicitar reconsideración</Link></p>}
-                {result.reconsideration && <p style={{ marginTop: 12 }}>Reconsideración: {result.reconsideration.status === "PENDING_REVIEW" ? "Pendiente de revisión" : result.reconsideration.outcome === "ACCEPTED" ? "Aceptada para continuar la revisión" : "Rechazo original confirmado"}</p>}
+                {result.status === "REJECTED" && <p><Link to="/reconsiderar">Solicitar reconsideración</Link></p>}
                 <p style={{ marginTop: 12 }}>Fecha de registro: {new Date(result.createdAt).toLocaleString("es-CO")}</p>
                 <p>Última actualización: {new Date(result.updatedAt).toLocaleString("es-CO")}</p>
               </div>
