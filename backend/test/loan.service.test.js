@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { disburseLoan, formalizeLoan, refreshArrears, registerPayment, writeOffLoan } from "../src/services/loan.service.js";
+import { disburseLoan, formalizeLoan, refreshArrears, registerCollectionAction, registerPayment, writeOffLoan } from "../src/services/loan.service.js";
 import { evaluateApplication } from "../src/services/evaluation.service.js";
 import { createPolicyVersion, findActivePolicy } from "../src/services/policy.service.js";
 
@@ -18,7 +18,7 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
     loanDecision: [{ id: "dec1", applicationId: "app1", outcome: "APPROVED", decidedAt: new Date() }],
     riskEvaluation: withEvaluation ? [{ id: "ev1", applicationId: "app1", policyId: effectivePolicy.id, policy: effectivePolicy }] : [],
     creditPolicy: [{ ...effectivePolicy, active: true, effectiveFrom: new Date("2026-01-01") }],
-    loan: [], paymentSchedule: [], payment: [], auditLog: []
+    loan: [], paymentSchedule: [], payment: [], collectionAction: [], auditLog: []
   };
   const collection = (name) => ({
     create: async ({ data }) => { const row = { id: nextId(), ...data }; t[name].push(row); return row; },
@@ -60,6 +60,7 @@ function memoryDb({ status = "APPROVED", policy = { id: "p1", name: "Base", vers
       }
     },
     payment: collection("payment"),
+    collectionAction: collection("collectionAction"),
     auditLog: collection("auditLog")
   };
   return db;
@@ -185,6 +186,31 @@ test("la mora marca las cuotas vencidas como OVERDUE y un pago posterior las cie
   await registerPayment(db, { loanId, amount: db.t.paymentSchedule[0].totalDue, actor, now: today });
   assert.equal(db.t.paymentSchedule[0].status, "PAID");
   assert.equal(db.t.paymentSchedule[1].status, "OVERDUE");
+});
+
+test("registrar una gestión de cobro conserva la descripción y genera auditoría", async () => {
+  const { db, loanId } = await activeLoan();
+  const action = await registerCollectionAction(db, {
+    loanId,
+    description: "Se realizó llamada de seguimiento al titular.",
+    result: "El titular solicita nueva fecha de contacto.",
+    actor,
+    performedAt: new Date("2026-04-20T10:00:00Z")
+  });
+  assert.equal(action.loanId, loanId);
+  assert.equal(action.recordedById, actor.id);
+  assert.equal(db.t.collectionAction.length, 1);
+  assert.ok(actions(db).includes("COLLECTION_ACTION_REGISTERED"));
+});
+
+test("no permite registrar gestiones de cobro en préstamos que no están activos", async () => {
+  const db = memoryDb();
+  const loan = await formalizeLoan(db, { applicationId: "app1", actor });
+  await assert.rejects(
+    () => registerCollectionAction(db, { loanId: loan.id, description: "Intento de contacto con el titular.", actor }),
+    (error) => error.status === 409
+  );
+  assert.equal(db.t.collectionAction.length, 0);
 });
 
 test("castigar un préstamo activo exige que esté ACTIVE y bloquea pagos", async () => {
