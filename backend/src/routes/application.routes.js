@@ -95,6 +95,14 @@ router.post("/", applicationSubmissionRateLimit, async (req, res, next) => {
       });
       await writeAudit(tx, {
         actorId: null,
+        action: "APPLICATION_SUBMITTED",
+        entityType: "LoanApplication",
+        entityId: created.id,
+        description: "El solicitante presentó una nueva solicitud de microcrédito.",
+        metadata: { applicationNumber, requestedAmount, requestedTerm, purpose }
+      });
+      await writeAudit(tx, {
+        actorId: null,
         action: "APPLICATION_TRACKING_CREDENTIAL_ISSUED",
         entityType: "LoanApplication",
         entityId: created.id,
