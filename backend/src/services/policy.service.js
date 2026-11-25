@@ -7,7 +7,7 @@ export function isCreditPolicyReady(policy) {
     Array.isArray(policy?.allowedPurposes) && policy.allowedPurposes.length > 0 &&
     typeof policy?.requireVerifiedResidence === "boolean" &&
     typeof policy?.approvalReference === "string" && policy.approvalReference.trim().length >= 5 &&
-    policy?.approvalDate instanceof Date && !Number.isNaN(policy.approvalDate.getTime());
+    policy?.approvalDate != null && !Number.isNaN(new Date(policy.approvalDate).getTime());
 }
 
 // Política vigente: activa, completa, autorizada, ya en vigor y no vencida. Si hay varias, la de vigencia más reciente.
