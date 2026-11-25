@@ -229,7 +229,7 @@ export default function RiskEvaluationPage() {
               </Form.Item>
               <Button type="primary" htmlType="submit" loading={verifyingConditions}>Confirmar cumplimiento de condiciones</Button>
             </Form>
-          </> : <Typography.Paragraph>Verificado por {application.conditionalApproval.verifiedById || "oficial asignado"} · {formatDate(application.conditionalApproval.verifiedAt)}<br />{application.conditionalApproval.verificationNotes}</Typography.Paragraph>}
+          </> : <Typography.Paragraph>Verificado por el oficial asignado · {formatDate(application.conditionalApproval.verifiedAt)}<br />{application.conditionalApproval.verificationNotes}</Typography.Paragraph>}
         </Card>}
         <Card className="detail-card">
           <div className="card-heading"><h2>Historial de decisiones</h2><Tag color="blue">{application.decisions?.length ?? 0} registradas</Tag></div>
