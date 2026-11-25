@@ -2,7 +2,6 @@ import { classifyArrears } from "../domain/arrears.js";
 import { outstanding } from "../domain/payments.js";
 
 const APPROVED_OUTCOMES = new Set(["APPROVED", "APPROVED_WITH_CONDITIONS"]);
-const FINAL_OUTCOMES = new Set(["APPROVED", "APPROVED_WITH_CONDITIONS", "REJECTED"]);
 const MINIMUM_GROUP_SIZE = 5;
 
 function dateWindow({ from, to } = {}) {
