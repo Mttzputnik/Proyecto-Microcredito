@@ -116,7 +116,7 @@ export default function RestructuringsPage() {
   };
 
   const columns = [
-    { title: "Préstamo", dataIndex: "loanId", key: "loanId", render: (value) => <Typography.Text code>{value}</Typography.Text> },
+    { title: "Préstamo", key: "loan", render: (_, row) => <div><Typography.Text strong>{row.loan?.loanNumber || row.loanId}</Typography.Text><br /><Typography.Text type="secondary">{row.loan?.application?.applicant ? `${row.loan.application.applicant.firstName} ${row.loan.application.applicant.lastName}` : "—"}</Typography.Text></div> },
     { title: "Versión", dataIndex: "version", key: "version" },
     { title: "Saldo reestructurado", dataIndex: "newPrincipal", key: "newPrincipal", render: cop },
     { title: "Tasa anual", dataIndex: "proposedAnnualRate", key: "rate", render: (value) => `${value}%` },
@@ -155,7 +155,7 @@ export default function RestructuringsPage() {
     {(canDecide || canAccept) && <Card title="Solicitudes y acuerdos">
       <Table rowKey="id" loading={loading} dataSource={items} columns={columns} pagination={{ pageSize: 10 }} scroll={{ x: 1100 }} expandable={{ expandedRowRender: (row) => <div>
         <Typography.Paragraph><strong>Motivo:</strong> {row.reason}</Typography.Paragraph>
-        <Typography.Paragraph><strong>Capital pendiente:</strong> {cop(row.principalOutstanding)} · <strong>Interés vencido:</strong> {cop(row.accruedInterestOutstanding)} · <strong>Interés de mora manual:</strong> {cop(row.lateInterestAmount)}</Typography.Paragraph>
+        <Typography.Paragraph><strong>Capital pendiente:</strong> {cop(row.principalOutstanding)} · <strong>Interés vencido:</strong> {cop(row.accruedInterestOutstanding)} · <strong>Interés de mora manual:</strong> {cop(row.lateInterestAmount)}</Typography.Paragraph>\n        {row.lateInterestEvidence && <Typography.Paragraph><strong>Soporte contable:</strong> {row.lateInterestEvidence}</Typography.Paragraph>}
         {row.justification && <Typography.Paragraph><strong>Justificación de decisión:</strong> {row.justification}</Typography.Paragraph>}
         {row.acceptanceEvidence && <Typography.Paragraph><strong>Soporte de aceptación:</strong> {row.acceptanceEvidence}</Typography.Paragraph>}
       </div>}} locale={{ emptyText: "No hay solicitudes de reestructuración." }} />
