@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
@@ -8,8 +8,9 @@ const storageDirectory = await mkdtemp(path.join(os.tmpdir(), "microcredito-docu
 process.env.DOCUMENT_STORAGE_PATH = storageDirectory;
 const { storeReconsiderationDocuments, readStoredDocument, removeStoredDocuments } = await import("../src/services/documentStorage.service.js");
 
-test("guarda, lee y elimina un documento PDF validado", async (t) => {
-  t.after(() => rm(storageDirectory, { recursive: true, force: true }));
+after(() => rm(storageDirectory, { recursive: true, force: true }));
+
+test("guarda, lee y elimina un documento PDF validado", async () => {
   const pdf = Buffer.from("%PDF-1.7\ncontenido de prueba");
   const [stored] = await storeReconsiderationDocuments([{
     name: "soporte.pdf",
