@@ -43,5 +43,11 @@ export const PERMISSIONS = Object.freeze({
   // Reportes agregados: administración y comité supervisor (sin datos identificables).
   readPortfolioReports: [ROLES.ADMINISTRATIVE_AREA, ROLES.SUPERVISORY_COMMITTEE],
   // Consulta detallada de eventos operativos: solo área administrativa.
-  readAuditEvents: [ROLES.ADMINISTRATIVE_AREA]
+  readAuditEvents: [ROLES.ADMINISTRATIVE_AREA],
+
+  // Reestructuración: gestión operativa, decisión humana y consulta histórica.
+  readRestructurings: [ROLES.ADMINISTRATIVE_AREA, ROLES.CREDIT_OFFICER, ROLES.SUPERVISORY_COMMITTEE],
+  createRestructurings: [ROLES.ADMINISTRATIVE_AREA, ROLES.CREDIT_OFFICER],
+  decideRestructurings: [ROLES.CREDIT_OFFICER, ROLES.SUPERVISORY_COMMITTEE],
+  acceptRestructurings: [ROLES.ADMINISTRATIVE_AREA],
 });
