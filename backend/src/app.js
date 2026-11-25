@@ -11,6 +11,8 @@ import policyRoutes from "./routes/policy.routes.js";
 import applicationEvaluationRoutes from "./routes/application.evaluation.routes.js";
 import loanRoutes from "./routes/loan.routes.js";
 import reconsiderationRoutes from "./routes/reconsideration.routes.js";
+import reportRoutes from "./routes/report.routes.js";
+import auditRoutes from "./routes/audit.routes.js";
 
 const app = express();
 
@@ -61,6 +63,8 @@ app.use("/api/applications", applicationEvaluationRoutes);
 app.use("/api/reconsiderations", reconsiderationRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/loans", loanRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/audit", auditRoutes);
 
 app.use((req, res) => res.status(404).json({
   success: false,
