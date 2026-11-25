@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "admin:bootstrap": "node scripts/seed-admin.js",
     "prisma:generate": "prisma generate",
+    "db:migrate-restructuring-schedules": "node scripts/migrate-restructuring-schedules.js",
     "prisma:validate": "prisma validate",
     "prisma:format": "prisma format",
     "test": "node --test"

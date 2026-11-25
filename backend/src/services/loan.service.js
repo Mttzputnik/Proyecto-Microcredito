@@ -107,7 +107,7 @@ export async function registerPayment(prisma, { loanId, amount, paymentDate, ref
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
     if (loan.status !== "ACTIVE") throw httpError(409, `Solo se registran pagos en préstamos ACTIVE. Estado actual: ${loan.status}.`);
 
-    const installments = await tx.paymentSchedule.findMany({ where: { loanId }, orderBy: { installment: "asc" } });
+    const installments = await tx.paymentSchedule.findMany({ where: { loanId, isCurrent: true }, orderBy: { installment: "asc" } });
     const pending = totalOutstanding(installments);
     if (amount > pending) throw httpError(400, `El pago (${amount}) excede el saldo pendiente (${pending}).`);
 
@@ -167,7 +167,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
     if (!loan) throw httpError(404, "Préstamo no encontrado.");
     if (loan.status !== "ACTIVE") throw httpError(409, `Solo se revisa la mora de préstamos ACTIVE. Estado actual: ${loan.status}.`);
 
-    const installments = await tx.paymentSchedule.findMany({ where: { loanId }, orderBy: { installment: "asc" } });
+    const installments = await tx.paymentSchedule.findMany({ where: { loanId, isCurrent: true }, orderBy: { installment: "asc" } });
     const arrears = classifyArrears(installments, today);
     const byId = new Map(installments.map((i) => [i.id, i]));
 
@@ -198,7 +198,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
 // Lista de mora de todos los préstamos activos (solo lectura).
 export async function listArrears(prisma, { today = new Date() } = {}) {
   const installments = await prisma.paymentSchedule.findMany({
-    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: today }, loan: { status: "ACTIVE" } },
+    where: { isCurrent: true, status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: today }, loan: { status: "ACTIVE" } },
     orderBy: [{ loanId: "asc" }, { installment: "asc" }],
     include: {
       loan: {
@@ -261,6 +261,7 @@ export async function monitorArrears(prisma, {
   return prisma.$transaction(async (tx) => {
     const schedules = await tx.paymentSchedule.findMany({
       where: {
+        isCurrent: true,
         status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] },
         dueDate: { lte: horizonEnd },
         loan: { status: "ACTIVE" }

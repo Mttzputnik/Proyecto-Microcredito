@@ -37,6 +37,30 @@ export const loanService = {
     const response = await client.post(`/loans/${id}/collection-actions`, payload);
     return response.data.data;
   },
+  async listRestructuringPolicies() {
+    const response = await client.get("/loans/restructuring-policies");
+    return response.data.data;
+  },
+  async createRestructuringPolicy(payload) {
+    const response = await client.post("/loans/restructuring-policies", payload);
+    return response.data.data;
+  },
+  async listRestructurings() {
+    const response = await client.get("/loans/restructurings");
+    return response.data.data;
+  },
+  async createRestructuring(loanId, payload) {
+    const response = await client.post(`/loans/${loanId}/restructurings`, payload);
+    return response.data.data;
+  },
+  async decideRestructuring(id, payload) {
+    const response = await client.patch(`/loans/restructurings/${id}/decision`, payload);
+    return response.data.data;
+  },
+  async acceptRestructuring(id, payload) {
+    const response = await client.post(`/loans/restructurings/${id}/accept`, payload);
+    return response.data.data;
+  },
   async refreshArrears(id) {
     const response = await client.post(`/loans/${id}/refresh-arrears`);
     return response.data.data;

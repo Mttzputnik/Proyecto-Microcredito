@@ -25,6 +25,7 @@ import PoliciesPage from "../pages/internal/PoliciesPage";
 import AuditPage from "../pages/internal/AuditPage";
 import ReportsPage from "../pages/internal/ReportsPage";
 import LoansPage from "../pages/internal/LoansPage";
+import RestructuringsPage from "../pages/internal/RestructuringsPage";
 import ArrearsPage from "../pages/internal/ArrearsPage";
 import UnauthorizedPage from "../pages/shared/UnauthorizedPage";
 
@@ -77,6 +78,9 @@ export default function AppRoutes() {
           </Route>
           <Route element={<RoleRoute roles={["administrativo"]} />}>
             <Route path="audit" element={<AuditPage />} />
+          </Route>
+          <Route element={<RoleRoute roles={["administrativo", ...CREDIT_OFFICERS, "analista_riesgo", "comite_supervisor"]} />}>
+            <Route path="restructurings" element={<RestructuringsPage />} />
           </Route>
           <Route element={<RoleRoute roles={["administrativo", "comite_supervisor"]} />}>
             <Route path="reports" element={<ReportsPage />} />

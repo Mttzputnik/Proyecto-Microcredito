@@ -30,10 +30,11 @@ export const PERMISSIONS = Object.freeze({
 
   // Analistas de riesgo: configuración y consulta de políticas.
   managePolicies: [ROLES.RISK_ANALYST],
-  readPolicies: [ROLES.RISK_ANALYST, ROLES.CREDIT_OFFICER],
+  readPolicies: [ROLES.RISK_ANALYST, ROLES.CREDIT_OFFICER, ROLES.ADMINISTRATIVE_AREA],
 
   // Área administrativa: seguimiento de préstamos, cronogramas y pagos.
-  readLoans: [ROLES.ADMINISTRATIVE_AREA],
+  readLoans: [ROLES.ADMINISTRATIVE_AREA, ROLES.CREDIT_OFFICER],
+  readArrears: [ROLES.ADMINISTRATIVE_AREA],
   manageLoans: [ROLES.ADMINISTRATIVE_AREA],
   registerPayments: [ROLES.ADMINISTRATIVE_AREA],
 
@@ -43,5 +44,11 @@ export const PERMISSIONS = Object.freeze({
   // Reportes agregados: administración y comité supervisor (sin datos identificables).
   readPortfolioReports: [ROLES.ADMINISTRATIVE_AREA, ROLES.SUPERVISORY_COMMITTEE],
   // Consulta detallada de eventos operativos: solo área administrativa.
-  readAuditEvents: [ROLES.ADMINISTRATIVE_AREA]
+  readAuditEvents: [ROLES.ADMINISTRATIVE_AREA],
+
+  // Reestructuración: gestión operativa, decisión humana y consulta histórica.
+  readRestructurings: [ROLES.ADMINISTRATIVE_AREA, ROLES.CREDIT_OFFICER, ROLES.SUPERVISORY_COMMITTEE],
+  createRestructurings: [ROLES.ADMINISTRATIVE_AREA, ROLES.CREDIT_OFFICER],
+  decideRestructurings: [ROLES.CREDIT_OFFICER, ROLES.SUPERVISORY_COMMITTEE],
+  acceptRestructurings: [ROLES.ADMINISTRATIVE_AREA],
 });
