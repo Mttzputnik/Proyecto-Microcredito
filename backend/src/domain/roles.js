@@ -30,10 +30,10 @@ export const PERMISSIONS = Object.freeze({
 
   // Analistas de riesgo: configuración y consulta de políticas.
   managePolicies: [ROLES.RISK_ANALYST],
-  readPolicies: [ROLES.RISK_ANALYST, ROLES.CREDIT_OFFICER],
+  readPolicies: [ROLES.RISK_ANALYST, ROLES.CREDIT_OFFICER, ROLES.ADMINISTRATIVE_AREA],
 
   // Área administrativa: seguimiento de préstamos, cronogramas y pagos.
-  readLoans: [ROLES.ADMINISTRATIVE_AREA],
+  readLoans: [ROLES.ADMINISTRATIVE_AREA, ROLES.CREDIT_OFFICER],
   manageLoans: [ROLES.ADMINISTRATIVE_AREA],
   registerPayments: [ROLES.ADMINISTRATIVE_AREA],
 
