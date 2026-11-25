@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, Button, Card, Form, Input, Result } from "antd";
+import { Alert, Button, Card, Form, Input, Result, Upload } from "antd";
 import {
   ArrowLeftOutlined,
   InfoCircleOutlined,
@@ -14,6 +14,14 @@ export default function ReconsiderationPage() {
   const [submitted, setSubmitted] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fileList, setFileList] = useState([]);
+
+  const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1]);
+    reader.onerror = () => reject(new Error("No fue posible leer uno de los documentos."));
+    reader.readAsDataURL(file);
+  });
 
   const submit = async (values) => {
     setLoading(true);
@@ -23,9 +31,15 @@ export default function ReconsiderationPage() {
         applicationNumber: values.applicationNumber.trim(),
         accessToken: values.accessToken.trim(),
         applicantMessage: values.applicantMessage.trim(),
+        documents: await Promise.all(fileList.map(async ({ originFileObj }) => ({
+          name: originFileObj.name,
+          mimeType: originFileObj.type,
+          contentBase64: await readFileAsBase64(originFileObj),
+        }))),
       });
       setSubmitted(result);
       form.resetFields();
+      setFileList([]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "No fue posible enviar la reconsideración. Verifica los datos e inténtalo nuevamente.");
     } finally {
@@ -95,6 +109,31 @@ export default function ReconsiderationPage() {
               maxLength={2000}
               placeholder="Explica qué información nueva aportas o qué circunstancia debe revisar el oficial."
             />
+          </Form.Item>
+          <Form.Item label="Documentos de soporte (opcional)">
+            <Upload
+              accept=".pdf,.jpg,.jpeg,.png"
+              multiple
+              maxCount={3}
+              fileList={fileList}
+              beforeUpload={(file) => {
+                const allowed = ["application/pdf", "image/jpeg", "image/png"].includes(file.type);
+                if (!allowed) {
+                  setError("Solo puedes adjuntar archivos PDF, JPG o PNG.");
+                  return Upload.LIST_IGNORE;
+                }
+                if (file.size > 4 * 1024 * 1024) {
+                  setError("Cada documento debe pesar máximo 4 MB.");
+                  return Upload.LIST_IGNORE;
+                }
+                setError("");
+                return false;
+              }}
+              onChange={({ fileList: next }) => setFileList(next.slice(-3))}
+            >
+              <Button disabled={fileList.length >= 3}>Adjuntar documento</Button>
+            </Upload>
+            <small>Máximo 3 archivos de 4 MB cada uno. Formatos: PDF, JPG y PNG.</small>
           </Form.Item>
           <Button type="primary" htmlType="submit" size="large" loading={loading} icon={<SendOutlined />}>
             Enviar reconsideración
