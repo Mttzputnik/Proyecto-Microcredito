@@ -66,6 +66,7 @@ export default function RestructuringsPage() {
         gracePeriodDays: values.gracePeriodDays ?? 0,
         firstDueDate: values.firstDueDate.toISOString(),
         lateInterestAmount: values.lateInterestAmount ?? 0,
+        ...(values.lateInterestEvidence ? { lateInterestEvidence: values.lateInterestEvidence } : {}),
       });
       message.success("Solicitud de reestructuración registrada.");
       setRequestOpen(false); requestForm.resetFields(); await load();
@@ -171,6 +172,8 @@ export default function RestructuringsPage() {
         </Space>
         <Form.Item name="firstDueDate" label="Fecha del primer vencimiento" rules={[{ required: true }]}><DatePicker style={{ width: "100%" }} disabledDate={(date) => date.isBefore(dayjs(), "day")} /></Form.Item>
         <Form.Item name="lateInterestAmount" label="Intereses de mora manuales (COP; solo si la política lo permite)" initialValue={0}><InputNumber min={0} precision={0} style={{ width: "100%" }} /></Form.Item>
+        <Form.Item name="lateInterestEvidence" label="Soporte contable del interés de mora (si aplica)"><Input maxLength={1000} /></Form.Item>
+        <Alert type="info" showIcon message="El motor actual genera cronogramas mensuales mediante el sistema francés. La periodicidad no mensual requiere una regla institucional y una extensión específica del motor financiero." />
       </Form>
     </Modal>
     <Modal title="Publicar política de reestructuración" open={policyOpen} onCancel={() => setPolicyOpen(false)} onOk={() => policyForm.submit()} confirmLoading={saving} width={720}>
