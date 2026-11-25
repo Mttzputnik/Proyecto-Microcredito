@@ -303,6 +303,7 @@ model RestructuringPolicy {
   includeAccruedInterest Boolean
   lateInterestTreatment String
   approvalReference String?
+  approvalDate DateTime?
   effectiveFrom DateTime
   effectiveUntil DateTime?
   active Boolean @default(true)
