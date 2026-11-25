@@ -198,7 +198,7 @@ export async function refreshArrears(prisma, { loanId, actor, today = new Date()
 // Lista de mora de todos los préstamos activos (solo lectura).
 export async function listArrears(prisma, { today = new Date() } = {}) {
   const installments = await prisma.paymentSchedule.findMany({
-    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: new Date(startOfCalendarDay(today) + DAY_MS) }, loan: { status: "ACTIVE" } },
+    where: { status: { in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"] }, dueDate: { lt: today }, loan: { status: "ACTIVE" } },
     orderBy: [{ loanId: "asc" }, { installment: "asc" }],
     include: {
       loan: {
@@ -254,8 +254,8 @@ export async function monitorArrears(prisma, {
   if (!Number.isInteger(upcomingDays) || upcomingDays < 0 || upcomingDays > 90) {
     throw new RangeError("UPCOMING_PAYMENT_ALERT_DAYS debe ser un entero entre 0 y 90.");
   }
-  const todayStart = startOfCalendarDay(today);
-  const horizonEnd = new Date(todayStart + (upcomingDays + 1) * DAY_MS - 1);
+  startOfCalendarDay(today); // valida la fecha y usa el calendario configurado para el cálculo posterior.
+  const horizonEnd = new Date(today.getTime() + (upcomingDays + 2) * DAY_MS);
 
   return prisma.$transaction(async (tx) => {
     const schedules = await tx.paymentSchedule.findMany({
